@@ -1,0 +1,2622 @@
+{
+    name	parameters
+    group {
+        name    "stdswitcher4"
+        label   "Transform"
+
+        parm {
+            name    "xOrd"
+            baseparm
+            label   "Transform Order"
+            joinnext
+            export  none
+        }
+        parm {
+            name    "rOrd"
+            baseparm
+            label   "Rotate Order"
+            nolabel
+            export  none
+        }
+        parm {
+            name    "t"
+            baseparm
+            label   "Translate"
+            export  all
+        }
+        parm {
+            name    "r"
+            baseparm
+            label   "Rotate"
+            export  all
+        }
+        parm {
+            name    "s"
+            baseparm
+            label   "Scale"
+            export  none
+        }
+        parm {
+            name    "p"
+            baseparm
+            label   "Pivot Translate"
+            export  none
+        }
+        parm {
+            name    "pr"
+            baseparm
+            label   "Pivot Rotate"
+            export  none
+        }
+        parm {
+            name    "scale"
+            baseparm
+            label   "Uniform Scale"
+            export  none
+        }
+        parm {
+            name    "pre_xform"
+            baseparm
+            label   "Modify Pre-Transform"
+            export  none
+        }
+        parm {
+            name    "keeppos"
+            baseparm
+            label   "Keep Position When Parenting"
+            export  none
+        }
+        parm {
+            name    "childcomp"
+            baseparm
+            label   "Child Compensation"
+            export  none
+        }
+        parm {
+            name    "constraints_on"
+            baseparm
+            label   "Enable Constraints"
+            export  none
+        }
+        parm {
+            name    "constraints_path"
+            baseparm
+            label   "Constraints"
+            export  none
+        }
+        parm {
+            name    "lookatpath"
+            baseparm
+            label   "Look At"
+            invisible
+            export  none
+        }
+        parm {
+            name    "lookupobjpath"
+            baseparm
+            label   "Look Up Object"
+            invisible
+            export  none
+        }
+        parm {
+            name    "lookup"
+            baseparm
+            label   "Look At Up Vector"
+            invisible
+            export  none
+        }
+        parm {
+            name    "pathobjpath"
+            baseparm
+            label   "Path Object"
+            invisible
+            export  none
+        }
+        parm {
+            name    "roll"
+            baseparm
+            label   "Roll"
+            invisible
+            export  none
+        }
+        parm {
+            name    "pos"
+            baseparm
+            label   "Position"
+            invisible
+            export  none
+        }
+        parm {
+            name    "uparmtype"
+            baseparm
+            label   "Parameterization"
+            invisible
+            export  none
+        }
+        parm {
+            name    "pathorient"
+            baseparm
+            label   "Orient Along Path"
+            invisible
+            export  none
+        }
+        parm {
+            name    "up"
+            baseparm
+            label   "Orient Up Vector"
+            invisible
+            export  none
+        }
+        parm {
+            name    "bank"
+            baseparm
+            label   "Auto-Bank factor"
+            invisible
+            export  none
+        }
+    }
+
+    group {
+        name    "stdswitcher4_1"
+        label   "Render"
+
+        parm {
+            name    "shop_materialpath"
+            baseparm
+            label   "Material"
+            export  none
+        }
+        parm {
+            name    "shop_materialopts"
+            baseparm
+            label   "Options"
+            invisible
+            export  none
+        }
+        parm {
+            name    "tdisplay"
+            baseparm
+            label   "Display"
+            joinnext
+            export  none
+        }
+        parm {
+            name    "display"
+            baseparm
+            label   "Display"
+            export  none
+        }
+        parm {
+            name    "viewportlod"
+            label   "Display As"
+            type    ordinal
+            default { "full" }
+            help    "Choose how the object's geometry should be rendered in the viewport"
+            menu {
+                "full"      "Full Geometry"
+                "points"    "Point Cloud"
+                "box"       "Bounding Box"
+                "centroid"  "Centroid"
+                "hidden"    "Hidden"
+                "subd"      "Subdivision Surface / Curves"
+            }
+            parmtag { "spare_category" "Render" }
+        }
+        parm {
+            name    "vm_rendervisibility"
+            label   "Render Visibility"
+            type    string
+            default { "*" }
+            menureplace {
+                "*"                             "Visible to all"
+                "primary"                       "Visible only to primary rays"
+                "primary|shadow"                "Visible only to primary and shadow rays"
+                "-primary"                      "Invisible to primary rays (Phantom)"
+                "-diffuse"                      "Invisible to diffuse rays"
+                "-diffuse&-reflect&-refract"    "Invisible to secondary rays"
+                ""                              "Invisible (Unrenderable)"
+            }
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "rendervisibility" }
+            parmtag { "spare_category" "Render" }
+        }
+        parm {
+            name    "vm_rendersubd"
+            label   "Render Polygons As Subdivision (Mantra)"
+            type    toggle
+            default { "0" }
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "rendersubd" }
+            parmtag { "spare_category" "Geometry" }
+        }
+        parm {
+            name    "vm_subdstyle"
+            label   "Subdivision Style"
+            type    string
+            default { "mantra_catclark" }
+            hidewhen "{ vm_rendersubd == 0 }"
+            menu {
+                "mantra_catclark"   "Mantra Catmull-Clark"
+                "osd_catclark"      "OpenSubdiv Catmull-Clark"
+            }
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "subdstyle" }
+            parmtag { "spare_category" "Geometry" }
+        }
+        parm {
+            name    "vm_subdgroup"
+            label   "Subdivision Group"
+            type    string
+            default { "" }
+            hidewhen "{ vm_rendersubd == 0 }"
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "subdgroup" }
+            parmtag { "spare_category" "Geometry" }
+        }
+        parm {
+            name    "vm_osd_quality"
+            label   "Open Subdiv Quality"
+            type    float
+            default { "1" }
+            hidewhen "{ vm_rendersubd == 0 vm_subdstyle != osd_catclark }"
+            range   { 0 10 }
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "osd_quality" }
+            parmtag { "spare_category" "Geometry" }
+        }
+        parm {
+            name    "vm_osd_vtxinterp"
+            label   "OSD Vtx Interp"
+            type    integer
+            default { "2" }
+            hidewhen "{ vm_rendersubd == 0 vm_subdstyle != osd_catclark }"
+            menu {
+                "0" "No vertex interpolation"
+                "1" "Edges only"
+                "2" "Edges and Corners"
+            }
+            range   { 0 10 }
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "osd_vtxinterp" }
+            parmtag { "spare_category" "Geometry" }
+        }
+        parm {
+            name    "vm_osd_fvarinterp"
+            label   "OSD FVar Interp"
+            type    integer
+            default { "4" }
+            hidewhen "{ vm_rendersubd == 0 vm_subdstyle != osd_catclark }"
+            menu {
+                "0" "Smooth everywhere"
+                "1" "Sharpen corners only"
+                "2" "Sharpen edges and corners"
+                "3" "Sharpen edges and propagated corners"
+                "4" "Sharpen all boundaries"
+                "5" "Bilinear interpolation"
+            }
+            range   { 0 10 }
+            parmtag { "mantra_class" "object" }
+            parmtag { "mantra_name" "osd_fvarinterp" }
+            parmtag { "spare_category" "Geometry" }
+        }
+        group {
+            name    "folder0"
+            label   "Shading"
+
+            parm {
+                name    "categories"
+                label   "Categories"
+                type    string
+                default { "" }
+                help    "A list of tags which can be used to select the object"
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "reflectmask"
+                label   "Reflection Mask"
+                type    oplist
+                default { "*" }
+                help    "Objects that will be reflected on this object."
+                parmtag { "opexpand" "1" }
+                parmtag { "opfilter" "!!OBJ/GEOMETRY!!" }
+                parmtag { "oprelative" "/obj" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "refractmask"
+                label   "Refraction Mask"
+                type    oplist
+                default { "*" }
+                help    "Objects that will be refracted on this object."
+                parmtag { "opexpand" "1" }
+                parmtag { "opfilter" "!!OBJ/GEOMETRY!!" }
+                parmtag { "oprelative" "/obj" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "lightmask"
+                label   "Light Mask"
+                type    oplist
+                default { "*" }
+                help    "Lights that illuminate this object."
+                parmtag { "opexpand" "1" }
+                parmtag { "opfilter" "!!OBJ/LIGHT!!" }
+                parmtag { "oprelative" "/obj" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "lightcategories"
+                label   "Light Selection"
+                type    string
+                default { "*" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "vm_lpetag"
+                label   "LPE Tag"
+                type    string
+                default { "" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "lpetag" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "vm_volumefilter"
+                label   "Volume Filter"
+                type    string
+                default { "box" }
+                menu {
+                    "box"       "Box Filter"
+                    "gaussian"  "Gaussian"
+                    "bartlett"  "Bartlett (triangle)"
+                    "catrom"    "Catmull-Rom"
+                    "hanning"   "Hanning"
+                    "blackman"  "Blackman"
+                    "sinc"      "Sinc (sharpening)"
+                }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "filter" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "vm_volumefilterwidth"
+                label   "Volume Filter Width"
+                type    float
+                default { "1" }
+                range   { 0.001 5 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "filterwidth" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "vm_matte"
+                label   "Matte shading"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "matte" }
+                parmtag { "spare_category" "Shading" }
+            }
+            parm {
+                name    "vm_rayshade"
+                label   "Raytrace Shading"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "rayshade" }
+                parmtag { "spare_category" "Shading" }
+            }
+        }
+
+        group {
+            name    "folder0_1"
+            label   "Sampling"
+
+            parm {
+                name    "geo_velocityblur"
+                label   "Geometry Velocity Blur"
+                type    ordinal
+                default { "off" }
+                disablewhen "{ allowmotionblur == 0 }"
+                menu {
+                    "off"       "No Velocity Blur"
+                    "on"        "Velocity Blur"
+                    "accelblur" "Acceleration Blur"
+                }
+            }
+            parm {
+                name    "geo_accelattribute"
+                label   "Acceleration Attribute"
+                type    string
+                default { "accel" }
+                hidewhen "{ geo_velocityblur != accelblur }"
+                parmtag { "spare_category" "Sampling" }
+            }
+        }
+
+        group {
+            name    "folder0_2"
+            label   "Dicing"
+
+            parm {
+                name    "vm_shadingquality"
+                label   "Shading Quality"
+                type    float
+                default { "1" }
+                range   { 0 10 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "shadingquality" }
+                parmtag { "spare_category" "Dicing" }
+            }
+            parm {
+                name    "vm_flatness"
+                label   "Dicing Flatness"
+                type    float
+                default { "0.05" }
+                range   { 0 1 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "flatness" }
+                parmtag { "spare_category" "Dicing" }
+            }
+            parm {
+                name    "vm_raypredice"
+                label   "Ray Predicing"
+                type    integer
+                default { "0" }
+                menu {
+                    "0" "Disable Predicing"
+                    "1" "Full Predicing"
+                    "2" "Precompute Bounds"
+                }
+                range   { 0 10 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "raypredice" }
+                parmtag { "spare_category" "Dicing" }
+            }
+            parm {
+                name    "vm_curvesurface"
+                label   "Shade Curves As Surfaces"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "curvesurface" }
+                parmtag { "spare_category" "Dicing" }
+            }
+        }
+
+        group {
+            name    "folder0_3"
+            label   "Geometry"
+
+            parm {
+                name    "vm_rmbackface"
+                label   "Backface Removal"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "rmbackface" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "shop_geometrypath"
+                label   "Procedural Shader"
+                type    oppath
+                default { "" }
+                parmtag { "opfilter" "!!SHOP/GEOMETRY!!" }
+                parmtag { "oprelative" "." }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_forcegeometry"
+                label   "Force Procedural Geometry Output"
+                type    toggle
+                default { "1" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_rendersubdcurves"
+                label   "Render Polygon Curves As Subdivision (Mantra)"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "rendersubdcurves" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_renderpoints"
+                label   "Render As Points (Mantra)"
+                type    integer
+                default { "2" }
+                menu {
+                    "0" "No Point Rendering"
+                    "1" "Render Only Points"
+                    "2" "Render Unconnected Points"
+                }
+                range   { 0 10 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "renderpoints" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_renderpointsas"
+                label   "Render Points As (Mantra)"
+                type    integer
+                default { "0" }
+                disablewhen "{ vm_renderpoints == 0 }"
+                menu {
+                    "0" "Spheres"
+                    "1" "Circles"
+                }
+                range   { 0 10 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "renderpointsas" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_usenforpoints"
+                label   "Use N For Point Rendering"
+                type    toggle
+                default { "0" }
+                disablewhen "{ vm_renderpoints == 0 }"
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "usenforpoints" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_pointscale"
+                label   "Point Scale"
+                type    float
+                default { "1" }
+                disablewhen "{ vm_renderpoints == 0 }"
+                range   { 0! 10 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "pointscale" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_pscalediameter"
+                label   "Treat Point Scale as Diameter Instead of Radius"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "pscalediameter" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_metavolume"
+                label   "Metaballs as Volume"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "metavolume" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_coving"
+                label   "Coving"
+                type    integer
+                default { "1" }
+                menu {
+                    "0" "Disable Coving"
+                    "1" "Coving for displacement/sub-d"
+                    "2" "Coving for all primitives"
+                }
+                range   { 0 10 }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "coving" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_materialoverride"
+                label   "Material Override"
+                type    string
+                default { "compact" }
+                menu {
+                    "none"      "Disabled"
+                    "full"      "Evaluate for Each Primitve/Point"
+                    "compact"   "Evaluate Once"
+                }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_overridedetail"
+                label   "Ignore Geometry Attribute Shaders"
+                type    toggle
+                default { "0" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "overridedetail" }
+                parmtag { "spare_category" "Geometry" }
+            }
+            parm {
+                name    "vm_procuseroottransform"
+                label   "Proc Use Root Transform"
+                type    toggle
+                default { "1" }
+                parmtag { "mantra_class" "object" }
+                parmtag { "mantra_name" "procuseroottransform" }
+                parmtag { "spare_category" "Geometry" }
+            }
+        }
+
+    }
+
+    group {
+        name    "stdswitcher4_2"
+        label   "Misc"
+
+        parm {
+            name    "use_dcolor"
+            baseparm
+            label   "Set Wireframe Color"
+            export  none
+        }
+        parm {
+            name    "dcolor"
+            baseparm
+            label   "Wireframe Color"
+            export  none
+        }
+        parm {
+            name    "picking"
+            baseparm
+            label   "Viewport Selecting Enabled"
+            export  none
+        }
+        parm {
+            name    "pickscript"
+            baseparm
+            label   "Select Script"
+            export  none
+        }
+        parm {
+            name    "caching"
+            baseparm
+            label   "Cache Object Transform"
+            export  none
+        }
+        parm {
+            name    "vport_shadeopen"
+            baseparm
+            label   "Shade Open Curves In Viewport"
+            export  none
+        }
+        parm {
+            name    "vport_displayassubdiv"
+            baseparm
+            label   "Display as Subdivision in Viewport"
+            invisible
+            export  none
+        }
+        parm {
+            name    "vport_onionskin"
+            baseparm
+            label   "Onion Skinning"
+            export  none
+        }
+    }
+
+    parm {
+        name    "renderable"
+        baseparm
+        label   "Renderable"
+        export  none
+    }
+    group {
+        name    "xn__BuildingGeneration_cra"
+        label   "Building Generation"
+
+        group {
+            name    "xn__01BuildingLayout_epai"
+            label   "Building Layout"
+
+            parm {
+                name    "block_count"
+                label   "Building Count"
+                type    integer
+                default { "5" }
+                range   { 1 20 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "random_seed"
+                label   "Random Seed"
+                type    integer
+                default { "0" }
+                range   { 0 9999 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "grid_unit"
+                label   "grid_unit"
+                type    float
+                invisible
+                default { "1" }
+                range   { 0 10 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_layout_mode"
+                label   "Layout Mode"
+                type    ordinal
+                default { "0" }
+                menu {
+                    "0" "Mix"
+                    "1" "Horizontal"
+                }
+                parmtag { "script_callback_language" "python" }
+            }
+        }
+
+        group {
+            name    "xn__01BuildingLayout_epai_1"
+            label   "Building Size"
+
+            parm {
+                name    "block_min_width_grid"
+                label   "Width_Min"
+                type    integer
+                default { "4" }
+                range   { 0 20 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_max_width_grid"
+                label   "Width_Max"
+                type    integer
+                default { "8" }
+                range   { 0 20 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_min_depth_grid"
+                label   "Depth Min"
+                type    integer
+                default { "4" }
+                range   { 0 20 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_max_depth_grid"
+                label   "Depth Max"
+                type    integer
+                default { "7" }
+                range   { 0 20 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_min_floor_count"
+                label   "Floor Count Min"
+                type    integer
+                default { "1" }
+                range   { 0 10 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_max_floor_count"
+                label   "Floor Count Max"
+                type    integer
+                default { "4" }
+                range   { 0 10 }
+                parmtag { "script_callback_language" "python" }
+            }
+        }
+
+        group {
+            name    "xn__01BuildingLayout_epai_2"
+            label   "03 Floor Height"
+            invisibletab
+
+            parm {
+                name    "ground_floor_height"
+                label   "Ground Floor Height"
+                type    float
+                default { "4" }
+                range   { 3 5 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "upper_floor_height"
+                label   "Upper Floor Height"
+                type    float
+                default { "3" }
+                range   { 2.5 4 }
+                parmtag { "script_callback_language" "python" }
+            }
+        }
+
+        group {
+            name    "xn__01BuildingLayout_epai_3"
+            label   "Stack Rules"
+
+            parm {
+                name    "block_ground_ratio"
+                label   "Ground Chance"
+                type    float
+                default { "0.55" }
+                help    "数值越高：更多楼体贴在地面上，建筑更横向铺开 数值越低：更多楼体往上叠，建筑更像叠层公寓"
+                range   { 0 1 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_attach_chance"
+                label   "Attach Chance"
+                type    float
+                default { "0.7" }
+                help    "数值高：更容易横向贴出一排楼 数值低：较少横向贴合"
+                range   { 0 1 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "block_stack_chance"
+                label   "Stack Chance"
+                type    float
+                default { "0.45" }
+                help    "数值高：更容易出现上层小楼、退台、叠层 数值低：更少向上堆叠"
+                range   { 0 1 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "max_block_offset_grid"
+                label   "Max Attach Offset Grid"
+                type    integer
+                invisible
+                default { "2" }
+                range   { 0 5 }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "min_attach_contact_grid"
+                label   "Min Attach Contact Grid"
+                type    integer
+                invisible
+                default { "2" }
+                range   { 1 8 }
+                parmtag { "script_callback_language" "python" }
+            }
+        }
+
+        parm {
+            name    "enable_whitebox_mode"
+            label   "White Box Mode"
+            type    toggle
+            default { "0" }
+            parmtag { "script_callback_language" "python" }
+        }
+    }
+
+    group {
+        name    "xn__BuildingGeneration_cra_1"
+        label   "Facade Rules"
+
+        group {
+            name    "stdswitcher4_3_5"
+            label   "Door/Window Rules"
+
+            group {
+                name    "folder2"
+                label   "Front"
+
+                group {
+                    name    "xn__DoorRules_8ia"
+                    label   "Front Door Rules"
+
+                    group {
+                        name    "xn__GroundDoor_6ja"
+                        label   "Ground Door Rules"
+
+                        parm {
+                            name    "enable_ground_door"
+                            label   "Enable"
+                            type    toggle
+                            default { "1" }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "door_position_mode"
+                            label   "Door Position"
+                            type    ordinal
+                            default { "0" }
+                            menu {
+                                "0" "Center"
+                                "1" "Left"
+                                "2" "Right"
+                            }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "ground_door_seed"
+                            label   "Seed"
+                            type    integer
+                            default { "0" }
+                            range   { 0 9999 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "ground_windows_per_door"
+                            label   "Windows Per Door"
+                            type    integer
+                            default { "4" }
+                            range   { 2 12 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                    }
+
+                    group {
+                        name    "xn__GroundDoor_6ja_1"
+                        label   "Upper Door Rules"
+
+                        parm {
+                            name    "enable_upper_doors"
+                            label   "Enable"
+                            type    toggle
+                            default { "0" }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_door_chance"
+                            label   "chance"
+                            type    float
+                            default { "0.15" }
+                            range   { 0 1 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_door_seed"
+                            label   "Seed"
+                            type    integer
+                            default { "0" }
+                            range   { 0 9999 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_door_layout_mode"
+                            label   "Layout"
+                            type    ordinal
+                            default { "0" }
+                            menu {
+                                "0" "Random"
+                                "1" "Vertical Column"
+                            }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                    }
+
+                }
+
+                group {
+                    name    "xn__DoorRules_8ia_1"
+                    label   "Front Window Rules"
+
+                    group {
+                        name    "stdswitcher4_3_5_1"
+                        label   "Ground Window Rules"
+
+                        parm {
+                            name    "enable_ground_windows"
+                            label   "Enable"
+                            type    toggle
+                            default { "1" }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "ground_window_interval"
+                            label   "Interval"
+                            type    integer
+                            default { "2" }
+                            range   { 1 5 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "ground_window_offset"
+                            label   "Offset"
+                            type    integer
+                            default { "0" }
+                            range   { 0 4 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                    }
+
+                    group {
+                        name    "stdswitcher4_3_5_1_1"
+                        label   "08 Upper Window Rules"
+
+                        parm {
+                            name    "enable_upper_windows"
+                            label   "Enable"
+                            type    toggle
+                            default { "1" }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_window_interval"
+                            label   "Interval"
+                            type    integer
+                            default { "1" }
+                            range   { 1 5 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_window_offset"
+                            label   "Offset"
+                            type    integer
+                            default { "0" }
+                            range   { 0 4 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_window_variant_mode"
+                            label   "Variant"
+                            type    ordinal
+                            default { "0" }
+                            menu {
+                                "0" "Default Only"
+                                "1" "Full Random"
+                                "2" "Vertical Columns"
+                            }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_window_variant_seed"
+                            label   "Variant Seed"
+                            type    integer
+                            default { "0" }
+                            range   { 0 9999 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_window_01_weight"
+                            label   "Window 01 weight"
+                            type    float
+                            default { "2" }
+                            range   { 0 10 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "enable_upper_wide_window"
+                            label   "Enable Wide Window"
+                            type    toggle
+                            default { "0" }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_wide_window_mode"
+                            label   "Wide Window Mode"
+                            type    ordinal
+                            default { "0" }
+                            menu {
+                                "0" "Random Match"
+                                "1" "Replace All Matching"
+                            }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_wide_window_chance"
+                            label   "Wide Window Chance"
+                            type    float
+                            default { "0.25" }
+                            range   { 0 1 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                        parm {
+                            name    "upper_wide_window_seed"
+                            label   "Wide Window Seed"
+                            type    integer
+                            default { "0" }
+                            range   { 0 9999 }
+                            parmtag { "script_callback_language" "python" }
+                        }
+                    }
+
+                }
+
+            }
+
+            group {
+                name    "folder2_1"
+                label   "Side"
+
+                group {
+                    name    "xn__DoorRules_2_0ka"
+                    label   "Side Upper Rules"
+
+                    parm {
+                        name    "enable_side_upper_windows"
+                        label   "Enable Windows"
+                        type    toggle
+                        default { "0" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "enable_side_upper_doors"
+                        label   "Enable Doors"
+                        type    toggle
+                        default { "0" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_upper_window_chance"
+                        label   "Window Chance"
+                        type    float
+                        default { "0.35" }
+                        range   { 0 1 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_upper_vertical_door_ratio"
+                        label   "side_upper_vertical_door_ratio"
+                        type    float
+                        default { "0" }
+                        range   { 0 1 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_upper_seed"
+                        label   "Seed"
+                        type    integer
+                        default { "0" }
+                        range   { 0 9999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_upper_door_base_depth"
+                        label   "Base Depth Generat Door"
+                        type    integer
+                        default { "12" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_upper_door_extra_depth"
+                        label   "Extra Depth Per Door"
+                        type    integer
+                        default { "6" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_upper_door_layout_mode"
+                        label   "Door Layout"
+                        type    ordinal
+                        default { "0" }
+                        menu {
+                            "0" "Random"
+                            "1" "Vertical Column"
+                        }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_protruding_door_min_segment_grid"
+                        label   "side_protruding_door_min_segment_grid"
+                        type    integer
+                        invisible
+                        default { "4" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "side_inner_corner_no_door_grid"
+                        label   "side_inner_corner_no_door_grid"
+                        type    integer
+                        invisible
+                        default { "2" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                }
+
+                group {
+                    name    "xn__DoorRules_2_0ka_1"
+                    label   "Side Ground Rules"
+
+                    parm {
+                        name    "enable_ground_side_windows"
+                        label   "Enable Windows"
+                        type    toggle
+                        default { "0" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "ground_side_window_chance"
+                        label   "Window Chance"
+                        type    float
+                        default { "0.35" }
+                        range   { 0 1 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "ground_side_window_seed"
+                        label   "Window Seed"
+                        type    integer
+                        default { "1" }
+                        range   { 0 999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "enable_ground_side_doors"
+                        label   "Enable Doors"
+                        type    toggle
+                        default { "0" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "ground_side_door_chance"
+                        label   "Door Chance"
+                        type    float
+                        default { "0.25" }
+                        range   { 0 1 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "ground_side_door_seed"
+                        label   "Door Seed"
+                        type    integer
+                        default { "1" }
+                        range   { 0 99 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "ground_side_door_only_outermost"
+                        label   "Door Only Outermost"
+                        type    toggle
+                        default { "1" }
+                        help    "一楼侧面门墙只会生成在整栋建筑最外侧的 left / right 墙面上。"
+                        parmtag { "script_callback_language" "python" }
+                    }
+                }
+
+            }
+
+            group {
+                name    "folder2_2"
+                label   "Ground Large Door Rules"
+
+                parm {
+                    name    "enable_ground_large_door"
+                    label   "Enable"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "ground_large_door_chance"
+                    label   "Chance"
+                    type    float
+                    default { "0.35" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "ground_large_door_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "1" }
+                    range   { 0 999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "ground_large_door_position_mode"
+                    label   "Door Position"
+                    type    ordinal
+                    default { "0" }
+                    menu {
+                        "0" "Random"
+                        "1" "Center"
+                        "2" "Left"
+                        "3" "Right"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+        }
+
+        group {
+            name    "stdswitcher4_3_5_2"
+            label   "Balcony Rules"
+
+            group {
+                name    "xn__FrontBalconyRules_dqah"
+                label   "Front Balcony Rules"
+
+                parm {
+                    name    "enable_front_balcony"
+                    label   "Enable"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_chance"
+                    label   "Chance"
+                    type    float
+                    default { "1" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_width_cm"
+                    label   "front_balcony_width_cm"
+                    type    float
+                    invisible
+                    default { "277" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_depth_cm"
+                    label   "front_balcony_depth_cm"
+                    type    float
+                    invisible
+                    default { "120" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_height_cm"
+                    label   "front_balcony_height_cm"
+                    type    float
+                    invisible
+                    default { "113" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_y_offset_cm"
+                    label   "H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_z_offset_cm"
+                    label   "L/R Offset"
+                    type    float
+                    default { "0" }
+                    range   { -100 100 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "enable_front_balcony_variant"
+                    label   "Enable Variant"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_variant_chance"
+                    label   "Variant Chance"
+                    type    float
+                    default { "0.25" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_balcony_variant_seed"
+                    label   "Variant Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "xn__FrontBalconyRules_dqah_1"
+                label   "Side Balcony Rules"
+
+                parm {
+                    name    "enable_side_balcony"
+                    label   "Enable"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_chance"
+                    label   "Chance"
+                    type    float
+                    default { "1" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "enable_side_balcony_variant"
+                    label   "Enable Variant"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_variant_chance"
+                    label   "Variant Chance"
+                    type    float
+                    default { "0.25" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_variant_seed"
+                    label   "Variant Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_protruding_min_floor_count"
+                    label   "Protruding Min Floor"
+                    type    integer
+                    default { "3" }
+                    help    "突出侧面区域至少要有多少层高度，才允许生成侧面阳台。"
+                    range   { 1 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_protruding_start_local_floor"
+                    label   "Protruding Start Floor"
+                    type    integer
+                    default { "2" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_y_offset_cm"
+                    label   "H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_balcony_wall_offset_cm"
+                    label   "Wall Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "side_protruding_inner_keepout_grid"
+                    label   "side_protruding_inner_keepout_grid"
+                    type    integer
+                    invisible
+                    default { "2" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "enable_side_balcony_stairs"
+                    label   "Enable Stairs"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+        }
+
+        group {
+            name    "stdswitcher4_3_5_3"
+            label   "Attach Rules"
+
+            group {
+                name    "stdswitcher4_3_5_4"
+                label   "Band Beam Rules"
+
+                parm {
+                    name    "enable_floor_band_beam"
+                    label   "Enable"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "floor_band_beam_interval"
+                    label   "Interval"
+                    type    integer
+                    default { "2" }
+                    range   { 1 5 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "floor_band_beam_start_floor"
+                    label   "Start Floor"
+                    type    integer
+                    default { "2" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "floor_band_beam_z_offset_cm"
+                    label   "Floor_band_beam_z_offset_cm"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "ground_floor_band_beam_y_offset_cm"
+                    label   "Ground Floor H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "upper_floor_band_beam_y_offset_cm"
+                    label   "Upper Floor H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "enable_front_door_wall_column"
+                    label   "enable_front_door_wall_column"
+                    type    toggle
+                    invisible
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_door_wall_column_side_offset_cm"
+                    label   "front_door_wall_column_side_offset_cm"
+                    type    float
+                    invisible
+                    default { "100" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "front_door_wall_column_z_offset_cm"
+                    label   "front_door_wall_column_z_offset_cm"
+                    type    float
+                    invisible
+                    default { "-3" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "stdswitcher4_3_5_3_1"
+                label   "Air Conditioner Rules"
+
+                group {
+                    name    "folder4"
+                    label   "Wall AC"
+
+                    parm {
+                        name    "enable_wall_ac"
+                        label   "Enable Wall AC"
+                        type    toggle
+                        default { "1" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_chance"
+                        label   "Wall AC Chance"
+                        type    float
+                        default { "0.35" }
+                        range   { 0 1 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_seed"
+                        label   "Wall AC Seed"
+                        type    integer
+                        default { "17" }
+                        range   { 0 999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "enable_wall_ac_random_offset"
+                        label   "Enable Wall AC Random Offset"
+                        type    toggle
+                        default { "1" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_random_side_min_cm"
+                        label   "Wall AC Random Side Min"
+                        type    float
+                        default { "-10" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_random_side_max_cm"
+                        label   "Wall AC Random Side Max"
+                        type    float
+                        default { "10" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_random_y_min_cm"
+                        label   "Wall AC Random H Min"
+                        type    float
+                        default { "-10" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_random_y_max_cm"
+                        label   "Wall AC Random H Max"
+                        type    float
+                        default { "10" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_right_gap_cm"
+                        label   "Wall AC Right Gap"
+                        type    float
+                        default { "45" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_pullback_cm"
+                        label   "Wall AC Pullback"
+                        type    float
+                        default { "30" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_side_y_offset_cm"
+                        label   "Wall AC Side H Offset"
+                        type    float
+                        default { "80" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_down_y_offset_cm"
+                        label   "Wall AC Down H Offset"
+                        type    float
+                        default { "50" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_side_inward_tune_cm"
+                        label   "Wall AC Side Inward Tune"
+                        type    float
+                        invisible
+                        default { "40" }
+                        range   { 0 10 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "wall_ac_placement_mode"
+                        label   "Wall AC Placement"
+                        type    ordinal
+                        default { "0" }
+                        menu {
+                            "0" "Random Right / Down"
+                            "1" "Right Only"
+                            "2" "Down Only"
+                        }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                }
+
+                group {
+                    name    "folder4_1"
+                    label   "Balcony AC"
+
+                    parm {
+                        name    "enable_balcony_ac"
+                        label   "Enable Balcony AC"
+                        type    toggle
+                        default { "1" }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "balcony_ac_chance"
+                        label   "Balcony AC Chance"
+                        type    float
+                        default { "0.5" }
+                        range   { 0 1 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "balcony_ac_seed"
+                        label   "Balcony AC Seed"
+                        type    integer
+                        default { "0" }
+                        range   { 0 999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "balcony_ac_forward_offset_cm"
+                        label   "Balcony AC Forward Offset"
+                        type    float
+                        default { "60" }
+                        range   { 0 9999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "balcony_ac_side_offset_cm"
+                        label   "Balcony AC Side Offset"
+                        type    float
+                        default { "90" }
+                        range   { 0 9999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                    parm {
+                        name    "balcony_ac_y_offset_cm"
+                        label   "Balcony AC H Offset"
+                        type    float
+                        default { "40" }
+                        range   { 0 9999 }
+                        parmtag { "script_callback_language" "python" }
+                    }
+                }
+
+            }
+
+            group {
+                name    "stdswitcher4_3_5_3_2"
+                label   "Roof Prop Rules"
+
+                parm {
+                    name    "enable_roof_props"
+                    label   "Enable"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_placement_mode"
+                    label   "Placement"
+                    type    ordinal
+                    default { "0" }
+                    menu {
+                        "0" "Random"
+                        "1" "Row Same Type"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_count"
+                    label   "Count"
+                    type    integer
+                    default { "2" }
+                    range   { 0 8 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_edge_margin_cm"
+                    label   "Edge Margin"
+                    type    float
+                    default { "100" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_row_spacing_cm"
+                    label   "Row Spacing"
+                    type    float
+                    default { "250" }
+                    range   { 0 1000 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_random_offset_cm"
+                    label   "Random Offset"
+                    type    float
+                    default { "50" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "enable_roof_prop_random_rotation"
+                    label   "Enable Random Rotation"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "roof_prop_y_offset_cm"
+                    label   "H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 1500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+        }
+
+        group {
+            name    "stdswitcher4_3_5_5"
+            label   "Upper Corner Rules"
+
+            parm {
+                name    "enable_upper_corner_variant"
+                label   "Enable Variant"
+                type    toggle
+                default { "0" }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "upper_corner_variant_mode"
+                label   "Variant Mode"
+                type    ordinal
+                default { "0" }
+                menu {
+                    "0" "Default"
+                    "1" "CRN_300x100_06"
+                    "2" "CRN_300x100_05"
+                    "3" "CRN_300x100_01"
+                    "4" "CRN_300x100_02"
+                    "5" "CRN_300x100_04"
+                    "6" "Random One Type"
+                }
+                parmtag { "script_callback_language" "python" }
+            }
+            parm {
+                name    "upper_corner_variant_seed"
+                label   "Variant Seed"
+                type    integer
+                default { "0" }
+                range   { 0 99 }
+                parmtag { "script_callback_language" "python" }
+            }
+        }
+
+        group {
+            name    "stdswitcher4_3_5_6"
+            label   "Plant Rules"
+
+            group {
+                name    "xn__WindowSillPlantRules_1saef"
+                label   "Window Sill Plant Rules"
+
+                parm {
+                    name    "enable_window_sill_plants"
+                    label   "Enable"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_chance"
+                    label   "Chance"
+                    type    float
+                    default { "0.35" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_rotation_offset_y"
+                    label   "Rotation Offset"
+                    type    float
+                    default { "90" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_forward_offset_cm"
+                    label   "Forward Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_y_offset_cm"
+                    label   "H Offset"
+                    type    float
+                    default { "60" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "enable_window_sill_plant_random_side_offset"
+                    label   "Enable Random Side Offset"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_side_random_min_cm"
+                    label   "Side Random Min"
+                    type    float
+                    default { "-5" }
+                    range   { -500 0 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_side_random_max_cm"
+                    label   "Side Random Max"
+                    type    float
+                    default { "5" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "window_sill_plant_variant_mode"
+                    label   "Variant Mode"
+                    type    ordinal
+                    default { "0" }
+                    menu {
+                        "0" "Random"
+                        "1" "01 Only"
+                        "2" "02 Only"
+                        "3" "03 Only"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "wide_window_plant_count_mode"
+                    label   "Wide Window Plant Count"
+                    type    ordinal
+                    default { "1" }
+                    menu {
+                        "0" "One Plant"
+                        "1" "Two Plants"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "wide_window_plant_spacing_cm"
+                    label   "Wide Window Plant Spacing"
+                    type    float
+                    default { "120" }
+                    range   { 0 200 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "xn__WindowSillPlantRules_1saef_1"
+                label   "Balcony Plant Rules"
+
+                parm {
+                    name    "enable_balcony_plants"
+                    label   "Enable"
+                    type    toggle
+                    default { "0" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "balcony_plant_chance"
+                    label   "Chance"
+                    type    float
+                    default { "0.5" }
+                    range   { 0 1 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "balcony_plant_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "balcony_plant_forward_offset_cm"
+                    label   "Forward Offset"
+                    type    float
+                    default { "-5" }
+                    range   { 0 300 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "balcony_plant_side_offset_cm"
+                    label   "Side Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 300 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "balcony_plant_y_offset_cm"
+                    label   "H Offset"
+                    type    float
+                    default { "70" }
+                    range   { 0 300 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "balcony_plant_rotation_offset_y"
+                    label   "Rotation Offset"
+                    type    float
+                    default { "0" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+        }
+
+        group {
+            name    "stdswitcher4_3_5_7"
+            label   "Pipe Rules"
+
+            group {
+                name    "xn__01PipeGeneration_epae"
+                label   "Pipe Generation"
+
+                parm {
+                    name    "enable_vertical_pipes"
+                    label   "Enable"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_chance"
+                    label   "Chance"
+                    type    float
+                    default { "0.4" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_max_count"
+                    label   "Max Count"
+                    type    integer
+                    default { "6" }
+                    range   { 0 20 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_facade_mode"
+                    label   "Pipe Facade Mode"
+                    type    ordinal
+                    default { "0" }
+                    menu {
+                        "0" "Left / Right / Back"
+                        "1" "Left / Right Only"
+                        "2" "Back Only"
+                        "3" "Front / Left / Right / Back"
+                        "4" "Front Only"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_segment_count_mode"
+                    label   "Segment Count Mode"
+                    type    ordinal
+                    default { "0" }
+                    menu {
+                        "0" "Fixed Count"
+                        "1" "Random Range"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_segment_count"
+                    label   "Segment Count"
+                    type    integer
+                    default { "10" }
+                    range   { 0 20 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_segment_min_count"
+                    label   "Segment Min Count"
+                    type    integer
+                    default { "5" }
+                    range   { 0 20 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_segment_max_count"
+                    label   "Segment Max Count"
+                    type    integer
+                    default { "12" }
+                    range   { 0 20 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_height_limit_mode"
+                    label   "Height Limit Mode"
+                    type    ordinal
+                    default { "2" }
+                    menu {
+                        "0" "Allow Exceed"
+                        "1" "Clamp To Wall Height"
+                        "2" "Skip If Too Tall"
+                    }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_wall_offset_cm"
+                    label   "Wall Offset"
+                    type    float
+                    default { "50" }
+                    range   { 0 1500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_start_y_offset_cm"
+                    label   "Start H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_along_wall_offset_cm"
+                    label   "Along Wall Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_corner_margin_cm"
+                    label   "Corner Margin"
+                    type    float
+                    default { "150" }
+                    range   { 0 150 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_min_spacing_cm"
+                    label   "Min Spacing"
+                    type    float
+                    default { "200" }
+                    range   { 0 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "xn__01PipeGeneration_epae_1"
+                label   "02 Straight Tube Adjust"
+                invisibletab
+                tabbreak
+
+                parm {
+                    name    "pipe_tube_offset_normal_cm"
+                    label   "Pipe Tube Offset Normal CM"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_tube_offset_tangent_cm"
+                    label   "Pipe Tube Offset Tangent CM"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_tube_offset_y_cm"
+                    label   "Pipe Tube Offset Y CM"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_tube_rot_x"
+                    label   "Pipe Tube Rot X"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_tube_rot_y"
+                    label   "Pipe Tube Rot Y"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_tube_rot_z"
+                    label   "Pipe Tube Rot Z"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "pipe_connector"
+                label   "Pipe Connector"
+                invisibletab
+                tabbreak
+
+                parm {
+                    name    "enable_pipe_connectors"
+                    label   "Enable Pipe Connectors"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_connector_offset_x_cm"
+                    label   "Pipe Connector Offset X CM"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_connector_offset_y_cm"
+                    label   "Pipe Connector Offset Y CM"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_connector_offset_z_cm"
+                    label   "Pipe Connector Offset Z CM"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_connector_rot_x"
+                    label   "Pipe Connector Rot X"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_connector_rot_y"
+                    label   "Pipe Connector Rot Y"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "pipe_fastening"
+                label   "Pipe Fastening"
+                tabbreak
+
+                parm {
+                    name    "enable_pipe_fastening"
+                    label   "Enable"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_interval_segments"
+                    label   "Interval Segments"
+                    type    integer
+                    default { "3" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_start_segment"
+                    label   "Start Segment"
+                    type    integer
+                    default { "1" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_seed"
+                    label   "Seed"
+                    type    integer
+                    default { "0" }
+                    range   { 0 9999 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_y_random_min_cm"
+                    label   "Pipe Fastening Y Random Min CM"
+                    type    float
+                    invisible
+                    default { "-10" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_y_random_max_cm"
+                    label   "Pipe Fastening Y Random Max CM"
+                    type    float
+                    invisible
+                    default { "10" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_surface_offset_cm"
+                    label   "Pipe Fastening Surface Offset CM"
+                    type    float
+                    invisible
+                    default { "-10" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_along_wall_offset_cm"
+                    label   "Pipe Fastening Along Wall Offset CM"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_y_offset_cm"
+                    label   "H Offset"
+                    type    float
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_rot_y"
+                    label   "Pipe Fastening Rot Y"
+                    type    float
+                    invisible
+                    default { "90" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_rot_z"
+                    label   "Pipe Fastening Rot Z"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { 0 10 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_front_base_rot_y"
+                    label   "Pipe Fastening Front Base Rot Y"
+                    type    float
+                    invisible
+                    default { "180" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_back_base_rot_y"
+                    label   "Pipe Fastening Back Base Rot Y"
+                    type    float
+                    invisible
+                    default { "0" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_left_base_rot_y"
+                    label   "Pipe Fastening Left Base Rot Y"
+                    type    float
+                    invisible
+                    default { "-90" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_fastening_right_base_rot_y"
+                    label   "Pipe Fastening Right Base Rot Y"
+                    type    float
+                    invisible
+                    default { "90" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "xn__PipeCap_hha"
+                label   "Pipe Cap"
+                invisibletab
+                tabbreak
+
+                parm {
+                    name    "enable_pipe_cap"
+                    label   "Enable Pipe Cap"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_cap_offset_x_cm"
+                    label   "Pipe Cap Offset X CM"
+                    type    float
+                    default { "0" }
+                    range   { -500 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_cap_offset_y_cm"
+                    label   "Pipe Cap Offset Y CM"
+                    type    float
+                    default { "31" }
+                    range   { -500 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_cap_offset_z_cm"
+                    label   "Pipe Cap Offset Z CM"
+                    type    float
+                    default { "0" }
+                    range   { -500 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+            group {
+                name    "xn__PipeBottom_4ja"
+                label   "Pipe Bottom"
+                invisibletab
+
+                parm {
+                    name    "enable_pipe_bottom_elbow"
+                    label   "Enable Pipe Bottom Elbow"
+                    type    toggle
+                    default { "1" }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_offset_x_cm"
+                    label   "Pipe Bottom Elbow Offset X CM"
+                    type    float
+                    default { "0" }
+                    range   { -500 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_offset_y_cm"
+                    label   "Pipe Bottom Elbow Offset Y CM"
+                    type    float
+                    default { "0" }
+                    range   { -500 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_offset_z_cm"
+                    label   "Pipe Bottom Elbow Offset Z CM"
+                    type    float
+                    default { "0" }
+                    range   { -500 500 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_rot_x"
+                    label   "Pipe Bottom Elbow Rot X"
+                    type    float
+                    default { "0" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_rot_y"
+                    label   "Pipe Bottom Elbow Rot Y"
+                    type    float
+                    default { "0" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_rot_z"
+                    label   "Pipe Bottom Elbow Rot Z"
+                    type    float
+                    default { "0" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_front_base_rot_y"
+                    label   "Pipe Bottom Elbow Front Base Rot Y"
+                    type    float
+                    default { "-90" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_back_base_rot_y"
+                    label   "Pipe Bottom Elbow Back Base Rot Y"
+                    type    float
+                    default { "90" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_left_base_rot_y"
+                    label   "Pipe Bottom Elbow Left Base Rot Y"
+                    type    float
+                    default { "0" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+                parm {
+                    name    "pipe_bottom_elbow_right_base_rot_y"
+                    label   "Pipe Bottom Elbow Right Base Rot Y"
+                    type    float
+                    default { "180" }
+                    range   { -180 180 }
+                    parmtag { "script_callback_language" "python" }
+                }
+            }
+
+        }
+
+    }
+
+    group {
+        name    "xn__BuildingGeneration_cra_2"
+        label   "03 Debug Preview"
+        invisibletab
+        grouptag { "export_disable" "1" }
+
+        group {
+            name    "stdswitcher4_3_4"
+            label   "05 Debug Preview"
+
+            parm {
+                name    "show_block_proxy"
+                label   "Show Block Proxy"
+                type    toggle
+                default { "1" }
+                parmtag { "script_callback_language" "python" }
+            }
+        }
+
+    }
+
+}

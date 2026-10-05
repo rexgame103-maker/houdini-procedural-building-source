@@ -1,0 +1,247 @@
+int enable = chi("../enable_ground_large_door");
+float chance = clamp(chf("../ground_large_door_chance"), 0.0, 1.0);
+int seed = chi("../ground_large_door_seed");
+int position_mode = chi("../ground_large_door_position_mode");
+float unit = chf("../grid_unit");
+
+if (enable == 0)
+{
+    return;
+}
+
+if (rand(seed + 801.37) > chance)
+{
+    return;
+}
+
+string large_asset = "SM_Building_01_WallDoor_400x800_01";
+string large_path  = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallDoor_400x800_01.SM_Building_01_WallDoor_400x800_01";
+
+int n = npoints(0);
+
+int cand_pts[];
+int cand_starts[];
+int cand_ends[];
+
+// 收集一楼正面可替换墙位：普通墙 / 窗墙 / 门墙都可，转角不可
+for (int p = 0; p < n; p++)
+{
+    if (point(0, "global_floor", p) != 0)
+    {
+        continue;
+    }
+
+    string facade = point(0, "facade", p);
+    if (facade != "front")
+    {
+        continue;
+    }
+
+    string module_type = point(0, "module_type", p);
+
+    if (module_type == "corner_wall")
+    {
+        continue;
+    }
+
+    int gw = point(0, "grid_width", p);
+    if (gw <= 0)
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", p);
+    int start_x = int(floor(P.x / unit + 0.5));
+    int end_x = start_x + gw;
+
+    append(cand_pts, p);
+    append(cand_starts, start_x);
+    append(cand_ends, end_x);
+}
+
+int cnum = len(cand_pts);
+
+if (cnum <= 0)
+{
+    return;
+}
+
+int min_x = cand_starts[0];
+int max_x = cand_ends[0];
+
+for (int i = 0; i < cnum; i++)
+{
+    min_x = min(min_x, cand_starts[i]);
+    max_x = max(max_x, cand_ends[i]);
+}
+
+int large_grid = 8;
+
+int valid_starts[];
+
+for (int sx = min_x; sx <= max_x - large_grid; sx++)
+{
+    int covered_pts[];
+    int covered_len = 0;
+    int valid = 1;
+
+    for (int x = sx; x < sx + large_grid; x++)
+    {
+        int covered = 0;
+
+        for (int i = 0; i < cnum; i++)
+        {
+            if (x >= cand_starts[i] && x < cand_ends[i])
+            {
+                covered = 1;
+                break;
+            }
+        }
+
+        if (covered == 0)
+        {
+            valid = 0;
+            break;
+        }
+    }
+
+    if (valid == 1)
+    {
+        // 大门起点和终点必须刚好落在墙体模块边界上
+        // 避免只替换 3 块、边界残留 1 块重叠
+        int boundary_ok = 1;
+    
+        for (int i = 0; i < cnum; i++)
+        {
+            int s = cand_starts[i];
+            int e = cand_ends[i];
+    
+            // 有模块跨过大门左边界，不允许
+            if (s < sx && e > sx)
+            {
+                boundary_ok = 0;
+                break;
+            }
+    
+            // 有模块跨过大门右边界，不允许
+            if (s < sx + large_grid && e > sx + large_grid)
+            {
+                boundary_ok = 0;
+                break;
+            }
+        }
+    
+        if (boundary_ok == 1)
+        {
+            append(valid_starts, sx);
+        }
+    }
+}
+
+if (len(valid_starts) <= 0)
+{
+    setdetailattrib(0, "ground_large_door_status", "no_valid_800cm_front_span", "set");
+    return;
+}
+
+int chosen_start = valid_starts[0];
+
+if (position_mode == 1)
+{
+    float center = (float(min_x + max_x) * 0.5) - float(large_grid) * 0.5;
+    float best_d = 999999.0;
+
+    foreach (int sx; valid_starts)
+    {
+        float d = abs(float(sx) - center);
+        if (d < best_d)
+        {
+            best_d = d;
+            chosen_start = sx;
+        }
+    }
+}
+else if (position_mode == 2)
+{
+    chosen_start = valid_starts[0];
+}
+else if (position_mode == 3)
+{
+    chosen_start = valid_starts[len(valid_starts) - 1];
+}
+else
+{
+    int pick = int(floor(rand(seed + 913.77) * len(valid_starts)));
+    pick = clamp(pick, 0, len(valid_starts) - 1);
+    chosen_start = valid_starts[pick];
+}
+
+int chosen_end = chosen_start + large_grid;
+
+// 删除被大门覆盖的原模块点
+int remove_pts[];
+
+for (int i = 0; i < cnum; i++)
+{
+    int s = cand_starts[i];
+    int e = cand_ends[i];
+
+    // 只删除完全落在大门 800cm 范围内的模块
+    // 避免边界上半重叠的墙被误删
+    int fully_inside = (s >= chosen_start) && (e <= chosen_end);
+    
+    if (fully_inside)
+    {
+        append(remove_pts, cand_pts[i]);
+    }
+}
+
+// 用第一个覆盖点继承高度和楼层属性
+int ref_pt = remove_pts[0];
+
+float floor_bottom_y = point(0, "floor_bottom_y", ref_pt);
+float floor_height = point(0, "floor_height", ref_pt);
+
+vector pos = point(0, "P", ref_pt);
+
+// 大门墙旋转 90° 后，枢轴需要右移 800cm，测试后再额外右移 100cm
+// 大门墙最终位置：旋转 90° 后右移 800cm，最终测试需要回退 100cm
+pos.x = float(chosen_start + large_grid) * unit;
+// 不再强制使用全局 Z=0。
+// 使用被替换墙段自己的 Z，保证楼体正面有前后起伏时，大门留在当前墙面上。
+vector ref_pos = point(0, "P", ref_pt);
+pos.z = ref_pos.z;
+
+int newpt = addpoint(0, pos);
+
+setpointattrib(0, "asset_id", newpt, large_asset, "set");
+setpointattrib(0, "unreal_instance", newpt, large_path, "set");
+
+setpointattrib(0, "module_type", newpt, "door_wall_ground_large", "set");
+setpointattrib(0, "facade", newpt, "front", "set");
+setpointattrib(0, "global_floor", newpt, 0, "set");
+
+setpointattrib(0, "grid_width", newpt, large_grid, "set");
+setpointattrib(0, "width_cm", newpt, 800.0, "set");
+setpointattrib(0, "height_cm", newpt, 400.0, "set");
+setpointattrib(0, "depth_cm", newpt, 25.0, "set");
+setpointattrib(0, "thickness_cm", newpt, 25.0, "set");
+
+setpointattrib(0, "floor_bottom_y", newpt, floor_bottom_y, "set");
+setpointattrib(0, "floor_height", newpt, floor_height, "set");
+
+float large_rot_y = 90.0;
+
+setpointattrib(0, "rot_y_deg", newpt, large_rot_y, "set");
+setpointattrib(0, "orient", newpt, quaternion(radians(large_rot_y), set(0, 1, 0)), "set");
+setpointattrib(0, "scale", newpt, set(1, 1, 1), "set");
+
+setpointattrib(0, "ground_large_door_applied", newpt, "yes", "set");
+
+for (int r = len(remove_pts) - 1; r >= 0; r--)
+{
+    removepoint(0, remove_pts[r]);
+}
+
+setdetailattrib(0, "ground_large_door_status", "created", "set");
+setdetailattrib(0, "ground_large_door_start_grid", chosen_start, "set");

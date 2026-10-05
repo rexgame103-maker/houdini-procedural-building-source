@@ -1,0 +1,447 @@
+// ==========================================
+// 09A_GROUND_DOOR_REPLACE
+// V2：一楼多门随机替换
+//
+// 当前规则：
+// 1. 只处理 global_floor = 0
+// 2. 只处理 facade = front
+// 3. 只替换 plain_wall
+// 4. 每 ground_windows_per_door 个 200cm slot 生成 1 个门墙
+// 5. 门墙位置随机
+// 6. 同一条 front 墙线上，两个门墙之间至少隔 1 个 200cm slot
+//
+// 注意：
+// 这个节点必须放在 09C_GROUND_CORNER_REPLACE 后面
+// 也必须放在 09B_GROUND_WINDOW_REPLACE 前面
+// ==========================================
+
+
+void add_ground_plain_module(
+    const int geo;
+    const int start_x;
+    const int z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const string facade;
+    const float rot_y;
+    const int module_grid;
+    const string source_tag)
+{
+    string asset_id = "";
+    string path = "";
+
+    if (module_grid == 1)
+    {
+        asset_id = "SM_Building_01_Wall_400x100_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x100_01.SM_Building_01_Wall_400x100_01";
+    }
+    else
+    {
+        asset_id = "SM_Building_01_Wall_400x200_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x200_01.SM_Building_01_Wall_400x200_01";
+    }
+
+    vector pos = set(float(start_x) * unit, floor_bottom_y, float(z) * unit);
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "plain_wall", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, 0, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "door_replace_source", pt, source_tag, "set");
+}
+
+
+void add_ground_door_module(
+    const int geo;
+    const int start_x;
+    const int z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const string facade;
+    const float rot_y;
+    const string source_tag)
+{
+    string asset_id = "SM_Building_01_WallDoor_400x200_01";
+    string path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallDoor_400x200_01.SM_Building_01_WallDoor_400x200_01";
+
+    vector pos = set(float(start_x) * unit, floor_bottom_y, float(z) * unit);
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "door_wall_ground", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, 0, "set");
+
+    setpointattrib(geo, "grid_width", pt, 2, "set");
+    setpointattrib(geo, "width_cm", pt, 200.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "door_replace_source", pt, source_tag, "set");
+}
+
+
+// ===============================
+// 参数
+// ===============================
+
+int enable_door = chi("../enable_ground_door");
+int door_seed = chi("../ground_door_seed");
+int windows_per_door = max(1, chi("../ground_windows_per_door"));
+
+float unit = chf("../grid_unit");
+
+int geo_id = 0;
+
+if (enable_door == 0)
+{
+    setdetailattrib(0, "ground_door_status", "disabled", "set");
+    return;
+}
+
+int src_count = npoints(0);
+
+
+// ===============================
+// 收集可替换的 200cm front 一楼 slot
+// ===============================
+
+int candidate_start_x[];
+int candidate_z[];
+float candidate_floor_bottom_y[];
+float candidate_floor_height[];
+float candidate_rot_y[];
+int candidate_selected[];
+
+int remove_ids[];
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = point(0, "grid_width", i);
+
+    if (
+        facade != "front" ||
+        module_type != "plain_wall" ||
+        global_floor != 0 ||
+        grid_width < 2
+    )
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", i);
+
+    int start_x = int(floor(P.x / unit + 0.5));
+    int z = int(floor(P.z / unit + 0.5));
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+    float rot_y = point(0, "rot_y_deg", i);
+
+    append(remove_ids, i);
+
+    int used = 0;
+
+    while (used < grid_width)
+    {
+        int remain = grid_width - used;
+
+        if (remain >= 2)
+        {
+            int slot_start_x = start_x + used;
+
+            append(candidate_start_x, slot_start_x);
+            append(candidate_z, z);
+            append(candidate_floor_bottom_y, floor_bottom_y);
+            append(candidate_floor_height, floor_height);
+            append(candidate_rot_y, rot_y);
+            append(candidate_selected, 0);
+
+            used += 2;
+        }
+        else
+        {
+            used += 1;
+        }
+    }
+}
+
+int slot_count = len(candidate_start_x);
+
+if (slot_count <= 0)
+{
+    setdetailattrib(0, "ground_door_status", "no_ground_front_slots", "set");
+    return;
+}
+
+
+// ===============================
+// 根据 slot 数量计算门数量
+// ===============================
+//
+// 规则：
+// 每 windows_per_door 个 200cm slot 生成 1 个门
+// 但只要有可用 slot，至少生成 1 个门
+
+int target_door_count = int(floor(float(slot_count) / float(windows_per_door)));
+
+if (target_door_count < 1)
+{
+    target_door_count = 1;
+}
+
+if (target_door_count > slot_count)
+{
+    target_door_count = slot_count;
+}
+
+
+// ===============================
+// 随机选择门位置
+// ===============================
+//
+// 同一条 front 墙线，也就是同一个 z 上，
+// 两个门的 start_x 距离必须 >= 4。
+// 因为门宽 2 grid，中间至少隔一个 2 grid 窗墙位。
+
+int created_door_count = 0;
+int max_attempt = slot_count * 30;
+
+for (int attempt = 0; attempt < max_attempt; attempt++)
+{
+    if (created_door_count >= target_door_count)
+    {
+        break;
+    }
+
+    float rv = rand(float(door_seed) + float(attempt) * 13.71);
+    int candidate_idx = int(floor(rv * float(slot_count)));
+    candidate_idx = clamp(candidate_idx, 0, slot_count - 1);
+
+    if (candidate_selected[candidate_idx] == 1)
+    {
+        continue;
+    }
+
+    int test_x = candidate_start_x[candidate_idx];
+    int test_z = candidate_z[candidate_idx];
+
+    int gap_ok = 1;
+
+    for (int j = 0; j < slot_count; j++)
+    {
+        if (candidate_selected[j] != 1)
+        {
+            continue;
+        }
+
+        int other_x = candidate_start_x[j];
+        int other_z = candidate_z[j];
+
+        if (other_z == test_z)
+        {
+            int dx = abs(test_x - other_x);
+
+            if (dx < 4)
+            {
+                gap_ok = 0;
+                break;
+            }
+        }
+    }
+
+    if (gap_ok == 0)
+    {
+        continue;
+    }
+
+    candidate_selected[candidate_idx] = 1;
+    created_door_count++;
+}
+
+
+// 如果因为间距限制没有选到门，强制选第一个
+if (created_door_count <= 0)
+{
+    candidate_selected[0] = 1;
+    created_door_count = 1;
+}
+
+
+// ===============================
+// 重建 front 一楼普通墙 / 门墙
+// ===============================
+
+int rebuilt_plain_count = 0;
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = point(0, "grid_width", i);
+
+    if (
+        facade != "front" ||
+        module_type != "plain_wall" ||
+        global_floor != 0 ||
+        grid_width < 2
+    )
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", i);
+
+    int start_x = int(floor(P.x / unit + 0.5));
+    int z = int(floor(P.z / unit + 0.5));
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+    float rot_y = point(0, "rot_y_deg", i);
+
+    int used = 0;
+
+    while (used < grid_width)
+    {
+        int remain = grid_width - used;
+
+        if (remain >= 2)
+        {
+            int slot_start_x = start_x + used;
+
+            int is_door_slot = 0;
+
+            for (int c = 0; c < slot_count; c++)
+            {
+                if (
+                    candidate_start_x[c] == slot_start_x &&
+                    candidate_z[c] == z &&
+                    candidate_selected[c] == 1
+                )
+                {
+                    is_door_slot = 1;
+                    break;
+                }
+            }
+
+            if (is_door_slot == 1)
+            {
+                string door_tag = "multi_ground_door";
+
+                add_ground_door_module(
+                    geo_id,
+                    slot_start_x,
+                    z,
+                    unit,
+                    floor_bottom_y,
+                    floor_height,
+                    facade,
+                    rot_y,
+                    door_tag
+                );
+            }
+            else
+            {
+                string plain_tag = "multi_door_plain_rebuild";
+                int module_grid = 2;
+
+                add_ground_plain_module(
+                    geo_id,
+                    slot_start_x,
+                    z,
+                    unit,
+                    floor_bottom_y,
+                    floor_height,
+                    facade,
+                    rot_y,
+                    module_grid,
+                    plain_tag
+                );
+
+                rebuilt_plain_count++;
+            }
+
+            used += 2;
+        }
+        else
+        {
+            int slot_start_x = start_x + used;
+            string plain_tag = "multi_door_plain_rebuild_100";
+            int module_grid = 1;
+
+            add_ground_plain_module(
+                geo_id,
+                slot_start_x,
+                z,
+                unit,
+                floor_bottom_y,
+                floor_height,
+                facade,
+                rot_y,
+                module_grid,
+                plain_tag
+            );
+
+            rebuilt_plain_count++;
+
+            used += 1;
+        }
+    }
+}
+
+
+// ===============================
+// 删除原始 front 一楼普通墙点
+// ===============================
+
+for (int r = len(remove_ids) - 1; r >= 0; r--)
+{
+    int remove_pt = remove_ids[r];
+    removepoint(0, remove_pt);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+setdetailattrib(0, "ground_door_status", "multi_ground_doors_created", "set");
+setdetailattrib(0, "ground_door_candidate_slot_count", slot_count, "set");
+setdetailattrib(0, "ground_door_target_count", target_door_count, "set");
+setdetailattrib(0, "ground_door_created_count", created_door_count, "set");
+setdetailattrib(0, "ground_door_rebuilt_plain_count", rebuilt_plain_count, "set");

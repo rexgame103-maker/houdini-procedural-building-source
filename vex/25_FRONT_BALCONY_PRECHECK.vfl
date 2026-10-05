@@ -1,0 +1,102 @@
+// ==========================================
+// 25_FRONT_BALCONY_PRECHECK
+// V2.1A：正面阳台实例点检查
+//
+// 作用：
+// 1. 检查是否为 front_balcony
+// 2. 检查是否只出现在 front
+// 3. 检查是否只出现在高层 global_floor > 0
+// 4. 检查尺寸是否正常
+// 5. 当前允许 unreal_instance 为空，因为还没接真实资产
+// ==========================================
+
+int pt_count = npoints(0);
+
+int total_count = 0;
+int ok_count = 0;
+int error_count = 0;
+int warning_count = 0;
+
+for (int i = 0; i < pt_count; i++)
+{
+    string module_type = point(0, "module_type", i);
+
+    if (module_type != "front_balcony")
+    {
+        continue;
+    }
+
+    total_count++;
+
+    string status = "ok";
+
+    string facade = point(0, "facade", i);
+    int global_floor = point(0, "global_floor", i);
+
+    float width_cm = point(0, "width_cm", i);
+    float depth_cm = point(0, "depth_cm", i);
+    float height_cm = point(0, "height_cm", i);
+
+    string asset_id = point(0, "asset_id", i);
+    string unreal_instance = point(0, "unreal_instance", i);
+    string pivot_type = point(0, "pivot_type", i);
+
+    if (facade != "front")
+    {
+        status = "error_wrong_facade";
+        error_count++;
+    }
+    else if (global_floor <= 0)
+    {
+        status = "error_ground_floor_balcony";
+        error_count++;
+    }
+    else if (width_cm <= 0 || depth_cm <= 0 || height_cm <= 0)
+    {
+        status = "error_invalid_size";
+        error_count++;
+    }
+    else if (pivot_type != "balcony_inner_bottom_center")
+    {
+        status = "warning_pivot_type_check";
+        warning_count++;
+    }
+    else if (asset_id == "PLACEHOLDER_FRONT_BALCONY" || unreal_instance == "")
+    {
+        status = "warning_placeholder_asset";
+        warning_count++;
+    }
+    else
+    {
+        ok_count++;
+    }
+
+    setpointattrib(0, "front_balcony_precheck_status", i, status, "set");
+}
+
+
+// ===============================
+// Detail 检查结果
+// ===============================
+
+setdetailattrib(0, "front_balcony_precheck_total_count", total_count, "set");
+setdetailattrib(0, "front_balcony_precheck_ok_count", ok_count, "set");
+setdetailattrib(0, "front_balcony_precheck_warning_count", warning_count, "set");
+setdetailattrib(0, "front_balcony_precheck_error_count", error_count, "set");
+
+if (total_count <= 0)
+{
+    setdetailattrib(0, "front_balcony_precheck_status", "no_front_balcony_points", "set");
+}
+else if (error_count > 0)
+{
+    setdetailattrib(0, "front_balcony_precheck_status", "has_errors", "set");
+}
+else if (warning_count > 0)
+{
+    setdetailattrib(0, "front_balcony_precheck_status", "placeholder_ready", "set");
+}
+else
+{
+    setdetailattrib(0, "front_balcony_precheck_status", "ready", "set");
+}

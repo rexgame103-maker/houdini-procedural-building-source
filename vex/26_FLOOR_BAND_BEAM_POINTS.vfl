@@ -1,0 +1,323 @@
+// ==========================================
+// 26_FLOOR_BAND_BEAM_POINTS
+// V2.1B：楼层横梁直线段生成
+//
+// 输入：08_WALL_SEGMENT_DATA
+// 输出：横梁模块点
+//
+// 规则：
+// 1. 一楼与二楼交界处使用 50cm Cornice 横梁
+// 2. 二层以上按 floor_band_beam_interval 生成 12cm DecorTrim 横梁
+// 3. 只生成直线段，转角横梁下一步做
+// 4. 横梁贴在当前外墙表面，位置逻辑参考普通墙 / 屋檐边
+// ==========================================
+
+int enable_beam = chi("../enable_floor_band_beam");
+
+int interval = max(1, chi("../floor_band_beam_interval"));
+int start_floor = max(2, chi("../floor_band_beam_start_floor"));
+
+float unit = chf("../grid_unit");
+float ground_beam_y_offset = chf("../ground_floor_band_beam_y_offset_cm") / 100.0;
+float upper_beam_y_offset  = chf("../upper_floor_band_beam_y_offset_cm") / 100.0;
+
+int prim_count = nprimitives(0);
+
+int created_count = 0;
+
+// ===============================
+// 找到整体最高楼层
+// 只过滤整体顶楼，不过滤下层退台屋顶
+// ===============================
+
+int max_global_floor = -999999;
+
+for (int pr = 0; pr < prim_count; pr++)
+{
+    int gf = prim(0, "global_floor", pr);
+    max_global_floor = max(max_global_floor, gf);
+}
+
+if (enable_beam == 0)
+{
+    for (int pr = prim_count - 1; pr >= 0; pr--)
+    {
+        removeprim(0, pr, 1);
+    }
+
+    for (int p = npoints(0) - 1; p >= 0; p--)
+    {
+        removepoint(0, p);
+    }
+
+    setdetailattrib(0, "floor_band_beam_status", "disabled", "set");
+    setdetailattrib(0, "floor_band_beam_created_count", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 添加横梁模块点
+// ===============================
+
+void add_beam_module(
+    int geo;
+    vector pos;
+    string facade;
+    int global_floor;
+    int module_grid;
+    float beam_y;
+    float rot_y;
+    int is_ground_band)
+{
+    string asset_id = "";
+    string path = "";
+    string module_type = "";
+
+    float h_cm = 12.0;
+    float d_cm = 4.0;
+
+    // 一楼与二楼交界处：50cm 高 Cornice
+    if (is_ground_band == 1)
+    {
+        module_type = "ground_floor_band_beam";
+
+        h_cm = 50.0;
+        d_cm = 47.0;
+
+        if (module_grid == 4)
+        {
+            asset_id = "SM_Building_01_Cornice_50x400_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Cornice_50x400_01.SM_Building_01_Cornice_50x400_01";
+        }
+        else if (module_grid == 2)
+        {
+            asset_id = "SM_Building_01_Cornice_50x200_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Cornice_50x200_01.SM_Building_01_Cornice_50x200_01";
+        }
+        else
+        {
+            asset_id = "SM_Building_01_Cornice_50x100_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Cornice_50x100_01.SM_Building_01_Cornice_50x100_01";
+        }
+    }
+
+    // 二层以上：12cm 高 DecorTrim
+    else
+    {
+        module_type = "floor_band_beam";
+
+        h_cm = 12.0;
+        d_cm = 4.0;
+
+        if (module_grid == 4)
+        {
+            asset_id = "SM_Building_01_DecorTrim_12x400_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_DecorTrim_12x400_01.SM_Building_01_DecorTrim_12x400_01";
+        }
+        else if (module_grid == 2)
+        {
+            asset_id = "SM_Building_01_DecorTrim_12x200_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_DecorTrim_12x200_01.SM_Building_01_DecorTrim_12x200_01";
+        }
+        else
+        {
+            asset_id = "SM_Building_01_DecorTrim_12x100_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_DecorTrim_12x100_01.SM_Building_01_DecorTrim_12x100_01";
+        }
+    }
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, module_type, "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(geo, "floor_band_after_global_floor", pt, global_floor, "set");
+    setpointattrib(geo, "floor_band_y", pt, beam_y, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, h_cm, "set");
+    setpointattrib(geo, "depth_cm", pt, d_cm, "set");
+    setpointattrib(geo, "thickness_cm", pt, d_cm, "set");
+
+    setpointattrib(geo, "pivot_type", pt, "left_bottom_depth_center", "set");
+
+    // 横梁真实资产需要整体向左旋转 90 度
+    float final_rot_y = rot_y + 90.0;
+    
+    setpointattrib(geo, "rot_y_deg", pt, final_rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(final_rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+    }
+
+
+// ===============================
+// 遍历外墙段并拆横梁
+// ===============================
+
+for (int pr = 0; pr < prim_count; pr++)
+{
+    string facade = prim(0, "edge_facade", pr);
+
+    int global_floor = prim(0, "global_floor", pr);
+    int human_floor = global_floor + 1;
+    // 整体顶楼不生成横梁，避免和屋顶屋檐重复
+    if (global_floor == max_global_floor)
+    {
+        continue;
+    }
+
+    int length_grid = prim(0, "length_grid", pr);
+
+    int start_x = prim(0, "grid_start_x", pr);
+    int start_z = prim(0, "grid_start_z", pr);
+
+    float floor_top_y = prim(0, "floor_top_y", pr);
+
+    int make_beam = 0;
+    int is_ground_band = 0;
+
+    // 一楼与二楼之间，永远使用大横梁
+    if (global_floor == 0)
+    {
+        make_beam = 1;
+        is_ground_band = 1;
+    }
+
+    // 二层以上，按间隔生成细横梁
+    else
+    {
+        if (human_floor >= start_floor)
+        {
+            if (((human_floor - start_floor) % interval) == 0)
+            {
+                make_beam = 1;
+                is_ground_band = 0;
+            }
+        }
+    }
+
+    if (make_beam == 0)
+    {
+        continue;
+    }
+    
+    float beam_y = floor_top_y;
+    
+    if (is_ground_band == 1)
+    {
+        beam_y += ground_beam_y_offset;
+    }
+    else
+    {
+        beam_y += upper_beam_y_offset;
+    }
+    
+    int used = 0;
+
+    while (used < length_grid)
+    {
+        int remain = length_grid - used;
+
+        int module_grid = 1;
+
+        if (remain >= 4)
+        {
+            module_grid = 4;
+        }
+        else if (remain >= 2)
+        {
+            module_grid = 2;
+        }
+        else
+        {
+            module_grid = 1;
+        }
+
+        vector pos = set(0, 0, 0);
+        float rot_y = 0.0;
+
+        if (facade == "front")
+        {
+            pos = set(float(start_x + used) * unit, beam_y, float(start_z) * unit);
+            rot_y = 0.0;
+        }
+        else if (facade == "back")
+        {
+            pos = set(float(start_x + used + module_grid) * unit, beam_y, float(start_z) * unit);
+            rot_y = 180.0;
+        }
+        else if (facade == "left")
+        {
+            pos = set(float(start_x) * unit, beam_y, float(start_z + used + module_grid) * unit);
+            rot_y = 90.0;
+        }
+        else if (facade == "right")
+        {
+            pos = set(float(start_x) * unit, beam_y, float(start_z + used) * unit);
+            rot_y = -90.0;
+        }
+        
+        // ==========================================
+        // 横梁旋转 90 度后，真实资产需要沿当前立面的“右侧”偏移自身长度
+        //
+        // front 的右 = +X
+        // back  的右 = -X
+        // left  的右 = -Z
+        // right 的右 = +Z
+        // ==========================================
+        
+        float beam_len = float(module_grid) * unit;
+        
+        vector facade_right = set(0, 0, 0);
+        
+        if (facade == "front")
+        {
+            facade_right = set(1, 0, 0);
+        }
+        else if (facade == "back")
+        {
+            facade_right = set(-1, 0, 0);
+        }
+        else if (facade == "left")
+        {
+            facade_right = set(0, 0, -1);
+        }
+        else if (facade == "right")
+        {
+            facade_right = set(0, 0, 1);
+        }
+        
+        pos += facade_right * beam_len;
+
+        add_beam_module(
+            0,
+            pos,
+            facade,
+            global_floor,
+            module_grid,
+            beam_y,
+            rot_y,
+            is_ground_band
+        );
+
+        created_count++;
+
+        used += module_grid;
+    }
+}
+
+
+// 删除原始墙段线，只保留横梁点
+for (int pr = prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}
+
+setdetailattrib(0, "floor_band_beam_status", "straight_beam_points_created", "set");
+setdetailattrib(0, "floor_band_beam_created_count", created_count, "set");

@@ -1,0 +1,170 @@
+// ==========================================
+// 34_AC_BALCONY_INSTANCE_POINTS
+// Step 27：基于 Balcony_01 / Balcony_02 生成阳台内空调
+//
+// 当前规则：
+// 1. 只处理 Balcony_01 / Balcony_02
+// 2. 不处理 Balcony_03
+// 3. 不处理 BalconyStairs
+// 4. 每个阳台最多生成 1 个空调
+// 5. 使用 SM_Conditioner_01_Conditioner_02
+// ==========================================
+
+int src_count = npoints(0);
+int ac_count = 0;
+
+
+// ===============================
+// 阳台内空调资产
+// ===============================
+
+string ac_asset = "SM_Conditioner_01_Conditioner_02";
+string ac_path  = "/Game/CityStreetStylizedPack/Environment/Props/Conditioner_01/SM_Conditioner_01_Conditioner_02.SM_Conditioner_01_Conditioner_02";
+
+
+// ===============================
+// HDA 参数
+// ===============================
+
+int enable_balcony_ac = chi("../enable_balcony_ac");
+float balcony_ac_chance = clamp(chf("../balcony_ac_chance"), 0.0, 1.0);
+int balcony_ac_seed = chi("../balcony_ac_seed");
+
+if (enable_balcony_ac == 0)
+{
+    setdetailattrib(0, "balcony_ac_count", 0, "set");
+    return;
+}
+
+// 临时位置偏移
+// 沿空调正面方向移动 90cm
+// 沿空调右侧方向移动 40cm
+// 向上移动 20cm
+float forward_offset = chf("../balcony_ac_forward_offset_cm") / 100.0;
+float side_offset = chf("../balcony_ac_side_offset_cm") / 100.0;
+float y_offset = chf("../balcony_ac_y_offset_cm") / 100.0;
+
+
+// ===============================
+// 遍历阳台点
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    string asset_id = point(0, "asset_id", i);
+    string facade = point(0, "facade", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    int is_balcony_01 = find(asset_id, "Balcony_01") >= 0;
+    int is_balcony_02 = find(asset_id, "Balcony_02") >= 0;
+    int is_balcony_03 = find(asset_id, "Balcony_03") >= 0;
+    int is_stair = find(asset_id, "BalconyStairs") >= 0;
+
+    if (!(is_balcony_01 || is_balcony_02))
+    {
+        continue;
+    }
+
+    if (is_balcony_03 || is_stair)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 概率控制
+    // ===============================
+
+    float r_spawn = rand(float(balcony_ac_seed) + float(i) * 13.719);
+
+    if (r_spawn > balcony_ac_chance)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 根据阳台立面计算方向
+    // forward = 阳台朝外方向
+    // side    = 沿墙向右方向
+    // ===============================
+
+    vector forward = set(0, 0, -1);
+    vector side = set(1, 0, 0);
+
+    if (facade == "front")
+    {
+        forward = set(0, 0, -1);
+        side = set(1, 0, 0);
+    }
+    else if (facade == "right")
+    {
+        forward = set(1, 0, 0);
+        side = set(0, 0, 1);
+    }
+    else if (facade == "left")
+    {
+        forward = set(-1, 0, 0);
+        side = set(0, 0, -1);
+    }
+
+
+    // ===============================
+    // 计算空调位置
+    //
+    // 阳台点通常在阳台挂点 / 枢轴附近。
+    // 这里先做一个临时规则：
+    // 1. 往阳台内部移动：-forward
+    // 2. 往阳台一侧移动：side
+    // 3. 轻微上移
+    // ===============================
+
+    vector base_pos = point(0, "P", i);
+
+    vector ac_pos = base_pos;
+
+    // 沿空调正面方向移动 90cm
+    ac_pos += forward * forward_offset;
+    
+    // 沿空调右侧方向移动 40cm
+    ac_pos += side * side_offset;
+    
+    // 向上移动 20cm
+    ac_pos.y += y_offset;
+
+
+    // ===============================
+    // 旋转
+    // 先继承阳台旋转
+    // 如果 Unreal 里方向不对，下一步再单独调
+    // ===============================
+
+    float rot_y = point(0, "rot_y_deg", i);
+    vector4 ac_orient = quaternion(radians(rot_y), set(0, 1, 0));
+
+
+    // ===============================
+    // 创建阳台内空调点
+    // ===============================
+
+    int pt = addpoint(0, ac_pos);
+
+    setpointattrib(0, "asset_id", pt, ac_asset, "set");
+    setpointattrib(0, "module_type", pt, "balcony_air_conditioner", "set");
+    setpointattrib(0, "unreal_instance", pt, ac_path, "set");
+
+    setpointattrib(0, "source_balcony_pt", pt, i, "set");
+    setpointattrib(0, "source_balcony_asset_id", pt, asset_id, "set");
+
+    setpointattrib(0, "facade", pt, facade, "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(0, "orient", pt, ac_orient, "set");
+    setpointattrib(0, "scale", pt, set(1.0, 1.0, 1.0), "set");
+
+    ac_count++;
+}
+
+setdetailattrib(0, "balcony_ac_count", ac_count, "set");

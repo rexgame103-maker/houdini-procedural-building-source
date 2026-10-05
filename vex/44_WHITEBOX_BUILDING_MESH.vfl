@@ -1,0 +1,156 @@
+// ==========================================
+// 44_WHITEBOX_BUILDING_MESH
+// 白盒模式：把 03_BUILDING_BLOCK_DATA 的楼体块点转换成白盒 Mesh
+// 只输出楼体体块，不输出任何 unreal_instance 附件
+// ==========================================
+
+float unit = chf("../grid_unit");
+
+int src_count = npoints(0);
+
+// ===============================
+// 先缓存输入点属性
+// ===============================
+
+int minxs[];
+int maxxs[];
+int minzs[];
+int maxzs[];
+float bottoms[];
+float tops[];
+int blockids[];
+
+resize(minxs, src_count);
+resize(maxxs, src_count);
+resize(minzs, src_count);
+resize(maxzs, src_count);
+resize(bottoms, src_count);
+resize(tops, src_count);
+resize(blockids, src_count);
+
+for (int i = 0; i < src_count; i++)
+{
+    int min_x = int(point(0, "min_x_grid", i));
+    int max_x = int(point(0, "max_x_grid", i));
+    int min_z = int(point(0, "min_z_grid", i));
+    int max_z = int(point(0, "max_z_grid", i));
+
+    float bottom_y = float(point(0, "bottom_y", i));
+    float top_y    = float(point(0, "top_y", i));
+
+    int block_id = int(point(0, "block_id", i));
+
+    minxs[i] = min_x;
+    maxxs[i] = max_x;
+    minzs[i] = min_z;
+    maxzs[i] = max_z;
+    bottoms[i] = bottom_y;
+    tops[i] = top_y;
+    blockids[i] = block_id;
+}
+
+// ===============================
+// 清空输入几何
+// ===============================
+
+for (int pr = nprimitives(0) - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}
+
+for (int pt = npoints(0) - 1; pt >= 0; pt--)
+{
+    removepoint(0, pt);
+}
+
+// ===============================
+// 生成白盒
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    int min_x = minxs[i];
+    int max_x = maxxs[i];
+    int min_z = minzs[i];
+    int max_z = maxzs[i];
+
+    float bottom_y = bottoms[i];
+    float top_y    = tops[i];
+
+    vector p0 = set(float(min_x) * unit, bottom_y, float(min_z) * unit);
+    vector p1 = set(float(max_x) * unit, bottom_y, float(min_z) * unit);
+    vector p2 = set(float(max_x) * unit, bottom_y, float(max_z) * unit);
+    vector p3 = set(float(min_x) * unit, bottom_y, float(max_z) * unit);
+
+    vector p4 = set(float(min_x) * unit, top_y, float(min_z) * unit);
+    vector p5 = set(float(max_x) * unit, top_y, float(min_z) * unit);
+    vector p6 = set(float(max_x) * unit, top_y, float(max_z) * unit);
+    vector p7 = set(float(min_x) * unit, top_y, float(max_z) * unit);
+
+    int v0 = addpoint(0, p0);
+    int v1 = addpoint(0, p1);
+    int v2 = addpoint(0, p2);
+    int v3 = addpoint(0, p3);
+    int v4 = addpoint(0, p4);
+    int v5 = addpoint(0, p5);
+    int v6 = addpoint(0, p6);
+    int v7 = addpoint(0, p7);
+
+    // bottom
+    int prim_bottom = addprim(0, "poly");
+    addvertex(0, prim_bottom, v3);
+    addvertex(0, prim_bottom, v2);
+    addvertex(0, prim_bottom, v1);
+    addvertex(0, prim_bottom, v0);
+
+    // top
+    int prim_top = addprim(0, "poly");
+    addvertex(0, prim_top, v4);
+    addvertex(0, prim_top, v5);
+    addvertex(0, prim_top, v6);
+    addvertex(0, prim_top, v7);
+
+    // front
+    int prim_front = addprim(0, "poly");
+    addvertex(0, prim_front, v0);
+    addvertex(0, prim_front, v1);
+    addvertex(0, prim_front, v5);
+    addvertex(0, prim_front, v4);
+
+    // right
+    int prim_right = addprim(0, "poly");
+    addvertex(0, prim_right, v1);
+    addvertex(0, prim_right, v2);
+    addvertex(0, prim_right, v6);
+    addvertex(0, prim_right, v5);
+
+    // back
+    int prim_back = addprim(0, "poly");
+    addvertex(0, prim_back, v2);
+    addvertex(0, prim_back, v3);
+    addvertex(0, prim_back, v7);
+    addvertex(0, prim_back, v6);
+
+    // left
+    int prim_left = addprim(0, "poly");
+    addvertex(0, prim_left, v3);
+    addvertex(0, prim_left, v0);
+    addvertex(0, prim_left, v4);
+    addvertex(0, prim_left, v7);
+
+    int prims[] = array(
+        prim_bottom,
+        prim_top,
+        prim_front,
+        prim_right,
+        prim_back,
+        prim_left
+    );
+
+    foreach (int pr; prims)
+    {
+        setprimattrib(0, "module_type", pr, "whitebox_block", "set");
+        setprimattrib(0, "block_id", pr, blockids[i], "set");
+        setprimattrib(0, "Cd", pr, set(1, 1, 1), "set");
+    }
+}

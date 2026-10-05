@@ -1,0 +1,412 @@
+// ==========================================
+// 33_AC_WALL_ANCHOR_POINTS
+// V2.3A：墙面空调挂点
+//
+// 当前规则：
+// 1. 只基于窗墙生成
+// 2. 只处理 front / left / right
+// 3. 不处理 back
+// 4. 不处理一楼和二楼，从三楼开始 global_floor > 1
+// 5. 门墙本身不生成
+// 6. 门墙左右相邻窗墙不生成
+// 7. 删除 left，只保留 right / down
+// 8. 一个窗墙最多生成一个空调
+// 9. 每个窗墙在 right / down 之间随机选择一个
+// ==========================================
+
+int src_count = npoints(0);
+int anchor_count = 0;
+
+
+// ===============================
+// 空调资产
+// ===============================
+
+string ac_asset = "SM_Conditioner_01_Conditioner_01";
+string ac_path  = "/Game/CityStreetStylizedPack/Environment/Props/Conditioner_01/SM_Conditioner_01_Conditioner_01.SM_Conditioner_01_Conditioner_01";
+
+
+// ===============================
+// HDA 参数
+// ===============================
+
+int enable_wall_ac = chi("../enable_wall_ac");
+float wall_ac_chance = clamp(chf("../wall_ac_chance"), 0.0, 1.0);
+int wall_ac_seed = chi("../wall_ac_seed");
+int wall_ac_placement_mode = chi("../wall_ac_placement_mode");
+
+int enable_wall_ac_random_offset = chi("../enable_wall_ac_random_offset");
+
+float wall_ac_random_side_min = chf("../wall_ac_random_side_min_cm") / 100.0;
+float wall_ac_random_side_max = chf("../wall_ac_random_side_max_cm") / 100.0;
+
+float wall_ac_random_y_min = chf("../wall_ac_random_y_min_cm") / 100.0;
+float wall_ac_random_y_max = chf("../wall_ac_random_y_max_cm") / 100.0;
+
+// 防止最小值大于最大值
+if (wall_ac_random_side_min > wall_ac_random_side_max)
+{
+    float tmp = wall_ac_random_side_min;
+    wall_ac_random_side_min = wall_ac_random_side_max;
+    wall_ac_random_side_max = tmp;
+}
+
+if (wall_ac_random_y_min > wall_ac_random_y_max)
+{
+    float tmp = wall_ac_random_y_min;
+    wall_ac_random_y_min = wall_ac_random_y_max;
+    wall_ac_random_y_max = tmp;
+}
+
+if (enable_wall_ac == 0)
+{
+    setdetailattrib(0, "ac_anchor_count", 0, "set");
+    return;
+}
+
+
+
+// ===============================
+// 临时位置参数
+// 后面会整理成 HDA 参数
+// ===============================
+
+// 右侧空调：离窗墙右边缘的基础距离
+float right_gap_cm = chf("../wall_ac_right_gap_cm");
+
+// 贴墙修正
+float wall_pullback_cm = chf("../wall_ac_pullback_cm");
+
+// 右侧空调高度
+float side_y_offset_cm = chf("../wall_ac_side_y_offset_cm");
+
+// 下方空调高度
+float down_y_offset_cm = chf("../wall_ac_down_y_offset_cm");
+
+// 下方空调向左右居中修正
+float down_center_offset_cm = 0.0;
+
+// 单位换算
+float right_gap = right_gap_cm / 100.0;
+float wall_pullback = wall_pullback_cm / 100.0;
+float side_y_offset = side_y_offset_cm / 100.0;
+float down_y_offset = down_y_offset_cm / 100.0;
+float down_center_offset = down_center_offset_cm / 100.0;
+
+// 当前已经调好的右侧位置修正
+float side_inward_tune = chf("../wall_ac_side_inward_tune_cm") / 100.0;
+float side_down_tune = 0.30;
+
+
+// ===============================
+// 遍历墙体点
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    string asset_id = point(0, "asset_id", i);
+    string facade = point(0, "facade", i);
+    int global_floor = point(0, "global_floor", i);
+
+    int facade_ok = (
+        facade == "front" ||
+        facade == "left" ||
+        facade == "right"
+    );
+
+    int is_window_wall = find(asset_id, "WallWindow") >= 0;
+    int is_door_wall = find(asset_id, "WallDoor") >= 0;
+
+    // 门墙本身不允许生成
+    if (is_door_wall)
+    {
+        setpointattrib(0, "ac_candidate_wall", i, 0, "set");
+        continue;
+    }
+
+    // 从三楼开始生成，避免二楼和一楼横梁穿模
+    int floor_ok = global_floor > 1;
+
+    if (!(facade_ok && is_window_wall && floor_ok))
+    {
+        setpointattrib(0, "ac_candidate_wall", i, 0, "set");
+        continue;
+    }
+
+    vector base_pos = point(0, "P", i);
+    float rot_y = point(0, "rot_y_deg", i);
+
+    int grid_width = point(0, "grid_width", i);
+    float width_cm = point(0, "width_cm", i);
+
+    float module_width = 2.0;
+
+    if (grid_width > 0)
+    {
+        module_width = float(grid_width);
+    }
+    else if (width_cm > 0.0)
+    {
+        module_width = width_cm / 100.0;
+    }
+
+
+    // ===============================
+    // 根据立面计算方向
+    // forward = 墙面朝外方向
+    // side    = 沿墙向右方向
+    // ===============================
+
+    vector forward = set(0, 0, -1);
+    vector side = set(1, 0, 0);
+
+    if (facade == "front")
+    {
+        forward = set(0, 0, -1);
+        side = set(1, 0, 0);
+    }
+    else if (facade == "right")
+    {
+        forward = set(1, 0, 0);
+        side = set(0, 0, 1);
+    }
+    else if (facade == "left")
+    {
+        forward = set(-1, 0, 0);
+        side = set(0, 0, -1);
+    }
+
+
+    // ===============================
+    // 门墙相邻窗墙过滤
+    // 当前窗墙左右紧贴门墙，则不生成空调
+    // ===============================
+
+    float win_start = dot(base_pos, side);
+    float win_end = win_start + module_width;
+
+    int near_door = 0;
+
+    for (int j = 0; j < src_count; j++)
+    {
+        if (j == i)
+        {
+            continue;
+        }
+
+        string other_asset_id = point(0, "asset_id", j);
+        string other_facade = point(0, "facade", j);
+        int other_floor = point(0, "global_floor", j);
+
+        if (other_facade != facade || other_floor != global_floor)
+        {
+            continue;
+        }
+
+        int other_is_door = find(other_asset_id, "WallDoor") >= 0;
+
+        if (!other_is_door)
+        {
+            continue;
+        }
+
+        vector other_pos = point(0, "P", j);
+
+        int other_grid_width = point(0, "grid_width", j);
+        float other_width_cm = point(0, "width_cm", j);
+
+        float other_width = 2.0;
+
+        if (other_grid_width > 0)
+        {
+            other_width = float(other_grid_width);
+        }
+        else if (other_width_cm > 0.0)
+        {
+            other_width = other_width_cm / 100.0;
+        }
+
+        float door_start = dot(other_pos, side);
+        float door_end = door_start + other_width;
+
+        float gap_a = abs(win_end - door_start);
+        float gap_b = abs(door_end - win_start);
+
+        if (gap_a < 0.05 || gap_b < 0.05)
+        {
+            near_door = 1;
+            break;
+        }
+    }
+
+    if (near_door == 1)
+    {
+        setpointattrib(0, "ac_candidate_wall", i, 0, "set");
+        continue;
+    }
+
+    setpointattrib(0, "ac_candidate_wall", i, 1, "set");
+
+
+    // ===============================
+    // 概率控制
+    // ===============================
+
+    float r_spawn = rand(float(wall_ac_seed) + float(i) * 11.371);
+
+    if (r_spawn > wall_ac_chance)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // right 位置
+    // ===============================
+
+    vector right_pos = base_pos;
+
+    // 到窗墙右边缘外侧
+    right_pos += side * (module_width + right_gap);
+
+    // 向窗墙方向回收，使用已测试的 40cm
+    right_pos -= side * side_inward_tune;
+
+    // 贴墙修正
+    right_pos -= forward * wall_pullback;
+
+    // 沿墙面正方向外移 30cm
+    right_pos += forward * 0.30;
+
+    // 高度修正
+    right_pos.y += side_y_offset;
+    right_pos.y -= side_down_tune;
+
+
+    // ===============================
+    // down 位置
+    // ===============================
+
+    vector down_pos = base_pos;
+
+    // 下方空调先放到窗墙中间位置
+    down_pos += side * (module_width * 0.5);
+    down_pos += side * down_center_offset;
+
+    // 贴墙修正
+    down_pos -= forward * wall_pullback;
+
+    // 沿墙面正方向外移 30cm
+    down_pos += forward * 0.30;
+
+    // 下方空调高度修正
+    down_pos.y += down_y_offset;
+
+
+    // ===============================
+    // 空调生成模式
+    // 0 = Random Right / Down
+    // 1 = Right Only
+    // 2 = Down Only
+    // ===============================
+    
+    string ac_slot = "right";
+    vector final_ac_pos = right_pos;
+    int ac_slot_index = 1;
+    
+    if (wall_ac_placement_mode == 0)
+    {
+        float r_slot = rand(float(wall_ac_seed) + float(i) * 19.731);
+        int prefer_slot = int(floor(r_slot * 2.0));
+    
+        if (prefer_slot == 0)
+        {
+            ac_slot = "down";
+            final_ac_pos = down_pos;
+            ac_slot_index = 2;
+        }
+    }
+    else if (wall_ac_placement_mode == 1)
+    {
+        ac_slot = "right";
+        final_ac_pos = right_pos;
+        ac_slot_index = 1;
+    }
+    else if (wall_ac_placement_mode == 2)
+    {
+        ac_slot = "down";
+        final_ac_pos = down_pos;
+        ac_slot_index = 2;
+    }
+    
+    // ===============================
+    // 随机偏移
+    // 必须放在 final_ac_pos 已经确定之后
+    // ===============================
+    
+    if (enable_wall_ac_random_offset == 1)
+    {
+        float r_side = rand(float(wall_ac_seed) + float(i) * 31.771);
+        float r_y = rand(float(wall_ac_seed) + float(i) * 43.219);
+    
+        float random_side_offset = fit01(
+            r_side,
+            wall_ac_random_side_min,
+            wall_ac_random_side_max
+        );
+    
+        float random_y_offset = fit01(
+            r_y,
+            wall_ac_random_y_min,
+            wall_ac_random_y_max
+        );
+    
+        final_ac_pos += side * random_side_offset;
+        final_ac_pos.y += random_y_offset;
+    }
+
+
+    // ===============================
+    // 旋转
+    // 普通窗墙：rot_y + 90 正确
+    // 高层宽窗墙：自身已经在 09L 里 rot_y + 90，
+    //             所以空调不能再额外 +90，否则会多转一次。
+    // ===============================
+    
+    float ac_rot_y = rot_y + 90.0;
+    
+    if (asset_id == "SM_Building_01_WallWindow_300x400_01")
+    {
+        ac_rot_y = rot_y;
+    }
+    
+    vector4 ac_orient = quaternion(radians(ac_rot_y), set(0, 1, 0));
+
+
+    // ===============================
+    // 创建空调点
+    // ===============================
+
+    int pt = addpoint(0, final_ac_pos);
+
+    setpointattrib(0, "asset_id", pt, ac_asset, "set");
+    setpointattrib(0, "module_type", pt, "wall_air_conditioner", "set");
+    setpointattrib(0, "unreal_instance", pt, ac_path, "set");
+
+    setpointattrib(0, "source_wall_pt", pt, i, "set");
+    setpointattrib(0, "source_wall_asset_id", pt, asset_id, "set");
+
+    setpointattrib(0, "facade", pt, facade, "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "ac_slot", pt, ac_slot, "set");
+    setpointattrib(0, "ac_slot_index", pt, ac_slot_index, "set");
+
+    setpointattrib(0, "rot_y_deg", pt, ac_rot_y, "set");
+    setpointattrib(0, "orient", pt, ac_orient, "set");
+    setpointattrib(0, "scale", pt, set(1.0, 1.0, 1.0), "set");
+
+    anchor_count++;
+}
+
+setdetailattrib(0, "ac_anchor_count", anchor_count, "set");

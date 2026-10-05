@@ -1,0 +1,78 @@
+// ==========================================
+// 06_EXPOSED_EDGE_DETECTION
+// V2：判断每个占用格四个方向是否暴露
+//
+// front = Z - 1
+// back  = Z + 1
+// left  = X - 1
+// right = X + 1
+// ==========================================
+
+int pt_count = npoints(0);
+
+for (int i = 0; i < pt_count; i++)
+{
+    int x = point(0, "cell_x", i);
+    int z = point(0, "cell_z", i);
+    int floor = point(0, "global_floor", i);
+
+    int has_front = 0;
+    int has_back = 0;
+    int has_left = 0;
+    int has_right = 0;
+
+    // 查找同一楼层的相邻占用格
+    for (int j = 0; j < pt_count; j++)
+    {
+        if (i == j)
+        {
+            continue;
+        }
+
+        int other_floor = point(0, "global_floor", j);
+
+        if (other_floor != floor)
+        {
+            continue;
+        }
+
+        int ox = point(0, "cell_x", j);
+        int oz = point(0, "cell_z", j);
+
+        if (ox == x && oz == z - 1)
+        {
+            has_front = 1;
+        }
+
+        if (ox == x && oz == z + 1)
+        {
+            has_back = 1;
+        }
+
+        if (ox == x - 1 && oz == z)
+        {
+            has_left = 1;
+        }
+
+        if (ox == x + 1 && oz == z)
+        {
+            has_right = 1;
+        }
+    }
+
+    int exposed_front = 1 - has_front;
+    int exposed_back  = 1 - has_back;
+    int exposed_left  = 1 - has_left;
+    int exposed_right = 1 - has_right;
+
+    int exposed_count = exposed_front + exposed_back + exposed_left + exposed_right;
+    int is_outer_cell = exposed_count > 0;
+
+    setpointattrib(0, "exposed_front", i, exposed_front, "set");
+    setpointattrib(0, "exposed_back", i, exposed_back, "set");
+    setpointattrib(0, "exposed_left", i, exposed_left, "set");
+    setpointattrib(0, "exposed_right", i, exposed_right, "set");
+
+    setpointattrib(0, "exposed_edge_count", i, exposed_count, "set");
+    setpointattrib(0, "is_outer_cell", i, is_outer_cell, "set");
+}

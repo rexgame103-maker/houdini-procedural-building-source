@@ -1,0 +1,182 @@
+// ==========================================
+// 09_WALL_MODULE_POINTS
+// V2：把连续墙段拆成 400 / 200 / 100cm 普通墙模块点
+//
+// 当前只生成普通墙模块：
+// 一楼：400cm 高普通墙
+// 二楼及以上：300cm 高普通墙
+// ==========================================
+
+int prim_count = nprimitives(0);
+float unit = chf("../grid_unit");
+
+
+// ===============================
+// 添加模块点函数
+// ===============================
+
+void add_wall_module(
+    int geo;
+    vector pos;
+    string facade;
+    int global_floor;
+    int module_grid;
+    float floor_bottom_y;
+    float floor_height;
+    float rot_y)
+{
+    string asset_id = "";
+    string path = "";
+
+    // 一楼 400cm 高普通墙
+    if (global_floor == 0)
+    {
+        if (module_grid == 4)
+        {
+            asset_id = "SM_Building_01_Wall_400x400_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x400_01.SM_Building_01_Wall_400x400_01";
+        }
+        else if (module_grid == 2)
+        {
+            asset_id = "SM_Building_01_Wall_400x200_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x200_01.SM_Building_01_Wall_400x200_01";
+        }
+        else
+        {
+            asset_id = "SM_Building_01_Wall_400x100_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x100_01.SM_Building_01_Wall_400x100_01";
+        }
+    }
+
+    // 二楼及以上 300cm 高普通墙
+    else
+    {
+        if (module_grid == 4)
+        {
+            asset_id = "SM_Building_01_Wall_300x400_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x400_01.SM_Building_01_Wall_300x400_01";
+        }
+        else if (module_grid == 2)
+        {
+            asset_id = "SM_Building_01_Wall_300x200_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x200_01.SM_Building_01_Wall_300x200_01";
+        }
+        else
+        {
+            asset_id = "SM_Building_01_Wall_300x100_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x100_01.SM_Building_01_Wall_300x100_01";
+        }
+    }
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "plain_wall", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+}
+
+
+// ===============================
+// 遍历墙段并拆模块
+// ===============================
+
+for (int pr = 0; pr < prim_count; pr++)
+{
+    string facade = prim(0, "edge_facade", pr);
+
+    int global_floor = prim(0, "global_floor", pr);
+    int length_grid = prim(0, "length_grid", pr);
+
+    int start_x = prim(0, "grid_start_x", pr);
+    int end_x   = prim(0, "grid_end_x", pr);
+
+    int start_z = prim(0, "grid_start_z", pr);
+    int end_z   = prim(0, "grid_end_z", pr);
+
+    float floor_bottom_y = prim(0, "floor_bottom_y", pr);
+    float floor_height = prim(0, "floor_height", pr);
+
+    int used = 0;
+
+    while (used < length_grid)
+    {
+        int remain = length_grid - used;
+        int module_grid = 1;
+
+        if (remain >= 4)
+        {
+            module_grid = 4;
+        }
+        else if (remain >= 2)
+        {
+            module_grid = 2;
+        }
+        else
+        {
+            module_grid = 1;
+        }
+
+        vector pos;
+        float rot_y = 0.0;
+
+        // front / back：墙段沿 X 方向
+        if (facade == "front")
+        {
+            pos = set(float(start_x + used) * unit, floor_bottom_y, float(start_z) * unit);
+            rot_y = 0.0;
+        }
+        else if (facade == "back")
+        {
+            pos = set(float(start_x + used + module_grid) * unit, floor_bottom_y, float(start_z) * unit);
+            rot_y = 180.0;
+        }
+
+        // left / right：墙段沿 Z 方向
+        else if (facade == "left")
+        {
+            pos = set(float(start_x) * unit, floor_bottom_y, float(start_z + used + module_grid) * unit);
+            rot_y = 90.0;
+        }
+        else if (facade == "right")
+        {
+            pos = set(float(start_x) * unit, floor_bottom_y, float(start_z + used) * unit);
+            rot_y = -90.0;
+        }
+
+        add_wall_module(
+            0,
+            pos,
+            facade,
+            global_floor,
+            module_grid,
+            floor_bottom_y,
+            floor_height,
+            rot_y
+        );
+
+        used += module_grid;
+    }
+}
+
+
+// 删除原始墙段线，只保留模块点
+for (int pr = prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}

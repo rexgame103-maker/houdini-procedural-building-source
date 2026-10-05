@@ -1,0 +1,359 @@
+// ==========================================
+// 21_ROOF_CORNICE_CORNER_MODULE_POINTS
+// V2：生成屋檐转角模块点
+//
+// 输入：
+// 18_ROOF_EDGE_DETECTION 过滤后的 1 grid 屋顶边缘线
+//
+// 输出：
+// cornice_corner 模块点
+// ==========================================
+
+
+function int corner_exists(
+    const int xs[];
+    const int zs[];
+    const float ys[];
+    const int test_x;
+    const int test_z;
+    const float test_y;
+    const float eps)
+{
+    for (int i = 0; i < len(xs); i++)
+    {
+        if (
+            xs[i] == test_x &&
+            zs[i] == test_z &&
+            abs(ys[i] - test_y) <= eps
+        )
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+function int has_roof_cell_at(
+    const int cx;
+    const int cz;
+    const float cy;
+    const float eps)
+{
+    int pt_count = npoints(1);
+
+    for (int i = 0; i < pt_count; i++)
+    {
+        int is_top = point(1, "is_top_exposed", i);
+
+        if (is_top != 1)
+        {
+            continue;
+        }
+
+        int x = point(1, "roof_cell_x", i);
+        int z = point(1, "roof_cell_z", i);
+        float y = point(1, "roof_y", i);
+
+        if (
+            x == cx &&
+            z == cz &&
+            abs(y - cy) <= eps
+        )
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+function int count_roof_quadrants_around_corner(
+    const int corner_x;
+    const int corner_z;
+    const float corner_y;
+    const float eps)
+{
+    int count = 0;
+
+    // 角点周围四个可能的 roof cell 象限
+    count += has_roof_cell_at(corner_x - 1, corner_z - 1, corner_y, eps);
+    count += has_roof_cell_at(corner_x,     corner_z - 1, corner_y, eps);
+    count += has_roof_cell_at(corner_x - 1, corner_z,     corner_y, eps);
+    count += has_roof_cell_at(corner_x,     corner_z,     corner_y, eps);
+
+    return count;
+}
+
+function void add_cornice_corner_module(
+    const int geo;
+    const int corner_x;
+    const int corner_z;
+    const float unit;
+    const float roof_y;
+    const int source_floor;
+    const float rot_y;
+    const string corner_name)
+{
+    string asset_id = "SM_Building_01_CorniceTop_CRN_100x100_01";
+    string path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_CorniceTop_CRN_100x100_01.SM_Building_01_CorniceTop_CRN_100x100_01";
+
+    vector pos = set(float(corner_x) * unit, roof_y, float(corner_z) * unit);
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "cornice_corner", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, "roof_corner", "set");
+    setpointattrib(geo, "corner_name", pt, corner_name, "set");
+
+    setpointattrib(geo, "global_floor", pt, source_floor, "set");
+    setpointattrib(geo, "roof_source_floor", pt, source_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, 1, "set");
+    setpointattrib(geo, "grid_depth", pt, 1, "set");
+
+    setpointattrib(geo, "width_cm", pt, 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, 58.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 100.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 58.0, "set");
+
+    setpointattrib(geo, "roof_y", pt, roof_y, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "cornice_source", pt, "roof_edge_corner_detected", "set");
+}
+
+
+// ===============================
+// 收集 roof edge primitive
+// ===============================
+
+int prim_count = nprimitives(0);
+float unit = chf("../grid_unit");
+float eps = 0.001;
+
+string edge_type[];
+int sx[];
+int ex[];
+int sz[];
+int ez[];
+float ey[];
+int ef[];
+
+for (int pr = 0; pr < prim_count; pr++)
+{
+    string t = prim(0, "roof_edge_type", pr);
+
+    if (
+        t != "roof_front" &&
+        t != "roof_back" &&
+        t != "roof_left" &&
+        t != "roof_right"
+    )
+    {
+        continue;
+    }
+
+    int a = prim(0, "grid_start_x", pr);
+    int b = prim(0, "grid_end_x", pr);
+    int c = prim(0, "grid_start_z", pr);
+    int d = prim(0, "grid_end_z", pr);
+    float y = prim(0, "roof_y", pr);
+    int f = prim(0, "roof_source_floor", pr);
+
+    append(edge_type, t);
+    append(sx, a);
+    append(ex, b);
+    append(sz, c);
+    append(ez, d);
+    append(ey, y);
+    append(ef, f);
+}
+
+int edge_count = len(edge_type);
+
+if (edge_count <= 0)
+{
+    setdetailattrib(0, "roof_cornice_corner_status", "no_roof_edges", "set");
+
+    for (int pr = prim_count - 1; pr >= 0; pr--)
+    {
+        removeprim(0, pr, 1);
+    }
+
+    return;
+}
+
+
+// ===============================
+// 检测水平边和垂直边的交点
+// ===============================
+
+int corner_x[];
+int corner_z[];
+float corner_y[];
+
+int corner_count = 0;
+
+for (int h = 0; h < edge_count; h++)
+{
+    string ht = edge_type[h];
+
+    if (ht != "roof_front" && ht != "roof_back")
+    {
+        continue;
+    }
+
+    for (int v = 0; v < edge_count; v++)
+    {
+        string vt = edge_type[v];
+
+        if (vt != "roof_left" && vt != "roof_right")
+        {
+            continue;
+        }
+
+        if (abs(ey[h] - ey[v]) > eps)
+        {
+            continue;
+        }
+
+        // 水平边两个端点
+        int hx0 = sx[h];
+        int hz0 = sz[h];
+
+        int hx1 = ex[h];
+        int hz1 = sz[h];
+
+        // 垂直边两个端点
+        int vx0 = sx[v];
+        int vz0 = sz[v];
+
+        int vx1 = sx[v];
+        int vz1 = ez[v];
+
+        int match_x = 0;
+        int match_z = 0;
+        int matched = 0;
+
+        if (hx0 == vx0 && hz0 == vz0)
+        {
+            match_x = hx0;
+            match_z = hz0;
+            matched = 1;
+        }
+        else if (hx0 == vx1 && hz0 == vz1)
+        {
+            match_x = hx0;
+            match_z = hz0;
+            matched = 1;
+        }
+        else if (hx1 == vx0 && hz1 == vz0)
+        {
+            match_x = hx1;
+            match_z = hz1;
+            matched = 1;
+        }
+        else if (hx1 == vx1 && hz1 == vz1)
+        {
+            match_x = hx1;
+            match_z = hz1;
+            matched = 1;
+        }
+
+        if (matched == 0)
+        {
+            continue;
+        }
+
+        if (corner_exists(corner_x, corner_z, corner_y, match_x, match_z, ey[h], eps) == 1)
+        {
+            continue;
+        }
+
+        string corner_name = "";
+        float rot_y = 0.0;
+
+        if (ht == "roof_front" && vt == "roof_left")
+        {
+            corner_name = "roof_front_left_corner";
+            rot_y = 0.0;
+        }
+        else if (ht == "roof_front" && vt == "roof_right")
+        {
+            corner_name = "roof_front_right_corner";
+            rot_y = -90.0;
+        }
+        else if (ht == "roof_back" && vt == "roof_left")
+        {
+            corner_name = "roof_back_left_corner";
+            rot_y = 90.0;
+        }
+        else if (ht == "roof_back" && vt == "roof_right")
+        {
+            corner_name = "roof_back_right_corner";
+            rot_y = 180.0;
+        }
+        else
+        {
+            continue;
+        }
+        
+        // ===============================
+        // 交接处 / 内凹角修正
+        // ===============================
+        //
+        // 普通外角周围通常只有 1 个 roof cell。
+        // 两个楼体交接处、T 型交接、内凹屋檐角，
+        // 周围通常会有 2 个或更多 roof cell。
+        // 这类屋檐角需要额外旋转 180 度。
+        
+        int roof_quadrant_count = count_roof_quadrants_around_corner(
+            match_x,
+            match_z,
+            ey[h],
+            eps
+        );
+        
+        if (roof_quadrant_count >= 2)
+        {
+            rot_y += 180.0;
+            corner_name += "_junction";
+        }
+
+        add_cornice_corner_module(
+            0,
+            match_x,
+            match_z,
+            unit,
+            ey[h],
+            ef[h],
+            rot_y,
+            corner_name
+        );
+
+        append(corner_x, match_x);
+        append(corner_z, match_z);
+        append(corner_y, ey[h]);
+
+        corner_count++;
+    }
+}
+
+
+// 删除原始 roof edge 线，只保留屋檐转角模块点
+for (int pr = prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}
+
+setdetailattrib(0, "roof_cornice_corner_status", "cornice_corner_modules_created", "set");
+setdetailattrib(0, "roof_cornice_corner_count", corner_count, "set");

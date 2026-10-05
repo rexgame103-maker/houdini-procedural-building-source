@@ -1,0 +1,455 @@
+// ==========================================
+// 09L_UPPER_WIDE_WINDOW_REPLACE
+// V2.4A：高层正面 300x400 宽窗墙替换
+//
+// 规则：
+// 1. 只处理 enable_upper_wide_window = 1
+// 2. 只处理 global_floor > 0
+// 3. 只处理 facade = front
+// 4. 可替换：
+//    - plain_wall
+//    - window_wall_upper
+//    - door_wall_upper
+// 5. 不替换 corner_wall
+// 6. 不处理 ground floor
+// 7. 每次寻找连续 400cm = 4 grid 的模块组合
+// 8. Random Match：按概率替换
+// 9. Replace All Matching：符合 4 grid 就尽量替换
+// ==========================================
+
+
+// -------------------------------
+// 工具函数：四舍五入到整数 grid
+// -------------------------------
+function int round_grid(const float v)
+{
+    return int(floor(v + 0.5));
+}
+
+
+// -------------------------------
+// 工具函数：判断 int 数组里是否包含某个值
+// -------------------------------
+function int int_array_contains(const int values[]; const int v)
+{
+    for (int i = 0; i < len(values); i++)
+    {
+        if (values[i] == v)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+// -------------------------------
+// 工具函数：查找某一楼层 / 某一条 front 线 / 某个 start_x 的候选模块
+// -------------------------------
+function int find_candidate_at(
+    const int cand_start_x[];
+    const int cand_floor[];
+    const int cand_z[];
+    const int gfloor;
+    const int z;
+    const int start_x)
+{
+    for (int i = 0; i < len(cand_start_x); i++)
+    {
+        if (
+            cand_floor[i] == gfloor &&
+            cand_z[i] == z &&
+            cand_start_x[i] == start_x
+        )
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+// -------------------------------
+// 工具函数：添加一个 300x400 高层宽窗墙模块点
+// -------------------------------
+void add_upper_wide_window_module(
+    const int geo;
+    const int start_x;
+    const int z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const int global_floor;
+    const float rot_y)
+{
+    string asset_id = "SM_Building_01_WallWindow_300x400_01";
+    string path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallWindow_300x400_01.SM_Building_01_WallWindow_300x400_01";
+
+    vector pos = set(
+        float(start_x) * unit,
+        floor_bottom_y,
+        float(z) * unit
+    );
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+
+    // 这里仍然使用 window_wall_upper，
+    // 这样后续空调 / 盆栽 / Unreal 补偿更容易继续识别它是高层窗墙。
+    setpointattrib(geo, "module_type", pt, "window_wall_upper", "set");
+
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, "front", "set");
+    setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, 4, "set");
+
+    setpointattrib(geo, "width_cm", pt, 400.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    // 高层宽窗墙资产需要在原正面墙旋转基础上向左旋转 90 度
+    float final_rot_y = rot_y + 90.0;
+    
+    setpointattrib(geo, "rot_y_deg", pt, final_rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(final_rot_y), set(0, 1, 0)), "set");
+    
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "is_upper_wide_window", pt, 1, "set");
+    setpointattrib(geo, "upper_wide_window_source", pt, "upper_wide_window_replace", "set");
+}
+
+
+// ===============================
+// 读取参数
+// ===============================
+
+int enable_wide = chi("../enable_upper_wide_window");
+int replace_mode = chi("../upper_wide_window_mode");
+
+float chance = clamp(chf("../upper_wide_window_chance"), 0.0, 1.0);
+int seed = chi("../upper_wide_window_seed");
+
+float unit = chf("../grid_unit");
+float upper_h = chf("../upper_floor_height");
+
+int src_count = npoints(0);
+
+
+// ===============================
+// 如果关闭，直接跳过
+// ===============================
+
+if (enable_wide == 0)
+{
+    setdetailattrib(0, "upper_wide_window_status", "disabled", "set");
+    setdetailattrib(0, "upper_wide_window_created_count", 0, "set");
+    setdetailattrib(0, "upper_wide_window_removed_module_count", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 收集可替换候选模块
+// ===============================
+
+int cand_pt[];
+int cand_start_x[];
+int cand_end_x[];
+int cand_floor[];
+int cand_z[];
+
+int line_floor[];
+int line_z[];
+int line_min_x[];
+int line_max_x[];
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    string asset_id = point(0, "asset_id", i);
+
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = max(1, point(0, "grid_width", i));
+
+    // 只处理高层正面
+    if (facade != "front")
+    {
+        continue;
+    }
+
+    if (global_floor <= 0)
+    {
+        continue;
+    }
+
+    // 已经是宽窗墙时不再参与候选，避免重复处理
+    if (asset_id == "SM_Building_01_WallWindow_300x400_01")
+    {
+        continue;
+    }
+
+    // 允许宽窗墙替换普通墙 / 高层窗墙 / 高层门墙
+    int replaceable = 0;
+
+    if (module_type == "plain_wall")
+    {
+        replaceable = 1;
+    }
+
+    if (module_type == "window_wall_upper")
+    {
+        replaceable = 1;
+    }
+
+    if (module_type == "door_wall_upper")
+    {
+        replaceable = 1;
+    }
+
+    if (replaceable == 0)
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", i);
+
+    int sx = round_grid(P.x / unit);
+    int z = round_grid(P.z / unit);
+
+    int ex = sx + grid_width;
+
+    append(cand_pt, i);
+    append(cand_start_x, sx);
+    append(cand_end_x, ex);
+    append(cand_floor, global_floor);
+    append(cand_z, z);
+
+    // 记录每一条 front 墙线的扫描范围
+    int line_found = -1;
+
+    for (int l = 0; l < len(line_floor); l++)
+    {
+        if (line_floor[l] == global_floor && line_z[l] == z)
+        {
+            line_found = l;
+            break;
+        }
+    }
+
+    if (line_found < 0)
+    {
+        append(line_floor, global_floor);
+        append(line_z, z);
+        append(line_min_x, sx);
+        append(line_max_x, ex);
+    }
+    else
+    {
+        line_min_x[line_found] = min(line_min_x[line_found], sx);
+        line_max_x[line_found] = max(line_max_x[line_found], ex);
+    }
+}
+
+
+// ===============================
+// 没有候选就跳过
+// ===============================
+
+if (len(cand_pt) == 0)
+{
+    setdetailattrib(0, "upper_wide_window_status", "no_candidate", "set");
+    setdetailattrib(0, "upper_wide_window_created_count", 0, "set");
+    setdetailattrib(0, "upper_wide_window_removed_module_count", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 扫描每条 front 线，寻找连续 4 grid
+// ===============================
+
+int geo_id = 0;
+
+int remove_ids[];
+
+int created_count = 0;
+int removed_module_count = 0;
+int checked_match_count = 0;
+
+for (int l = 0; l < len(line_floor); l++)
+{
+    int gfloor = line_floor[l];
+    int z = line_z[l];
+
+    int scan_x = line_min_x[l];
+    int scan_end_x = line_max_x[l];
+
+    while (scan_x <= scan_end_x - 4)
+    {
+        int target_start = scan_x;
+        int target_end = scan_x + 4;
+
+        int cursor = target_start;
+
+        int group_candidate_indices[];
+        int group_point_ids[];
+
+        int match_ok = 1;
+
+        // 从 target_start 开始，沿 X 方向拼出 4 grid
+        while (cursor < target_end)
+        {
+            int ci = find_candidate_at(
+                cand_start_x,
+                cand_floor,
+                cand_z,
+                gfloor,
+                z,
+                cursor
+            );
+
+            if (ci < 0)
+            {
+                match_ok = 0;
+                break;
+            }
+
+            int piece_end = cand_end_x[ci];
+
+            // 这个模块超过了 4 grid 范围，说明不能刚好匹配
+            if (piece_end > target_end)
+            {
+                match_ok = 0;
+                break;
+            }
+
+            append(group_candidate_indices, ci);
+            append(group_point_ids, cand_pt[ci]);
+
+            cursor = piece_end;
+        }
+
+        if (cursor != target_end)
+        {
+            match_ok = 0;
+        }
+
+        if (match_ok == 1)
+        {
+            checked_match_count++;
+
+            int do_replace = 0;
+
+            // 0 = Random Match
+            if (replace_mode == 0)
+            {
+                float r = rand(
+                    float(seed) +
+                    float(gfloor) * 31.17 +
+                    float(z) * 19.73 +
+                    float(target_start) * 7.91
+                );
+
+                if (r < chance)
+                {
+                    do_replace = 1;
+                }
+            }
+
+            // 1 = Replace All Matching
+            else if (replace_mode == 1)
+            {
+                do_replace = 1;
+            }
+
+            if (do_replace == 1)
+            {
+                int first_ci = group_candidate_indices[0];
+                int first_pt = cand_pt[first_ci];
+
+                float floor_bottom_y = point(0, "floor_bottom_y", first_pt);
+                float floor_height = point(0, "floor_height", first_pt);
+                float rot_y = point(0, "rot_y_deg", first_pt);
+
+                if (floor_height <= 0.001)
+                {
+                    floor_height = upper_h;
+                }
+
+                add_upper_wide_window_module(
+                    geo_id,
+                    target_start,
+                    z,
+                    unit,
+                    floor_bottom_y,
+                    floor_height,
+                    gfloor,
+                    rot_y
+                );
+
+                for (int g = 0; g < len(group_point_ids); g++)
+                {
+                    int rid = group_point_ids[g];
+
+                    if (int_array_contains(remove_ids, rid) == 0)
+                    {
+                        append(remove_ids, rid);
+                        removed_module_count++;
+                    }
+                }
+
+                created_count++;
+
+                // 已经占用 4 grid，直接跳过这段，避免重叠替换
+                scan_x = target_end;
+                continue;
+            }
+        }
+
+        scan_x += 1;
+    }
+}
+
+
+// ===============================
+// 删除被宽窗墙替换掉的原模块
+// 注意：只删除原始输入点，不删除刚刚新增的宽窗墙点
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    if (int_array_contains(remove_ids, i) == 1)
+    {
+        removepoint(0, i);
+    }
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+if (created_count > 0)
+{
+    setdetailattrib(0, "upper_wide_window_status", "created", "set");
+}
+else
+{
+    setdetailattrib(0, "upper_wide_window_status", "no_match_replaced", "set");
+}
+
+setdetailattrib(0, "upper_wide_window_candidate_count", len(cand_pt), "set");
+setdetailattrib(0, "upper_wide_window_checked_match_count", checked_match_count, "set");
+setdetailattrib(0, "upper_wide_window_created_count", created_count, "set");
+setdetailattrib(0, "upper_wide_window_removed_module_count", removed_module_count, "set");

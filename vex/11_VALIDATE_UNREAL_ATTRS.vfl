@@ -1,0 +1,208 @@
+// ==========================================
+// 11_VALIDATE_UNREAL_ATTRS
+// V2：检查输出给 Unreal 的模块点属性是否完整
+// Run Over: Points
+// ==========================================
+
+int ok = 1;
+string msg = "";
+
+
+// ==========================================
+// V2.6A：管道模块允许通过验证
+// 管道不是楼层墙体，不参与 400 / 300 高度检查
+// ==========================================
+
+if (startswith(s@module_type, "pipe_"))
+{
+    ok = 1;
+    msg = "";
+
+    if (s@asset_id == "")
+    {
+        ok = 0;
+        msg += "pipe_missing_asset_id;";
+    }
+
+    if (s@unreal_instance == "")
+    {
+        ok = 0;
+        msg += "pipe_missing_unreal_instance;";
+    }
+
+    if (f@height_cm <= 0.0)
+    {
+        ok = 0;
+        msg += "pipe_invalid_height;";
+    }
+
+    i@is_valid_unreal_module = ok;
+    s@validation_message = msg;
+
+    if (ok == 1)
+    {
+        v@Cd = set(0.0, 0.8, 1.0);
+    }
+    else
+    {
+        v@Cd = set(1.0, 0.0, 0.0);
+    }
+
+    return;
+}
+
+
+// ===============================
+// 必要字符串属性检查
+// ===============================
+
+if (s@asset_id == "")
+{
+    ok = 0;
+    msg += "missing_asset_id;";
+}
+
+if (s@module_type == "")
+{
+    ok = 0;
+    msg += "missing_module_type;";
+}
+
+if (s@unreal_instance == "")
+{
+    ok = 0;
+    msg += "missing_unreal_instance;";
+}
+
+if (s@facade == "")
+{
+    ok = 0;
+    msg += "missing_facade;";
+}
+
+
+// ===============================
+// facade 合法性检查
+// ===============================
+
+int facade_ok = (
+    s@facade == "front" ||
+    s@facade == "back" ||
+    s@facade == "left" ||
+    s@facade == "right" ||
+    s@facade == "corner" ||
+    s@facade == "roof" ||
+    s@facade == "roof_front" ||
+    s@facade == "roof_back" ||
+    s@facade == "roof_left" ||
+    s@facade == "roof_right" ||
+    s@facade == "roof_corner"
+);
+
+if (facade_ok == 0)
+{
+    ok = 0;
+    msg += "invalid_facade;";
+}
+
+
+// ===============================
+// 尺寸检查
+// ===============================
+
+if (i@grid_width != 1 && i@grid_width != 2 && i@grid_width != 4)
+{
+    ok = 0;
+    msg += "invalid_grid_width;";
+}
+
+if (f@width_cm <= 0)
+{
+    ok = 0;
+    msg += "invalid_width_cm;";
+}
+
+if (f@height_cm <= 0)
+{
+    ok = 0;
+    msg += "invalid_height_cm;";
+}
+
+if (f@depth_cm <= 0)
+{
+    ok = 0;
+    msg += "invalid_depth_cm;";
+}
+
+
+
+
+// ===============================
+// 楼层高度检查
+// 一楼应该 400cm
+// 二楼及以上应该 300cm
+// ===============================
+
+if (s@module_type == "roof_fill")
+{
+    if (abs(f@height_cm - 10.0) > 0.01)
+    {
+        ok = 0;
+        msg += "roof_height_not_10;";
+    }
+}
+else if (s@module_type == "cornice_edge")
+{
+    if (abs(f@height_cm - 58.0) > 0.01)
+    {
+        ok = 0;
+        msg += "cornice_edge_height_not_58;";
+    }
+}
+
+else if (s@module_type == "cornice_corner")
+{
+    if (abs(f@height_cm - 58.0) > 0.01)
+    {
+        ok = 0;
+        msg += "cornice_corner_height_not_58;";
+    }
+}
+
+else
+{
+    if (i@global_floor == 0)
+    {
+        if (abs(f@height_cm - 400.0) > 0.01)
+        {
+            ok = 0;
+            msg += "ground_floor_height_not_400;";
+        }
+    }
+    else
+    {
+        if (abs(f@height_cm - 300.0) > 0.01)
+        {
+            ok = 0;
+            msg += "upper_floor_height_not_300;";
+        }
+    }
+}
+
+
+// ===============================
+// 输出检查结果
+// ===============================
+
+i@is_valid_unreal_module = ok;
+s@validation_message = msg;
+
+// 方便在视图里快速看出错误点
+if (ok == 1)
+{
+    v@Cd = set(0.1, 0.8, 0.2);
+}
+else
+{
+    v@Cd = set(1.0, 0.0, 0.0);
+}

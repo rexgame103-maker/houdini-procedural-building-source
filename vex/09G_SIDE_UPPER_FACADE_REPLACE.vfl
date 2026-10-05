@@ -1,0 +1,969 @@
+// ==========================================
+// 09G_SIDE_UPPER_FACADE_REPLACE
+// V2.1C：侧面高层门窗墙替换
+//
+// 当前规则：
+// 1. 只处理 global_floor > 0
+// 2. 只处理 facade = left / right
+// 3. 只替换 plain_wall
+// 4. 侧面以普通墙为主，窗墙次之，门墙最少
+// 5. Random 模式：所有 left / right 可见侧面都允许随机生成门墙
+// 6. Vertical Column 模式：
+//    - outer_side 走竖列门墙
+//    - protruding_visible_side 仍走随机门墙
+// 7. 输出 side_upper_region：
+//    - outer_side
+//    - protruding_visible_side
+//
+// 注意：
+// 这个节点放在高层正面窗 / 门之后
+// 只影响 left / right，不影响 front / back
+// ==========================================
+
+
+void add_side_upper_module(
+    const int geo;
+    const int x;
+    const int start_z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const int global_floor;
+    const string facade;
+    const int module_grid;
+    const int module_kind;
+    const string source_tag;
+    const string side_region)
+{
+    // module_kind:
+    // 0 = plain wall
+    // 1 = side window wall
+    // 2 = upper door wall
+
+    string asset_id = "";
+    string path = "";
+    string module_type = "plain_wall";
+
+    if (module_kind == 2)
+    {
+        asset_id = "SM_Building_01_WallDoor_300x200_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallDoor_300x200_01.SM_Building_01_WallDoor_300x200_01";
+        module_type = "door_wall_upper";
+    }
+    else if (module_kind == 1)
+    {
+        asset_id = "SM_Building_01_WallWindow_300x200_05";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallWindow_300x200_05.SM_Building_01_WallWindow_300x200_05";
+        module_type = "window_wall_side_upper";
+    }
+    else
+    {
+        if (module_grid == 1)
+        {
+            asset_id = "SM_Building_01_Wall_300x100_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x100_01.SM_Building_01_Wall_300x100_01";
+        }
+        else
+        {
+            asset_id = "SM_Building_01_Wall_300x200_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x200_01.SM_Building_01_Wall_300x200_01";
+        }
+
+        module_type = "plain_wall";
+    }
+
+    vector pos = set(0, 0, 0);
+    float rot_y = 0.0;
+
+    if (facade == "left")
+    {
+        pos = set(float(x) * unit, floor_bottom_y, float(start_z + module_grid) * unit);
+        rot_y = 90.0;
+    }
+    else
+    {
+        // right
+        pos = set(float(x) * unit, floor_bottom_y, float(start_z) * unit);
+        rot_y = -90.0;
+    }
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, module_type, "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "side_upper_source", pt, source_tag, "set");
+    setpointattrib(geo, "side_upper_region", pt, side_region, "set");
+}
+
+
+// ===============================
+// 参数
+// ===============================
+
+int enable_windows = chi("../enable_side_upper_windows");
+int enable_doors = chi("../enable_side_upper_doors");
+
+float window_chance = clamp(chf("../side_upper_window_chance"), 0.0, 1.0);
+int side_seed = chi("../side_upper_seed");
+
+int base_depth = max(1, chi("../side_upper_door_base_depth"));
+int extra_depth = max(1, chi("../side_upper_door_extra_depth"));
+int side_door_layout_mode = chi("../side_upper_door_layout_mode");
+float vertical_door_ratio = clamp(chf("../side_upper_vertical_door_ratio"), 0.0, 1.0);
+
+float unit = chf("../grid_unit");
+int geo_id = 0;
+
+if (enable_windows == 0 && enable_doors == 0)
+{
+    setdetailattrib(0, "side_upper_status", "disabled", "set");
+    return;
+}
+
+int src_count = npoints(0);
+
+
+// ===============================
+// 拆解侧面高层普通墙为 slot
+// ===============================
+
+int piece_x[];
+int piece_start_z[];
+int piece_floor[];
+int piece_grid[];
+int piece_kind[];
+
+string piece_facade[];
+string piece_side_region[];
+
+float piece_floor_bottom_y[];
+float piece_floor_height[];
+
+int remove_ids[];
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = point(0, "grid_width", i);
+
+    if (
+        module_type != "plain_wall" ||
+        global_floor <= 0 ||
+        grid_width <= 0 ||
+        (facade != "left" && facade != "right")
+    )
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", i);
+
+    float gx = P.x / unit;
+    float gz = P.z / unit;
+
+    int anchor_x = gx >= 0 ? int(floor(gx + 0.5)) : int(ceil(gx - 0.5));
+    int anchor_z = gz >= 0 ? int(floor(gz + 0.5)) : int(ceil(gz - 0.5));
+
+    int start_z = anchor_z;
+
+    if (facade == "left")
+    {
+        start_z = anchor_z - grid_width;
+    }
+    else
+    {
+        start_z = anchor_z;
+    }
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+
+    append(remove_ids, i);
+
+    int used = 0;
+
+    while (used < grid_width)
+    {
+        int remain = grid_width - used;
+        int module_grid = 1;
+
+        if (remain >= 2)
+        {
+            module_grid = 2;
+        }
+        else
+        {
+            module_grid = 1;
+        }
+
+        append(piece_x, anchor_x);
+        append(piece_start_z, start_z + used);
+        append(piece_floor, global_floor);
+        append(piece_grid, module_grid);
+        append(piece_kind, 0);
+
+        append(piece_facade, facade);
+        append(piece_side_region, "unknown");
+
+        append(piece_floor_bottom_y, floor_bottom_y);
+        append(piece_floor_height, floor_height);
+
+        used += module_grid;
+    }
+}
+
+int piece_count = len(piece_x);
+
+if (piece_count <= 0)
+{
+    setdetailattrib(0, "side_upper_status", "no_side_upper_plain_walls", "set");
+    return;
+}
+
+
+// ===============================
+// 侧面区域分类
+//
+// left  侧面：X 等于全局最小 X = 整体最外侧
+// right 侧面：X 等于全局最大 X = 整体最外侧
+// 其他 left / right 可见侧面 = 中间突出楼体侧面
+// ===============================
+
+int global_min_side_x = piece_x[0];
+int global_max_side_x = piece_x[0];
+
+for (int i = 0; i < piece_count; i++)
+{
+    global_min_side_x = min(global_min_side_x, piece_x[i]);
+    global_max_side_x = max(global_max_side_x, piece_x[i]);
+}
+
+for (int i = 0; i < piece_count; i++)
+{
+    string region = "protruding_visible_side";
+
+    if (piece_facade[i] == "left" && piece_x[i] == global_min_side_x)
+    {
+        region = "outer_side";
+    }
+    else if (piece_facade[i] == "right" && piece_x[i] == global_max_side_x)
+    {
+        region = "outer_side";
+    }
+
+    piece_side_region[i] = region;
+}
+
+
+// ===============================
+// 找楼层范围
+// ===============================
+
+int min_floor = piece_floor[0];
+int max_floor = piece_floor[0];
+
+for (int i = 0; i < piece_count; i++)
+{
+    min_floor = min(min_floor, piece_floor[i]);
+    max_floor = max(max_floor, piece_floor[i]);
+}
+
+
+// ===============================
+// 每层 / 竖列 选择少量侧面门墙
+// ===============================
+
+int total_side_door_count = 0;
+
+if (enable_doors == 1)
+{
+    // ------------------------------------------
+    // Mode 1：Vertical Column
+    //
+    // outer_side：
+    // 选择若干侧面门列，再把这些列贯穿到所有可用高层
+    //
+    // protruding_visible_side：
+    // 不参与竖列，后面单独走 Random 逻辑
+    // ------------------------------------------
+
+    if (side_door_layout_mode == 1)
+    {
+        int column_x[];
+        int column_z[];
+        string column_facade[];
+
+        // 根据整体最外侧最大侧面 depth 计算应该生成几条门列
+        int max_side_depth_all = 0;
+
+        for (int i = 0; i < piece_count; i++)
+        {
+            if (piece_grid[i] != 2)
+            {
+                continue;
+            }
+
+            if (piece_side_region[i] != "outer_side")
+            {
+                continue;
+            }
+
+            string fa = piece_facade[i];
+            int xa = piece_x[i];
+
+            int min_z = piece_start_z[i];
+            int max_z = piece_start_z[i] + piece_grid[i];
+
+            for (int j = 0; j < piece_count; j++)
+            {
+                if (
+                    piece_facade[j] == fa &&
+                    piece_x[j] == xa &&
+                    piece_side_region[j] == "outer_side"
+                )
+                {
+                    min_z = min(min_z, piece_start_z[j]);
+                    max_z = max(max_z, piece_start_z[j] + piece_grid[j]);
+                }
+            }
+
+            int depth_grid = max_z - min_z;
+            max_side_depth_all = max(max_side_depth_all, depth_grid);
+        }
+
+        int target_column_count = 1;
+
+        if (max_side_depth_all > base_depth)
+        {
+            int extra_count = 1 + int(floor(float(max_side_depth_all - base_depth - 1) / float(extra_depth)));
+            target_column_count += extra_count;
+        }
+
+        // 候选列：只用整体最外侧 200cm slot
+        int candidate_ids[];
+
+        for (int i = 0; i < piece_count; i++)
+        {
+            if (piece_grid[i] != 2)
+            {
+                continue;
+            }
+
+            if (piece_side_region[i] != "outer_side")
+            {
+                continue;
+            }
+
+            // 只收集每个 x / z / facade 一次
+            int exists = 0;
+
+            for (int c = 0; c < len(candidate_ids); c++)
+            {
+                int old = candidate_ids[c];
+
+                if (
+                    piece_x[old] == piece_x[i] &&
+                    piece_start_z[old] == piece_start_z[i] &&
+                    piece_facade[old] == piece_facade[i]
+                )
+                {
+                    exists = 1;
+                    break;
+                }
+            }
+
+            if (exists == 0)
+            {
+                append(candidate_ids, i);
+            }
+        }
+
+        int candidate_count = len(candidate_ids);
+
+        if (candidate_count <= 0)
+        {
+            setdetailattrib(0, "side_upper_vertical_status", "no_vertical_door_candidates", "set");
+        }
+        else
+        {
+            int base_target_column_count = clamp(target_column_count, 1, candidate_count);
+
+            // side_upper_vertical_door_ratio 只在 Vertical Column 模式生效
+            // 0.0 = 保持原始门列数量
+            // 1.0 = 尽量接近所有候选列，但仍受门间距限制
+            int extra_column_count = int(ceil(float(candidate_count - base_target_column_count) * vertical_door_ratio));
+
+            target_column_count = clamp(
+                base_target_column_count + extra_column_count,
+                base_target_column_count,
+                candidate_count
+            );
+        }
+
+        int created_column_count = 0;
+        int max_attempt = max(1, candidate_count * 40);
+
+        for (int attempt = 0; attempt < max_attempt; attempt++)
+        {
+            if (created_column_count >= target_column_count)
+            {
+                break;
+            }
+
+            float rv = rand(float(side_seed) + float(attempt) * 19.37);
+            int pick = int(floor(rv * float(candidate_count)));
+            pick = clamp(pick, 0, candidate_count - 1);
+
+            int idx = candidate_ids[pick];
+
+            int test_x = piece_x[idx];
+            int test_z = piece_start_z[idx];
+            string test_facade = piece_facade[idx];
+
+            int column_ok = 1;
+
+            // 门列之间也要隔一个 200cm slot
+            for (int c = 0; c < len(column_x); c++)
+            {
+                if (
+                    column_facade[c] == test_facade &&
+                    column_x[c] == test_x
+                )
+                {
+                    int dz = abs(test_z - column_z[c]);
+
+                    if (dz < 4)
+                    {
+                        column_ok = 0;
+                        break;
+                    }
+                }
+            }
+
+            if (column_ok == 0)
+            {
+                continue;
+            }
+
+            append(column_x, test_x);
+            append(column_z, test_z);
+            append(column_facade, test_facade);
+
+            created_column_count++;
+        }
+
+        // 如果随机没选够，就按候选顺序补足
+        // 这样 side_upper_vertical_door_ratio = 1.0 时会尽量铺满门列
+        for (int fill = 0; fill < candidate_count; fill++)
+        {
+            if (created_column_count >= target_column_count)
+            {
+                break;
+            }
+
+            int idx = candidate_ids[fill];
+
+            int test_x = piece_x[idx];
+            int test_z = piece_start_z[idx];
+            string test_facade = piece_facade[idx];
+
+            int column_ok = 1;
+
+            for (int c = 0; c < len(column_x); c++)
+            {
+                if (
+                    column_facade[c] == test_facade &&
+                    column_x[c] == test_x
+                )
+                {
+                    int dz = abs(test_z - column_z[c]);
+
+                    if (dz < 4)
+                    {
+                        column_ok = 0;
+                        break;
+                    }
+                }
+            }
+
+            if (column_ok == 0)
+            {
+                continue;
+            }
+
+            append(column_x, test_x);
+            append(column_z, test_z);
+            append(column_facade, test_facade);
+
+            created_column_count++;
+        }
+
+        // 如果仍然没选到列，强制选第一列
+        if (created_column_count <= 0 && candidate_count > 0)
+        {
+            int idx = candidate_ids[0];
+
+            append(column_x, piece_x[idx]);
+            append(column_z, piece_start_z[idx]);
+            append(column_facade, piece_facade[idx]);
+
+            created_column_count = 1;
+        }
+
+        // 把选中的列应用到所有楼层
+        for (int i = 0; i < piece_count; i++)
+        {
+            if (piece_grid[i] != 2)
+            {
+                continue;
+            }
+
+            if (piece_side_region[i] != "outer_side")
+            {
+                continue;
+            }
+
+            for (int c = 0; c < len(column_x); c++)
+            {
+                if (
+                    piece_x[i] == column_x[c] &&
+                    piece_start_z[i] == column_z[c] &&
+                    piece_facade[i] == column_facade[c]
+                )
+                {
+                    piece_kind[i] = 2;
+                    total_side_door_count++;
+                    break;
+                }
+            }
+        }
+
+
+        // ===============================
+        // Vertical Column 模式下：
+        // protruding_visible_side 仍然按 Random 规则生成侧面门墙
+        // ===============================
+
+        int protruding_min_floor = 999999;
+        int protruding_max_floor = -999999;
+
+        for (int i = 0; i < piece_count; i++)
+        {
+            if (
+                piece_side_region[i] == "protruding_visible_side" &&
+                piece_grid[i] == 2 &&
+                piece_kind[i] == 0
+            )
+            {
+                protruding_min_floor = min(protruding_min_floor, piece_floor[i]);
+                protruding_max_floor = max(protruding_max_floor, piece_floor[i]);
+            }
+        }
+
+        if (protruding_min_floor <= protruding_max_floor)
+        {
+            for (int gf = protruding_min_floor; gf <= protruding_max_floor; gf++)
+            {
+                int protruding_candidate_ids[];
+
+                for (int i = 0; i < piece_count; i++)
+                {
+                    if (
+                        piece_floor[i] != gf ||
+                        piece_grid[i] != 2 ||
+                        piece_kind[i] != 0 ||
+                        piece_side_region[i] != "protruding_visible_side"
+                    )
+                    {
+                        continue;
+                    }
+
+                    append(protruding_candidate_ids, i);
+                }
+
+                int protruding_candidate_count = len(protruding_candidate_ids);
+
+                if (protruding_candidate_count <= 0)
+                {
+                    continue;
+                }
+
+                // 用候选数量近似侧面可用深度：
+                // 每个候选门位是 2 grid
+                int visible_depth_grid = protruding_candidate_count * 2;
+
+                int target_door_count = 1;
+
+                if (visible_depth_grid > base_depth)
+                {
+                    target_door_count += int(floor(float(visible_depth_grid - base_depth) / float(extra_depth)));
+                }
+
+                target_door_count = clamp(target_door_count, 1, protruding_candidate_count);
+
+                int created_for_floor = 0;
+                int max_attempt = max(1, protruding_candidate_count * 30);
+
+                for (int attempt = 0; attempt < max_attempt; attempt++)
+                {
+                    if (created_for_floor >= target_door_count)
+                    {
+                        break;
+                    }
+
+                    float rv = rand(
+                        float(side_seed) +
+                        float(gf) * 43.17 +
+                        float(attempt) * 11.91 +
+                        901.37
+                    );
+
+                    int pick = int(floor(rv * float(protruding_candidate_count)));
+                    pick = clamp(pick, 0, protruding_candidate_count - 1);
+
+                    int idx = protruding_candidate_ids[pick];
+
+                    if (piece_kind[idx] != 0)
+                    {
+                        continue;
+                    }
+
+                    int test_x = piece_x[idx];
+                    int test_z = piece_start_z[idx];
+                    string test_facade = piece_facade[idx];
+
+                    int gap_ok = 1;
+
+                    // 与同层、同侧、同 X 的其他门墙保持至少 1 个 200cm slot 间距
+                    for (int j = 0; j < piece_count; j++)
+                    {
+                        if (piece_kind[j] != 2)
+                        {
+                            continue;
+                        }
+
+                        if (
+                            piece_floor[j] == gf &&
+                            piece_x[j] == test_x &&
+                            piece_facade[j] == test_facade
+                        )
+                        {
+                            int dz = abs(test_z - piece_start_z[j]);
+
+                            if (dz < 4)
+                            {
+                                gap_ok = 0;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (gap_ok == 0)
+                    {
+                        continue;
+                    }
+
+                    piece_kind[idx] = 2;
+                    created_for_floor++;
+                    total_side_door_count++;
+                }
+
+                // 如果随机没选到，强制给突出侧面一个门
+                if (created_for_floor <= 0 && target_door_count > 0)
+                {
+                    int idx = protruding_candidate_ids[0];
+
+                    if (piece_kind[idx] == 0)
+                    {
+                        piece_kind[idx] = 2;
+                        total_side_door_count++;
+                    }
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------
+    // Mode 0：Random
+    // 所有 left / right 可见侧面都允许随机生成门墙
+    // ------------------------------------------
+
+    else
+    {
+        for (int gf = min_floor; gf <= max_floor; gf++)
+        {
+            int candidate_ids[];
+
+            for (int i = 0; i < piece_count; i++)
+            {
+                if (piece_floor[i] == gf && piece_grid[i] == 2)
+                {
+                    append(candidate_ids, i);
+                }
+            }
+
+            int candidate_count = len(candidate_ids);
+
+            if (candidate_count <= 0)
+            {
+                continue;
+            }
+
+            int max_side_depth = 0;
+
+            for (int a = 0; a < candidate_count; a++)
+            {
+                int idx_a = candidate_ids[a];
+
+                string fa = piece_facade[idx_a];
+                int xa = piece_x[idx_a];
+
+                int min_z = piece_start_z[idx_a];
+                int max_z = piece_start_z[idx_a] + piece_grid[idx_a];
+
+                for (int b = 0; b < piece_count; b++)
+                {
+                    if (
+                        piece_floor[b] == gf &&
+                        piece_facade[b] == fa &&
+                        piece_x[b] == xa
+                    )
+                    {
+                        min_z = min(min_z, piece_start_z[b]);
+                        max_z = max(max_z, piece_start_z[b] + piece_grid[b]);
+                    }
+                }
+
+                int depth_grid = max_z - min_z;
+                max_side_depth = max(max_side_depth, depth_grid);
+            }
+
+            int target_door_count = 1;
+
+            if (max_side_depth > base_depth)
+            {
+                int extra_count = 1 + int(floor(float(max_side_depth - base_depth - 1) / float(extra_depth)));
+                target_door_count += extra_count;
+            }
+
+            target_door_count = min(target_door_count, candidate_count);
+
+            int created_for_floor = 0;
+            int max_attempt = candidate_count * 40;
+
+            for (int attempt = 0; attempt < max_attempt; attempt++)
+            {
+                if (created_for_floor >= target_door_count)
+                {
+                    break;
+                }
+
+                float rv = rand(float(side_seed) + float(gf) * 101.37 + float(attempt) * 13.71);
+                int pick = int(floor(rv * float(candidate_count)));
+                pick = clamp(pick, 0, candidate_count - 1);
+
+                int idx = candidate_ids[pick];
+
+                if (piece_kind[idx] != 0)
+                {
+                    continue;
+                }
+
+                int test_z = piece_start_z[idx];
+                int test_x = piece_x[idx];
+                string test_facade = piece_facade[idx];
+
+                int gap_ok = 1;
+
+                for (int j = 0; j < piece_count; j++)
+                {
+                    if (piece_kind[j] != 2)
+                    {
+                        continue;
+                    }
+
+                    if (
+                        piece_floor[j] == gf &&
+                        piece_x[j] == test_x &&
+                        piece_facade[j] == test_facade
+                    )
+                    {
+                        int dz = abs(test_z - piece_start_z[j]);
+
+                        if (dz < 4)
+                        {
+                            gap_ok = 0;
+                            break;
+                        }
+                    }
+                }
+
+                if (gap_ok == 0)
+                {
+                    continue;
+                }
+
+                piece_kind[idx] = 2;
+                created_for_floor++;
+                total_side_door_count++;
+            }
+
+            if (created_for_floor <= 0 && target_door_count > 0)
+            {
+                int idx = candidate_ids[0];
+
+                if (piece_kind[idx] == 0)
+                {
+                    piece_kind[idx] = 2;
+                    total_side_door_count++;
+                }
+            }
+        }
+    }
+}
+
+
+// ===============================
+// 选择侧面窗墙
+// ===============================
+
+int total_side_window_count = 0;
+
+if (enable_windows == 1 && window_chance > 0.0)
+{
+    for (int i = 0; i < piece_count; i++)
+    {
+        if (piece_grid[i] != 2)
+        {
+            continue;
+        }
+
+        if (piece_kind[i] != 0)
+        {
+            continue;
+        }
+
+        int facade_bias = 0;
+
+        if (piece_facade[i] == "left")
+        {
+            facade_bias = 101;
+        }
+        else
+        {
+            facade_bias = 202;
+        }
+
+        float rv = rand(
+            float(side_seed) +
+            float(piece_floor[i]) * 37.17 +
+            float(piece_x[i]) * 19.43 +
+            float(piece_start_z[i]) * 23.89 +
+            float(facade_bias)
+        );
+
+        if (rv < window_chance)
+        {
+            piece_kind[i] = 1;
+            total_side_window_count++;
+        }
+    }
+}
+
+
+// ===============================
+// 重建侧面模块
+// ===============================
+
+int rebuilt_plain_count = 0;
+int outer_side_piece_count = 0;
+int protruding_visible_side_piece_count = 0;
+
+for (int i = 0; i < piece_count; i++)
+{
+    string source_tag = "side_upper_plain_rebuild";
+
+    if (piece_side_region[i] == "outer_side")
+    {
+        outer_side_piece_count++;
+    }
+    else if (piece_side_region[i] == "protruding_visible_side")
+    {
+        protruding_visible_side_piece_count++;
+    }
+
+    if (piece_kind[i] == 1)
+    {
+        source_tag = "side_upper_window_created";
+    }
+    else if (piece_kind[i] == 2)
+    {
+        source_tag = "side_upper_door_created";
+    }
+    else
+    {
+        rebuilt_plain_count++;
+    }
+
+    add_side_upper_module(
+        geo_id,
+        piece_x[i],
+        piece_start_z[i],
+        unit,
+        piece_floor_bottom_y[i],
+        piece_floor_height[i],
+        piece_floor[i],
+        piece_facade[i],
+        piece_grid[i],
+        piece_kind[i],
+        source_tag,
+        piece_side_region[i]
+    );
+}
+
+
+// ===============================
+// 删除原始侧面高层普通墙
+// ===============================
+
+for (int r = len(remove_ids) - 1; r >= 0; r--)
+{
+    int remove_pt = remove_ids[r];
+    removepoint(0, remove_pt);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+setdetailattrib(0, "side_upper_status", "side_upper_facade_created", "set");
+setdetailattrib(0, "side_upper_piece_count", piece_count, "set");
+setdetailattrib(0, "side_upper_window_count", total_side_window_count, "set");
+setdetailattrib(0, "side_upper_door_count", total_side_door_count, "set");
+setdetailattrib(0, "side_upper_door_layout_mode", side_door_layout_mode, "set");
+setdetailattrib(0, "side_upper_vertical_door_ratio", vertical_door_ratio, "set");
+setdetailattrib(0, "side_upper_rebuilt_plain_count", rebuilt_plain_count, "set");
+
+setdetailattrib(0, "side_upper_outer_side_piece_count", outer_side_piece_count, "set");
+setdetailattrib(0, "side_upper_protruding_visible_side_piece_count", protruding_visible_side_piece_count, "set");

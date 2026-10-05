@@ -1,0 +1,1389 @@
+[
+  {
+    "path": "01_CONTROLS",
+    "type": "null",
+    "category": "Sop",
+    "inputs": []
+  },
+  {
+    "path": "03_BUILDING_BLOCK_DATA",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "01_CONTROLS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/03_BUILDING_BLOCK_DATA.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "04_BUILDING_BLOCK_PROXY",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "03_BUILDING_BLOCK_DATA",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/04_BUILDING_BLOCK_PROXY.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "05_OCCUPANCY_GRID",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "03_BUILDING_BLOCK_DATA",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/05_OCCUPANCY_GRID.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "06_EXPOSED_EDGE_DETECTION",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "05_OCCUPANCY_GRID",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/06_EXPOSED_EDGE_DETECTION.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "07_EXPOSED_EDGE_DEBUG",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "06_EXPOSED_EDGE_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/07_EXPOSED_EDGE_DEBUG.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "08_WALL_SEGMENT_DATA",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "06_EXPOSED_EDGE_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/08_WALL_SEGMENT_DATA.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09A_GROUND_DOOR_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09C_GROUND_CORNER_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09A_GROUND_DOOR_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09B_GROUND_WINDOW_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09A_GROUND_DOOR_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09B_GROUND_WINDOW_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09C_GROUND_CORNER_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09_WALL_MODULE_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09C_GROUND_CORNER_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09D_UPPER_CORNER_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09B_GROUND_WINDOW_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09D_UPPER_CORNER_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09E_UPPER_WINDOW_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09F_UPPER_DOOR_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09E_UPPER_WINDOW_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09F_UPPER_DOOR_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09H_UPPER_CORNER_VARIANT_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09F_UPPER_DOOR_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09G_SIDE_UPPER_FACADE_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09L_UPPER_WIDE_WINDOW_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09G_SIDE_UPPER_FACADE_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09H_UPPER_CORNER_VARIANT_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09D_UPPER_CORNER_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09H_UPPER_CORNER_VARIANT_REPLACE.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "09I_GROUND_SIDE_WINDOW_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09G_SIDE_UPPER_FACADE_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09I_GROUND_SIDE_WINDOW_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09J_GROUND_SIDE_DOOR_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09I_GROUND_SIDE_WINDOW_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09J_GROUND_SIDE_DOOR_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09K_GROUND_LARGE_DOOR_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09J_GROUND_SIDE_DOOR_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09K_GROUND_LARGE_DOOR_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09L_UPPER_WIDE_WINDOW_REPLACE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09E_UPPER_WINDOW_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09L_UPPER_WIDE_WINDOW_REPLACE.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "09_WALL_MODULE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "08_WALL_SEGMENT_DATA",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/09_WALL_MODULE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "10A_NORMALIZE_INSTANCE_SCALE",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "MERGE_WALL_ROOF_BALCONY_MODULE_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/10A_NORMALIZE_INSTANCE_SCALE.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "10_WALL_MODULE_DEBUG_BOX",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09_WALL_MODULE_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/10_WALL_MODULE_DEBUG_BOX.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "11_VALIDATE_UNREAL_ATTRS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "10A_NORMALIZE_INSTANCE_SCALE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/11_VALIDATE_UNREAL_ATTRS.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "12_UNREAL_INSTANCE_OUTPUT",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "11_VALIDATE_UNREAL_ATTRS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/12_UNREAL_INSTANCE_OUTPUT.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "13_HDA_PARAMETER_PRECHECK",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "14_FINAL_UNREAL_COMPENSATION_V2",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/13_HDA_PARAMETER_PRECHECK.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "14_ASSET_COMPENSATION_TABLE_V2",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "12_UNREAL_INSTANCE_OUTPUT",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/14_ASSET_COMPENSATION_TABLE_V2.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "14_FINAL_UNREAL_COMPENSATION_V2",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "14_ASSET_COMPENSATION_TABLE_V2",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/14_FINAL_UNREAL_COMPENSATION_V2.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "15_ROOF_TOP_EXPOSED_DETECTION",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "06_EXPOSED_EDGE_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/15_ROOF_TOP_EXPOSED_DETECTION.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "16_ROOF_RECTANGLE_AREAS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "15_ROOF_TOP_EXPOSED_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/16_ROOF_RECTANGLE_AREAS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "17_ROOF_FILL_MODULE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "16_ROOF_RECTANGLE_AREAS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/17_ROOF_FILL_MODULE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "18_ROOF_EDGE_DETECTION",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "15_ROOF_TOP_EXPOSED_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/18_ROOF_EDGE_DETECTION.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "19_ROOF_EDGE_SEGMENTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "18_ROOF_EDGE_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/19_ROOF_EDGE_SEGMENTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "20_ROOF_CORNICE_EDGE_MODULE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "19_ROOF_EDGE_SEGMENTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/20_ROOF_CORNICE_EDGE_MODULE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "21_ROOF_CORNICE_CORNER_MODULE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "18_ROOF_EDGE_DETECTION",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "15_ROOF_TOP_EXPOSED_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/21_ROOF_CORNICE_CORNER_MODULE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "22_FRONT_BALCONY_ANCHOR_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/22_FRONT_BALCONY_ANCHOR_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "23_FRONT_BALCONY_PROXY_BOX",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "22_FRONT_BALCONY_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/23_FRONT_BALCONY_PROXY_BOX.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "24_FRONT_BALCONY_INSTANCE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "22_FRONT_BALCONY_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/24_FRONT_BALCONY_INSTANCE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "25_FRONT_BALCONY_PRECHECK",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "24_FRONT_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/25_FRONT_BALCONY_PRECHECK.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "26_FLOOR_BAND_BEAM_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "08_WALL_SEGMENT_DATA",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/26_FLOOR_BAND_BEAM_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "27_FLOOR_BAND_BEAM_CORNER_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "06_EXPOSED_EDGE_DETECTION",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/27_FLOOR_BAND_BEAM_CORNER_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "28_SIDE_BALCONY_ANCHOR_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/28_SIDE_BALCONY_ANCHOR_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "29_SIDE_BALCONY_PROXY_BOX",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "28_SIDE_BALCONY_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/29_SIDE_BALCONY_PROXY_BOX.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "30_SIDE_BALCONY_INSTANCE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "28_SIDE_BALCONY_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/30_SIDE_BALCONY_INSTANCE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "31_SIDE_BALCONY_STAIR_01_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "30_SIDE_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/31_SIDE_BALCONY_STAIR_01_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "32_SIDE_BALCONY_STAIR_02_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "30_SIDE_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/32_SIDE_BALCONY_STAIR_02_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "33_AC_WALL_ANCHOR_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "MERGE_AC_BLOCKERS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/33_AC_WALL_ANCHOR_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "33_AC_WALL_ANCHOR_POINTS/attribvop1",
+    "type": "attribwranglecore",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "MERGE_AC_BLOCKERS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 2,
+        "source": null,
+        "source_output_index": 0,
+        "subnet_input_index": 2
+      },
+      {
+        "input_index": 3,
+        "source": null,
+        "source_output_index": 0,
+        "subnet_input_index": 3
+      }
+    ]
+  },
+  {
+    "path": "34_AC_BALCONY_INSTANCE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "MERGE_AC_BALCONY_SOURCES",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/34_AC_BALCONY_INSTANCE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "35_WINDOW_SILL_PLANT_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "33_AC_WALL_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/35_WINDOW_SILL_PLANT_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "36_BALCONY_PLANT_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "MERGE_BALCONY_PLANT_SOURCES",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/36_BALCONY_PLANT_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "37_ROOF_PROP_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "16_ROOF_RECTANGLE_AREAS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/37_ROOF_PROP_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "38_PIPE_ANCHOR_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/38_PIPE_ANCHOR_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "39_PIPE_STRAIGHT_TUBE_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "38_PIPE_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/39_PIPE_STRAIGHT_TUBE_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "40_PIPE_CONNECTOR_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "38_PIPE_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/40_PIPE_CONNECTOR_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "41_PIPE_FASTENING_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "38_PIPE_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/41_PIPE_FASTENING_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "42_PIPE_CAP_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "38_PIPE_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/42_PIPE_CAP_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "43_PIPE_BOTTOM_ELBOW_POINTS",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "38_PIPE_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/43_PIPE_BOTTOM_ELBOW_POINTS.vfl",
+    "run_over": {
+      "value": 0,
+      "label": "detail"
+    }
+  },
+  {
+    "path": "44_WHITEBOX_BUILDING_MESH",
+    "type": "attribwrangle",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "03_BUILDING_BLOCK_DATA",
+        "source_output_index": 0
+      }
+    ],
+    "vex_file": "vex/44_WHITEBOX_BUILDING_MESH.vfl",
+    "run_over": {
+      "value": 2,
+      "label": "point"
+    }
+  },
+  {
+    "path": "MERGE_AC_BALCONY_SOURCES",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "25_FRONT_BALCONY_PRECHECK",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "30_SIDE_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "MERGE_AC_BLOCKERS",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "25_FRONT_BALCONY_PRECHECK",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "30_SIDE_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 2,
+        "source": "31_SIDE_BALCONY_STAIR_01_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 3,
+        "source": "32_SIDE_BALCONY_STAIR_02_POINTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "MERGE_BALCONY_PLANT_SOURCES",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "30_SIDE_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "25_FRONT_BALCONY_PRECHECK",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "MERGE_DEBUG_WALL_AND_FRONT_BALCONY",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "10_WALL_MODULE_DEBUG_BOX",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "23_FRONT_BALCONY_PROXY_BOX",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 2,
+        "source": "29_SIDE_BALCONY_PROXY_BOX",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "MERGE_OUTPUT_WITH_PIPE",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "13_HDA_PARAMETER_PRECHECK",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "MERGE_WALL_AND_ROOF_MODULE_POINTS",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "09K_GROUND_LARGE_DOOR_REPLACE",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "17_ROOF_FILL_MODULE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 2,
+        "source": "20_ROOF_CORNICE_EDGE_MODULE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 3,
+        "source": "21_ROOF_CORNICE_CORNER_MODULE_POINTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "MERGE_WALL_ROOF_BALCONY_MODULE_POINTS",
+    "type": "merge",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "33_AC_WALL_ANCHOR_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "17_ROOF_FILL_MODULE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 2,
+        "source": "20_ROOF_CORNICE_EDGE_MODULE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 3,
+        "source": "21_ROOF_CORNICE_CORNER_MODULE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 4,
+        "source": "25_FRONT_BALCONY_PRECHECK",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 5,
+        "source": "26_FLOOR_BAND_BEAM_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 6,
+        "source": "27_FLOOR_BAND_BEAM_CORNER_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 7,
+        "source": "30_SIDE_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 8,
+        "source": "32_SIDE_BALCONY_STAIR_02_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 9,
+        "source": "31_SIDE_BALCONY_STAIR_01_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 10,
+        "source": "34_AC_BALCONY_INSTANCE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 11,
+        "source": "35_WINDOW_SILL_PLANT_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 12,
+        "source": "36_BALCONY_PLANT_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 13,
+        "source": "37_ROOF_PROP_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 14,
+        "source": "39_PIPE_STRAIGHT_TUBE_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 15,
+        "source": "40_PIPE_CONNECTOR_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 16,
+        "source": "41_PIPE_FASTENING_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 17,
+        "source": "42_PIPE_CAP_POINTS",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 18,
+        "source": "43_PIPE_BOTTOM_ELBOW_POINTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_DEBUG_FRONT_BALCONY_PROXY",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "MERGE_DEBUG_WALL_AND_FRONT_BALCONY",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_DEBUG_WALL_ROOF_BALCONY_POINTS",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "MERGE_WALL_ROOF_BALCONY_MODULE_POINTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_EDGE_DEBUG",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "07_EXPOSED_EDGE_DEBUG",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_MODULE_POINTS",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "switch1",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_PIPE_ANCHOR_DEBUG",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "38_PIPE_ANCHOR_POINTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_ROOF_EDGE_DEBUG",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "18_ROOF_EDGE_DETECTION",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_ROOF_EDGE_SEGMENTS",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "19_ROOF_EDGE_SEGMENTS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_ROOF_RECTANGLES",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "16_ROOF_RECTANGLE_AREAS",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_ROOF_TOP_EXPOSED",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "15_ROOF_TOP_EXPOSED_DETECTION",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_WALL_MODULE_DEBUG",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "10_WALL_MODULE_DEBUG_BOX",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "OUT_WALL_SEGMENTS",
+    "type": "null",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "08_WALL_SEGMENT_DATA",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "facet1",
+    "type": "facet",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "44_WHITEBOX_BUILDING_MESH",
+        "source_output_index": 0
+      }
+    ]
+  },
+  {
+    "path": "switch1",
+    "type": "switch",
+    "category": "Sop",
+    "inputs": [
+      {
+        "input_index": 0,
+        "source": "13_HDA_PARAMETER_PRECHECK",
+        "source_output_index": 0
+      },
+      {
+        "input_index": 1,
+        "source": "facet1",
+        "source_output_index": 0
+      }
+    ]
+  }
+]

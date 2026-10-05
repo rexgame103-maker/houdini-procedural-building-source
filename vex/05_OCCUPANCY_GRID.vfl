@@ -1,0 +1,119 @@
+// ==========================================
+// 05_OCCUPANCY_GRID
+// V2：把楼体块转换成每层、每格的占用点
+// 每个点 = 一个 100cm x 100cm 的占用格
+// 修正版：不使用自定义函数，避免 VEX 函数解析报错
+// ==========================================
+
+float ground_h = chf("../ground_floor_height");
+float upper_h  = chf("../upper_floor_height");
+float unit = chf("../grid_unit");
+
+int src_count = npoints(0);
+
+
+// ===============================
+// 遍历每一个楼体块
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    int block_id = point(0, "block_id", i);
+
+    int min_x = point(0, "min_x_grid", i);
+    int max_x = point(0, "max_x_grid", i);
+
+    int min_z = point(0, "min_z_grid", i);
+    int max_z = point(0, "max_z_grid", i);
+
+    int block_floor_count = point(0, "floor_count", i);
+
+    float block_bottom_y = point(0, "bottom_y", i);
+
+    // ===============================
+    // 根据 block_bottom_y 推算全局楼层编号
+    // ===============================
+
+    int start_floor = 0;
+
+    if (block_bottom_y <= 0.001)
+    {
+        start_floor = 0;
+    }
+    else
+    {
+        // 不使用 round()，改用 floor(x + 0.5)
+        start_floor = 1 + int(floor(((block_bottom_y - ground_h) / upper_h) + 0.5));
+    }
+
+
+    // ===============================
+    // 遍历该体块的每一层
+    // ===============================
+
+    for (int local_floor = 0; local_floor < block_floor_count; local_floor++)
+    {
+        int global_floor = start_floor + local_floor;
+
+        float floor_bottom_y;
+        float floor_height;
+
+        if (global_floor <= 0)
+        {
+            floor_bottom_y = 0.0;
+            floor_height = ground_h;
+        }
+        else
+        {
+            floor_bottom_y = ground_h + float(global_floor - 1) * upper_h;
+            floor_height = upper_h;
+        }
+
+        float floor_top_y = floor_bottom_y + floor_height;
+
+
+        // ===============================
+        // 遍历该楼层占用的每一个 100cm 网格
+        // ===============================
+
+        for (int x = min_x; x < max_x; x++)
+        {
+            for (int z = min_z; z < max_z; z++)
+            {
+                vector pos = set(
+                    (float(x) + 0.5) * unit,
+                    floor_bottom_y,
+                    (float(z) + 0.5) * unit
+                );
+
+                int pt = addpoint(0, pos);
+
+                setpointattrib(0, "cell_type", pt, "occupied", "set");
+
+                setpointattrib(0, "source_block_id", pt, block_id, "set");
+
+                setpointattrib(0, "local_floor", pt, local_floor, "set");
+                setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+                setpointattrib(0, "cell_x", pt, x, "set");
+                setpointattrib(0, "cell_z", pt, z, "set");
+
+                setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+                setpointattrib(0, "floor_height", pt, floor_height, "set");
+                setpointattrib(0, "floor_top_y", pt, floor_top_y, "set");
+
+                setpointattrib(0, "grid_unit", pt, unit, "set");
+            }
+        }
+    }
+}
+
+
+// ===============================
+// 删除原始 block 数据点，只保留 occupancy cell 点
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}

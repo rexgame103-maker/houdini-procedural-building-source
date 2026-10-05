@@ -1,0 +1,138 @@
+// ==========================================
+// 43_PIPE_BOTTOM_ELBOW_POINTS
+// V2.6A：生成底部弯头
+//
+// 资产：
+// SM_Drains_01_Tube_02
+//
+// 规则：
+// 1. 基于 pipe_anchor 生成
+// 2. 每条竖管底部生成 1 个弯头
+// 3. 弯头根据 facade 自动给基础 Y 旋转
+// 4. 额外提供 X / Y / Z 偏移和旋转微调
+// ==========================================
+
+int enable = chi("../enable_pipe_bottom_elbow");
+
+string elbow_asset = "SM_Drains_01_Tube_02";
+string elbow_path  = "/Game/CityStreetStylizedPack/Environment/Props/Drains_01/SM_Drains_01_Tube_02.SM_Drains_01_Tube_02";
+
+float offset_x = chf("../pipe_bottom_elbow_offset_x_cm") / 100.0;
+float offset_y = chf("../pipe_bottom_elbow_offset_y_cm") / 100.0;
+float offset_z = chf("../pipe_bottom_elbow_offset_z_cm") / 100.0;
+
+float rot_x = chf("../pipe_bottom_elbow_rot_x");
+float rot_y = chf("../pipe_bottom_elbow_rot_y");
+float rot_z = chf("../pipe_bottom_elbow_rot_z");
+
+float base_rot_y_front = chf("../pipe_bottom_elbow_front_base_rot_y");
+float base_rot_y_back  = chf("../pipe_bottom_elbow_back_base_rot_y");
+float base_rot_y_left  = chf("../pipe_bottom_elbow_left_base_rot_y");
+float base_rot_y_right = chf("../pipe_bottom_elbow_right_base_rot_y");
+
+int src_count = npoints(0);
+int elbow_count = 0;
+
+if (enable == 1)
+{
+    for (int i = 0; i < src_count; i++)
+    {
+        string module_type = point(0, "module_type", i);
+
+        if (module_type != "pipe_anchor")
+        {
+            continue;
+        }
+
+        vector anchor_pos = point(0, "P", i);
+
+        int segment_count = point(0, "pipe_segment_count", i);
+        segment_count = max(1, segment_count);
+
+        string facade = point(0, "pipe_facade", i);
+
+        vector wall_normal = point(0, "pipe_wall_normal", i);
+        vector wall_tangent = point(0, "pipe_wall_tangent", i);
+
+        // 弯头默认放在竖管最底部
+        vector pos = anchor_pos;
+        pos += set(offset_x, offset_y, offset_z);
+
+        int pt = addpoint(0, pos);
+
+        setpointattrib(0, "asset_id", pt, elbow_asset, "set");
+        setpointattrib(0, "module_type", pt, "pipe_bottom_elbow", "set");
+        setpointattrib(0, "unreal_instance", pt, elbow_path, "set");
+
+        setpointattrib(0, "facade", pt, facade, "set");
+        setpointattrib(0, "pipe_facade", pt, facade, "set");
+
+        setpointattrib(0, "pipe_run_id", pt, i, "set");
+        setpointattrib(0, "pipe_segment_count", pt, segment_count, "set");
+
+        setpointattrib(0, "pipe_wall_normal", pt, wall_normal, "set");
+        setpointattrib(0, "pipe_wall_tangent", pt, wall_tangent, "set");
+
+        setpointattrib(0, "width_cm", pt, 50.0, "set");
+        setpointattrib(0, "depth_cm", pt, 40.0, "set");
+        setpointattrib(0, "height_cm", pt, 50.0, "set");
+        setpointattrib(0, "thickness_cm", pt, 40.0, "set");
+
+        setpointattrib(0, "grid_width", pt, 1, "set");
+        setpointattrib(0, "grid_depth", pt, 1, "set");
+
+        // ===============================
+        // 根据墙面自动决定弯头基础朝向
+        // ===============================
+
+        float facade_base_y = 0.0;
+
+        if (facade == "front")
+        {
+            facade_base_y = base_rot_y_front;
+        }
+        else if (facade == "back")
+        {
+            facade_base_y = base_rot_y_back;
+        }
+        else if (facade == "left")
+        {
+            facade_base_y = base_rot_y_left;
+        }
+        else if (facade == "right")
+        {
+            facade_base_y = base_rot_y_right;
+        }
+
+        float final_rot_y = facade_base_y + rot_y;
+
+        vector4 qx = quaternion(radians(rot_x), set(1, 0, 0));
+        vector4 qy = quaternion(radians(final_rot_y), set(0, 1, 0));
+        vector4 qz = quaternion(radians(rot_z), set(0, 0, 1));
+
+        vector4 q = qy * qx * qz;
+
+        setpointattrib(0, "orient", pt, q, "set");
+        setpointattrib(0, "rot_y_deg", pt, final_rot_y, "set");
+
+        setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+        setpointattrib(0, "pscale", pt, 1.0, "set");
+
+        setpointattrib(0, "asset_table_found", pt, 1, "set");
+        setpointattrib(0, "asset_table_status", pt, "pipe_manual", "set");
+        setpointattrib(0, "table_module_type", pt, "pipe_bottom_elbow", "set");
+        setpointattrib(0, "table_unreal_asset_path", pt, elbow_path, "set");
+
+        setpointattrib(0, "Cd", pt, set(0.2, 1.0, 0.2), "set");
+
+        elbow_count++;
+    }
+}
+
+// 删除输入 anchor，只保留 elbow 点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "pipe_bottom_elbow_count", elbow_count, "set");

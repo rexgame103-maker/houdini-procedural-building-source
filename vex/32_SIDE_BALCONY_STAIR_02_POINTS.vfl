@@ -1,0 +1,236 @@
+// ==========================================
+// 32_SIDE_BALCONY_STAIR_02_POINTS
+// V2.1D：侧面 Balcony_03 挂梯生成
+//
+// 输入：30_SIDE_BALCONY_INSTANCE_POINTS
+// 输出：BalconyStairs_02 实例点
+//
+// 规则：
+// 1. 只基于 is_side_stair_balcony = 1 的 Balcony_03
+// 2. 只处理 outer_side
+// 3. 挂梯生成点 = 三楼 Balcony_03 的生成点
+// 4. 一楼 = global_floor 0
+//    二楼 = global_floor 1
+//    三楼 = global_floor 2
+// 5. rot_y / orient 继承三楼 Balcony_03
+// ==========================================
+
+
+function int round_grid(const float v)
+{
+    if (v >= 0)
+    {
+        return int(floor(v + 0.5));
+    }
+
+    return int(ceil(v - 0.5));
+}
+
+
+function string make_ladder_column_key(
+    const int geo;
+    const int pt;
+    const float unit)
+{
+    string facade = point(geo, "facade", pt);
+    vector P = point(geo, "P", pt);
+
+    // 乘 2 是为了兼容 0.5 格中心点
+    int x2 = round_grid((P.x / unit) * 2.0);
+    int z2 = round_grid((P.z / unit) * 2.0);
+
+    return sprintf("%s_%d_%d", facade, x2, z2);
+}
+
+
+// ===============================
+// 参数
+// ===============================
+
+int enable_side_balcony_stairs = chi("../enable_side_balcony_stairs");
+int side_upper_door_layout_mode = chi("../side_upper_door_layout_mode");
+
+float unit = chf("../grid_unit");
+
+int src_count = npoints(0);
+
+if (enable_side_balcony_stairs == 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "side_balcony_stair02_status", "disabled", "set");
+    return;
+}
+
+if (side_upper_door_layout_mode != 1)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "side_balcony_stair02_status", "not_vertical_column_mode", "set");
+    return;
+}
+
+
+// ===============================
+// 收集 Balcony_03 候选
+// ===============================
+
+int candidate_ids[];
+string candidate_keys[];
+int candidate_floors[];
+
+for (int i = 0; i < src_count; i++)
+{
+    string asset_id = point(0, "asset_id", i);
+    string module_type = point(0, "module_type", i);
+    string side_region = point(0, "side_upper_region", i);
+
+    int is_side_stair_balcony = point(0, "is_side_stair_balcony", i);
+
+    if (
+        module_type != "side_balcony" ||
+        asset_id != "SM_Building_01_Balcony_03" ||
+        is_side_stair_balcony != 1 ||
+        side_region != "outer_side"
+    )
+    {
+        continue;
+    }
+
+    int global_floor = point(0, "global_floor", i);
+    string key = make_ladder_column_key(0, i, unit);
+
+    append(candidate_ids, i);
+    append(candidate_keys, key);
+    append(candidate_floors, global_floor);
+}
+
+int candidate_count = len(candidate_ids);
+
+if (candidate_count <= 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "side_balcony_stair02_status", "no_balcony03_candidates", "set");
+    return;
+}
+
+
+// ===============================
+// 每条 Balcony_03 竖列只在三楼生成一个挂梯
+// global_floor = 2
+// ===============================
+
+int created_count = 0;
+string created_keys[];
+
+for (int c = 0; c < candidate_count; c++)
+{
+    int src_pt = candidate_ids[c];
+
+    string key = candidate_keys[c];
+    int gf = candidate_floors[c];
+
+    // 三楼，包含底层一楼计算
+    if (gf != 2)
+    {
+        continue;
+    }
+
+    // 同一列只生成一次挂梯
+    int already_created = 0;
+
+    for (int k = 0; k < len(created_keys); k++)
+    {
+        if (created_keys[k] == key)
+        {
+            already_created = 1;
+            break;
+        }
+    }
+
+    if (already_created == 1)
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", src_pt);
+
+    string facade = point(0, "facade", src_pt);
+
+    float rot_y = point(0, "rot_y_deg", src_pt);
+    vector4 orient = point(0, "orient", src_pt);
+
+    float floor_bottom_y = point(0, "floor_bottom_y", src_pt);
+    float floor_height = point(0, "floor_height", src_pt);
+
+    int local_floor_in_region = point(0, "local_floor_in_region", src_pt);
+    int visible_floor_count = point(0, "visible_floor_count", src_pt);
+    int outer_building_floor_count = point(0, "outer_building_floor_count", src_pt);
+
+    string stair_asset = "SM_Building_01_BalconyStairs_02";
+    string stair_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_BalconyStairs_02.SM_Building_01_BalconyStairs_02";
+
+    int pt = addpoint(0, P);
+
+    setpointattrib(0, "asset_id", pt, stair_asset, "set");
+    setpointattrib(0, "module_type", pt, "side_balcony_stair_02", "set");
+    setpointattrib(0, "unreal_instance", pt, stair_path, "set");
+
+    setpointattrib(0, "facade", pt, facade, "set");
+    setpointattrib(0, "global_floor", pt, gf, "set");
+
+    setpointattrib(0, "side_upper_region", pt, "outer_side", "set");
+    setpointattrib(0, "side_balcony_stair_type", pt, "stair_02_ladder", "set");
+    setpointattrib(0, "side_balcony_stair_rule", pt, "balcony03_third_floor_ladder", "set");
+    setpointattrib(0, "side_balcony_stair_column_key", pt, key, "set");
+
+    setpointattrib(0, "source_balcony_asset", pt, "SM_Building_01_Balcony_03", "set");
+    setpointattrib(0, "source_balcony_point", pt, src_pt, "set");
+
+    setpointattrib(0, "visible_floor_count", pt, visible_floor_count, "set");
+    setpointattrib(0, "local_floor_in_region", pt, local_floor_in_region, "set");
+    setpointattrib(0, "outer_building_floor_count", pt, outer_building_floor_count, "set");
+
+    // 暂时写入近似尺寸，真实显示主要依赖 unreal_instance / P / orient
+    setpointattrib(0, "width_cm", pt, 120.0, "set");
+    setpointattrib(0, "depth_cm", pt, 80.0, "set");
+    setpointattrib(0, "height_cm", pt, 300.0, "set");
+    setpointattrib(0, "thickness_cm", pt, 0.0, "set");
+
+    setpointattrib(0, "grid_width", pt, 0, "set");
+    setpointattrib(0, "grid_depth", pt, 0, "set");
+
+    setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(0, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(0, "pivot_type", pt, "same_as_balcony03_third_floor", "set");
+
+    setpointattrib(0, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(0, "orient", pt, orient, "set");
+    setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+    append(created_keys, key);
+    created_count++;
+}
+
+
+// 删除原始阳台点，只保留挂梯点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+
+setdetailattrib(0, "side_balcony_stair02_status", "side_balcony_stair02_created", "set");
+setdetailattrib(0, "side_balcony_stair02_candidate_count", candidate_count, "set");
+setdetailattrib(0, "side_balcony_stair02_created_count", created_count, "set");

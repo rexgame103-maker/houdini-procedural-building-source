@@ -1,0 +1,291 @@
+// ==========================================
+// 36_BALCONY_PLANT_POINTS
+// V2.4B：阳台外侧长条盆栽
+//
+// 当前规则：
+// 1. 只基于 30_SIDE_BALCONY_INSTANCE_POINTS
+// 2. 只处理 module_type = side_balcony
+// 3. 只处理 asset_id = SM_Building_01_Balcony_01
+// 4. 不处理 Balcony_02
+// 5. 不处理 Balcony_03
+// 6. 不处理 BalconyStairs
+// 7. 生成在 Balcony_01 外侧栏杆方向
+// 8. 本节点是挂件支线，最后删除输入阳台点，只保留盆栽点
+// ==========================================
+
+
+int src_count = npoints(0);
+int plant_count = 0;
+
+
+// ===============================
+// 阳台盆栽资产
+// ===============================
+
+string plant_assets[] = array(
+    "SM_PottedPlants_01_BalconyPlant_01",
+    "SM_PottedPlants_01_BalconyPlant_02"
+);
+
+string plant_paths[] = array(
+    "/Game/CityStreetStylizedPack/Environment/Props/PottedPlants_01/SM_PottedPlants_01_BalconyPlant_01.SM_PottedPlants_01_BalconyPlant_01",
+    "/Game/CityStreetStylizedPack/Environment/Props/PottedPlants_01/SM_PottedPlants_01_BalconyPlant_02.SM_PottedPlants_01_BalconyPlant_02"
+);
+
+
+// ===============================
+// HDA 参数
+// ===============================
+
+int enable_plants = chi("../enable_balcony_plants");
+
+float plant_chance = clamp(
+    chf("../balcony_plant_chance"),
+    0.0,
+    1.0
+);
+
+int plant_seed = chi("../balcony_plant_seed");
+
+float forward_offset = chf("../balcony_plant_forward_offset_cm") / 100.0;
+float side_offset = chf("../balcony_plant_side_offset_cm") / 100.0;
+float y_offset = chf("../balcony_plant_y_offset_cm") / 100.0;
+
+float rot_offset_y = chf("../balcony_plant_rotation_offset_y");
+
+
+// ===============================
+// 如果关闭，则本支线不输出任何点
+// ===============================
+
+if (enable_plants == 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "balcony_plant_status", "disabled", "set");
+    setdetailattrib(0, "balcony_plant_count", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 遍历输入阳台点
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    string asset_id = point(0, "asset_id", i);
+    string module_type = point(0, "module_type", i);
+    string facade = point(0, "facade", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    // 只处理 Balcony_01
+    // 正面阳台和侧面阳台都可以，只要资产是 Balcony_01
+    if (asset_id != "SM_Building_01_Balcony_01")
+    {
+        continue;
+    }
+    
+    // 不处理楼梯，也不处理非阳台挂件
+    if (
+        module_type != "front_balcony" &&
+        module_type != "side_balcony"
+    )
+    {
+        continue;
+    }
+    
+    // 只处理 front / left / right
+    // 不处理 back
+    if (
+        facade != "front" &&
+        facade != "left" &&
+        facade != "right"
+    )
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 概率控制
+    // ===============================
+
+    float r_spawn = rand(
+        float(plant_seed) +
+        float(i) * 17.371
+    );
+
+    if (r_spawn > plant_chance)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 读取阳台基础信息
+    // ===============================
+
+    vector base_pos = point(0, "P", i);
+
+    float rot_y = point(0, "rot_y_deg", i);
+
+    float depth_cm = point(0, "depth_cm", i);
+    float width_cm = point(0, "width_cm", i);
+    float height_cm = point(0, "height_cm", i);
+
+    // 如果阳台点没有尺寸，使用当前 Balcony_01 的近似默认尺寸兜底
+    float balcony_depth = 3.0;
+    float balcony_width = 2.87;
+
+    if (depth_cm > 0.0)
+    {
+        balcony_depth = depth_cm / 100.0;
+    }
+
+    if (width_cm > 0.0)
+    {
+        balcony_width = width_cm / 100.0;
+    }
+
+
+    // ===============================
+    // 根据侧面计算方向
+    //
+    // outward = 阳台从墙面向外伸出的方向
+    // side    = 沿阳台栏杆左右方向
+    // ===============================
+
+    vector outward = set(0, 0, -1);
+    vector side = set(1, 0, 0);
+    
+    if (facade == "front")
+    {
+        outward = set(0, 0, -1);
+        side = set(1, 0, 0);
+    }
+    else if (facade == "right")
+    {
+        outward = set(1, 0, 0);
+        side = set(0, 0, 1);
+    }
+    else if (facade == "left")
+    {
+        outward = set(-1, 0, 0);
+        side = set(0, 0, -1);
+    }
+
+
+    // ===============================
+    // 计算最终位置
+    //
+    // 30_SIDE_BALCONY_INSTANCE_POINTS 的阳台点在墙面挂点附近。
+    // 因此要先沿 outward 推到阳台外侧栏杆，
+    // 再用 forward_offset 做微调。
+    // ===============================
+
+    vector plant_pos = base_pos;
+
+    // 推到外侧栏杆方向
+    plant_pos += outward * balcony_depth;
+
+    // 继续沿外侧方向做可调偏移
+    plant_pos += outward * forward_offset;
+
+    // 沿栏杆左右方向微调
+    plant_pos += side * side_offset;
+
+    // 高度微调
+    plant_pos.y += y_offset;
+
+
+    // ===============================
+    // 盆栽资产随机
+    // ===============================
+
+    float r_variant = rand(
+        float(plant_seed) +
+        float(i) * 29.917
+    );
+
+    int variant_index = int(floor(r_variant * 2.0));
+    variant_index = clamp(variant_index, 0, 1);
+
+    string plant_asset = plant_assets[variant_index];
+    string plant_path = plant_paths[variant_index];
+
+
+    // ===============================
+    // 旋转
+    // ===============================
+
+    float plant_rot_y = rot_y + rot_offset_y;
+    vector4 plant_orient = quaternion(
+        radians(plant_rot_y),
+        set(0, 1, 0)
+    );
+
+
+    // ===============================
+    // 创建盆栽点
+    // ===============================
+
+    int pt = addpoint(0, plant_pos);
+
+    setpointattrib(0, "asset_id", pt, plant_asset, "set");
+    setpointattrib(0, "module_type", pt, "balcony_hanging_plant", "set");
+    setpointattrib(0, "unreal_instance", pt, plant_path, "set");
+
+    setpointattrib(0, "facade", pt, facade, "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "source_balcony_pt", pt, i, "set");
+    setpointattrib(0, "source_balcony_asset_id", pt, asset_id, "set");
+
+    setpointattrib(0, "is_balcony_plant", pt, 1, "set");
+    setpointattrib(0, "balcony_plant_variant_index", pt, variant_index, "set");
+
+    // 资产近似尺寸：宽 157，高 52，深 51
+    // 这里只用于检查，不缩放真实资产
+    setpointattrib(0, "width_cm", pt, 157.0, "set");
+    setpointattrib(0, "height_cm", pt, 52.0, "set");
+    setpointattrib(0, "depth_cm", pt, 51.0, "set");
+    setpointattrib(0, "thickness_cm", pt, 0.0, "set");
+
+    setpointattrib(0, "rot_y_deg", pt, plant_rot_y, "set");
+    setpointattrib(0, "orient", pt, plant_orient, "set");
+    setpointattrib(0, "scale", pt, set(1.0, 1.0, 1.0), "set");
+
+    plant_count++;
+}
+
+
+// ===============================
+// 删除输入阳台点
+// 本节点是挂件输出支线，只保留阳台盆栽点
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+setdetailattrib(0, "balcony_plant_count", plant_count, "set");
+
+if (plant_count > 0)
+{
+    setdetailattrib(0, "balcony_plant_status", "created", "set");
+}
+else
+{
+    setdetailattrib(0, "balcony_plant_status", "no_plant_created", "set");
+}

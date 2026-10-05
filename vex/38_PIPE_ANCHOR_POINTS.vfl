@@ -1,0 +1,451 @@
+// ==========================================
+// 38_PIPE_ANCHOR_POINTS
+// V2.6A：竖直管道挂点生成
+//
+// 作用：
+// 1. 从墙体模块中筛选可放管道的位置
+// 2. 只输出 pipe_anchor 点
+// 3. 不生成真实管道资产
+// ==========================================
+
+
+// 判断 facade 是否允许生成管道
+function int pipe_facade_allowed(const string f; const int mode)
+{
+    // 0 = Left / Right / Back
+    if (mode == 0)
+    {
+        return f == "left" || f == "right" || f == "back";
+    }
+
+    // 1 = Left / Right Only
+    if (mode == 1)
+    {
+        return f == "left" || f == "right";
+    }
+
+    // 2 = Back Only
+    if (mode == 2)
+    {
+        return f == "back";
+    }
+
+    // 3 = Front / Left / Right / Back
+    if (mode == 3)
+    {
+        return f == "front" || f == "left" || f == "right" || f == "back";
+    }
+
+    // 4 = Front Only
+    if (mode == 4)
+    {
+        return f == "front";
+    }
+
+    return 0;
+}
+
+
+// 根据 facade 获取墙面外法线
+function vector get_wall_normal(const string f)
+{
+    if (f == "front") return set(0, 0, -1);
+    if (f == "back")  return set(0, 0,  1);
+    if (f == "left")  return set(-1, 0, 0);
+    if (f == "right") return set( 1, 0, 0);
+
+    return set(0, 0, 0);
+}
+
+
+// 根据 facade 获取墙段延伸方向
+function vector get_wall_tangent(const string f)
+{
+    if (f == "front" || f == "back")
+    {
+        return set(1, 0, 0);
+    }
+
+    if (f == "left" || f == "right")
+    {
+        return set(0, 0, 1);
+    }
+
+    return set(1, 0, 0);
+}
+
+
+// ===============================
+// 读取参数
+// ===============================
+
+int enable = chi("../enable_vertical_pipes");
+
+int pipe_seed = chi("../pipe_seed");
+float pipe_chance = clamp(chf("../pipe_chance"), 0.0, 1.0);
+int pipe_max_count = max(0, chi("../pipe_max_count"));
+
+int facade_mode = chi("../pipe_facade_mode");
+
+int count_mode = chi("../pipe_segment_count_mode");
+int fixed_count = max(1, chi("../pipe_segment_count"));
+int min_count = max(1, chi("../pipe_segment_min_count"));
+int max_count = max(min_count, chi("../pipe_segment_max_count"));
+
+float wall_offset_m = chf("../pipe_wall_offset_cm") / 100.0;
+float start_y_offset_m = chf("../pipe_start_y_offset_cm") / 100.0;
+float along_wall_offset_m = chf("../pipe_along_wall_offset_cm") / 100.0;
+
+float corner_margin_m = chf("../pipe_corner_margin_cm") / 100.0;
+float pipe_min_spacing_m = chf("../pipe_min_spacing_cm") / 100.0;
+
+
+// ===============================
+// 遍历输入墙体点
+// ===============================
+
+int src_count = npoints(0);
+int placed_count = 0;
+vector placed_pipe_pos[];
+string placed_pipe_facade[];
+
+if (enable == 1 && pipe_max_count > 0)
+{
+    for (int i = 0; i < src_count; i++)
+    {
+        string module_type = "";
+        if (haspointattrib(0, "module_type"))
+        {
+            module_type = point(0, "module_type", i);
+        }
+
+        string facade = "";
+        if (haspointattrib(0, "facade"))
+        {
+            facade = point(0, "facade", i);
+        }
+        
+        // ===============================
+        // 当前候选墙体所在楼层
+        // 用于转角避让
+        // ===============================
+        
+        int pipe_source_floor = -1;
+        
+        if (haspointattrib(0, "global_floor"))
+        {
+            pipe_source_floor = point(0, "global_floor", i);
+        }
+        else if (haspointattrib(0, "floor_index"))
+        {
+            pipe_source_floor = point(0, "floor_index", i);
+        }
+
+        // 第一版只从普通墙上生成管道
+        // 不从门墙、窗墙、转角、屋顶、阳台、空调、植物上生成
+        if (find(module_type, "plain_wall") < 0)
+        {
+            continue;
+        }
+
+        if (pipe_facade_allowed(facade, facade_mode) == 0)
+        {
+            continue;
+        }
+
+        // 概率控制
+        float r = rand(pipe_seed + i * 17.371);
+        if (r > pipe_chance)
+        {
+            continue;
+        }
+
+        if (placed_count >= pipe_max_count)
+        {
+            break;
+        }
+
+        vector src_pos = point(0, "P", i);
+
+        float width_cm = 100.0;
+        if (haspointattrib(0, "width_cm"))
+        {
+            width_cm = point(0, "width_cm", i);
+        }
+
+        if (width_cm <= 0.0)
+        {
+            width_cm = 100.0;
+        }
+        
+        // ===============================
+        // 提前读取楼层，用于转角避让判断
+        // ===============================
+        
+        
+
+        vector n = get_wall_normal(facade);
+        vector t = get_wall_tangent(facade);
+
+        // 把挂点移动到当前墙模块中间
+        vector wall_pos = src_pos + t * ((width_cm / 100.0) * 0.5);
+        
+        // 沿墙面方向平移
+        wall_pos += t * along_wall_offset_m;
+        
+        // 最终管道中心线位置
+        vector pos = wall_pos + n * wall_offset_m;
+        
+        
+        
+        // ===============================
+        // 转角避让：离转角太近的候选点不生成管道
+        // ===============================
+        
+        int too_close_to_corner = 0;
+        
+        for (int c = 0; c < src_count; c++)
+        {
+            string c_module_type = "";
+            if (haspointattrib(0, "module_type"))
+            {
+                c_module_type = point(0, "module_type", c);
+            }
+        
+            if (c_module_type != "corner_wall")
+            {
+                continue;
+            }
+        
+            int c_floor = -1;
+            if (haspointattrib(0, "global_floor"))
+            {
+                c_floor = point(0, "global_floor", c);
+            }
+            else if (haspointattrib(0, "floor_index"))
+            {
+                c_floor = point(0, "floor_index", c);
+            }
+        
+            // 只比较同一层的转角
+            if (c_floor != pipe_source_floor)
+            {
+                continue;
+            }
+        
+            vector c_pos = point(0, "P", c);
+        
+            // 沿墙方向的距离
+            float along_dist = abs(dot(wall_pos - c_pos, t));
+        
+            // 垂直墙面的距离，用来避免不同墙面误判
+            float normal_dist = abs(dot(wall_pos - c_pos, n));
+        
+            if (normal_dist < 0.25 && along_dist < corner_margin_m)
+            {
+                too_close_to_corner = 1;
+                break;
+            }
+        }
+        
+        if (too_close_to_corner == 1)
+        {
+            continue;
+        }
+        
+        // ===============================
+        // 管道之间最小间距：同一墙面上，管道不能太近
+        // ===============================
+        
+        int too_close_to_other_pipe = 0;
+        
+        for (int p = 0; p < len(placed_pipe_pos); p++)
+        {
+            if (placed_pipe_facade[p] != facade)
+            {
+                continue;
+            }
+        
+            vector prev_pos = placed_pipe_pos[p];
+        
+            // 必须在同一个墙面平面上才比较
+            float same_wall_plane_dist = abs(dot(pos - prev_pos, n));
+        
+            if (same_wall_plane_dist > 0.5)
+            {
+                continue;
+            }
+        
+            float along_pipe_dist = abs(dot(pos - prev_pos, t));
+        
+            if (along_pipe_dist < pipe_min_spacing_m)
+            {
+                too_close_to_other_pipe = 1;
+                break;
+            }
+        }
+        
+        if (too_close_to_other_pipe == 1)
+        {
+            continue;
+        }
+
+        // 起点高度偏移
+        pos.y += start_y_offset_m;
+        
+        // ===============================
+        // 计算这根管道背后墙体的最高高度
+        //
+        // 更稳的版本：
+        // 1. 用墙模块中心点判断是否和管道在同一竖列
+        // 2. 如果找到墙体，pipe_wall_top_found = 1
+        // 3. 如果没找到，后面 41 不强制过滤，避免支架全没
+        // ===============================
+        
+        float pipe_wall_top_y = src_pos.y;
+        int pipe_wall_top_found = 0;
+        
+        float pipe_along_coord = dot(wall_pos, t);
+        float pipe_wall_plane_coord = dot(wall_pos, n);
+        
+        for (int w = 0; w < src_count; w++)
+        {
+            string w_facade = "";
+            if (haspointattrib(0, "facade"))
+            {
+                w_facade = point(0, "facade", w);
+            }
+        
+            if (w_facade != facade)
+            {
+                continue;
+            }
+        
+            string w_module_type = "";
+            if (haspointattrib(0, "module_type"))
+            {
+                w_module_type = point(0, "module_type", w);
+            }
+        
+            // 只统计墙体类模块
+            if (find(w_module_type, "wall") < 0)
+            {
+                continue;
+            }
+        
+            vector w_pos = point(0, "P", w);
+        
+            float w_width_cm = 100.0;
+            if (haspointattrib(0, "width_cm"))
+            {
+                w_width_cm = point(0, "width_cm", w);
+            }
+        
+            float w_width_m = max(0.01, w_width_cm / 100.0);
+        
+            // 当前墙模块中心点
+            vector w_center = w_pos + t * (w_width_m * 0.5);
+        
+            // 是否在同一个墙面平面上
+            float normal_dist = abs(dot(w_center, n) - pipe_wall_plane_coord);
+        
+            if (normal_dist > 0.35)
+            {
+                continue;
+            }
+        
+            // 是否覆盖当前管道沿墙方向的位置
+            float w_center_along = dot(w_center, t);
+            float along_dist = abs(w_center_along - pipe_along_coord);
+        
+            if (along_dist > w_width_m * 0.5 + 0.15)
+            {
+                continue;
+            }
+        
+            float w_top_y = w_pos.y;
+        
+            if (haspointattrib(0, "floor_top_y"))
+            {
+                w_top_y = point(0, "floor_top_y", w);
+            }
+            else if (haspointattrib(0, "height_cm"))
+            {
+                float h_cm = point(0, "height_cm", w);
+                w_top_y = w_pos.y + h_cm / 100.0;
+            }
+        
+            pipe_wall_top_y = max(pipe_wall_top_y, w_top_y);
+            pipe_wall_top_found = 1;
+        }
+
+        // 计算本条管道段数
+        int segment_count = fixed_count;
+
+        if (count_mode == 1)
+        {
+            float rr = rand(pipe_seed + i * 29.913);
+            segment_count = min_count + int(floor(rr * float(max_count - min_count + 1)));
+        }
+
+        segment_count = max(1, segment_count);
+
+        int pt = addpoint(0, pos);
+
+        string source_asset_id = "";
+        if (haspointattrib(0, "asset_id"))
+        {
+            source_asset_id = point(0, "asset_id", i);
+        }
+
+        
+
+        float source_rot_y = 0.0;
+        if (haspointattrib(0, "rot_y_deg"))
+        {
+            source_rot_y = point(0, "rot_y_deg", i);
+        }
+
+        setpointattrib(0, "asset_id", pt, "PIPE_ANCHOR", "set");
+        setpointattrib(0, "module_type", pt, "pipe_anchor", "set");
+
+        setpointattrib(0, "pipe_facade", pt, facade, "set");
+        setpointattrib(0, "facade", pt, facade, "set");
+
+        setpointattrib(0, "pipe_segment_count", pt, segment_count, "set");
+        setpointattrib(0, "pipe_requested_height_cm", pt, float(segment_count) * 100.0, "set");
+        setpointattrib(0, "pipe_wall_top_y", pt, pipe_wall_top_y, "set");
+        setpointattrib(0, "pipe_wall_top_height_cm", pt, pipe_wall_top_y * 100.0, "set");
+        setpointattrib(0, "pipe_wall_top_found", pt, pipe_wall_top_found, "set");
+
+        setpointattrib(0, "pipe_wall_normal", pt, n, "set");
+        setpointattrib(0, "pipe_wall_tangent", pt, t, "set");
+
+        setpointattrib(0, "source_pt", pt, i, "set");
+        setpointattrib(0, "source_asset_id", pt, source_asset_id, "set");
+        setpointattrib(0, "source_module_type", pt, module_type, "set");
+        setpointattrib(0, "global_floor", pt, pipe_source_floor, "set");
+        setpointattrib(0, "source_rot_y_deg", pt, source_rot_y, "set");
+
+        // Debug 显示用
+        setpointattrib(0, "Cd", pt, set(0.1, 0.6, 1.0), "set");
+        setpointattrib(0, "pscale", pt, 0.08, "set");
+        
+        append(placed_pipe_pos, pos);
+        append(placed_pipe_facade, facade);
+
+        placed_count++;
+    }
+}
+
+
+// ===============================
+// 删除原输入点，只保留 pipe_anchor
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "pipe_anchor_count", placed_count, "set");

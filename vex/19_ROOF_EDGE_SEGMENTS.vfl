@@ -1,0 +1,329 @@
+// ==========================================
+// 19_ROOF_EDGE_SEGMENTS
+// V2：把 1 grid 屋顶边缘线合并成连续屋檐段
+//
+// 输入：
+// 18_ROOF_EDGE_DETECTION 输出的 roof edge polyline
+//
+// 输出：
+// 每条 polyline = 一段连续屋顶边缘
+// 后续会拆成 400 / 200 / 100cm 屋檐模块
+// ==========================================
+
+
+function int find_x_edge(
+    const string types[];
+    const int start_xs[];
+    const int start_zs[];
+    const float ys[];
+    const int used[];
+    const string target_type;
+    const int target_start_x;
+    const int target_z;
+    const float target_y;
+    const float eps)
+{
+    for (int i = 0; i < len(types); i++)
+    {
+        if (used[i] == 1)
+        {
+            continue;
+        }
+
+        if (
+            types[i] == target_type &&
+            start_xs[i] == target_start_x &&
+            start_zs[i] == target_z &&
+            abs(ys[i] - target_y) <= eps
+        )
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+function int find_z_edge(
+    const string types[];
+    const int start_xs[];
+    const int start_zs[];
+    const float ys[];
+    const int used[];
+    const string target_type;
+    const int target_x;
+    const int target_start_z;
+    const float target_y;
+    const float eps)
+{
+    for (int i = 0; i < len(types); i++)
+    {
+        if (used[i] == 1)
+        {
+            continue;
+        }
+
+        if (
+            types[i] == target_type &&
+            start_xs[i] == target_x &&
+            start_zs[i] == target_start_z &&
+            abs(ys[i] - target_y) <= eps
+        )
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+// ===============================
+// 收集 roof edge primitive
+// ===============================
+
+int src_prim_count = nprimitives(0);
+float unit = chf("../grid_unit");
+float eps = 0.001;
+
+string edge_types[];
+int start_xs[];
+int end_xs[];
+int start_zs[];
+int end_zs[];
+float edge_ys[];
+int source_floors[];
+int edge_used[];
+
+for (int pr = 0; pr < src_prim_count; pr++)
+{
+    string edge_type = prim(0, "roof_edge_type", pr);
+
+    if (
+        edge_type != "roof_front" &&
+        edge_type != "roof_back" &&
+        edge_type != "roof_left" &&
+        edge_type != "roof_right"
+    )
+    {
+        continue;
+    }
+
+    int sx = prim(0, "grid_start_x", pr);
+    int ex = prim(0, "grid_end_x", pr);
+    int sz = prim(0, "grid_start_z", pr);
+    int ez = prim(0, "grid_end_z", pr);
+
+    float y = prim(0, "roof_y", pr);
+    int source_floor = prim(0, "roof_source_floor", pr);
+
+    append(edge_types, edge_type);
+    append(start_xs, sx);
+    append(end_xs, ex);
+    append(start_zs, sz);
+    append(end_zs, ez);
+    append(edge_ys, y);
+    append(source_floors, source_floor);
+    append(edge_used, 0);
+}
+
+int edge_count = len(edge_types);
+
+if (edge_count <= 0)
+{
+    setdetailattrib(0, "roof_edge_segment_status", "no_roof_edges", "set");
+
+    for (int pr = src_prim_count - 1; pr >= 0; pr--)
+    {
+        removeprim(0, pr, 1);
+    }
+
+    return;
+}
+
+
+// ===============================
+// 合并边缘线
+// ===============================
+
+int segment_count = 0;
+
+for (int i = 0; i < edge_count; i++)
+{
+    if (edge_used[i] == 1)
+    {
+        continue;
+    }
+
+    string edge_type = edge_types[i];
+
+    int start_x = start_xs[i];
+    int end_x = end_xs[i];
+    int start_z = start_zs[i];
+    int end_z = end_zs[i];
+
+    float y = edge_ys[i];
+    int source_floor = source_floors[i];
+
+    edge_used[i] = 1;
+
+
+    // ===============================
+    // roof_front / roof_back：沿 X 合并
+    // ===============================
+
+    if (edge_type == "roof_front" || edge_type == "roof_back")
+    {
+        int fixed_z = start_z;
+
+        int searching = 1;
+
+        while (searching == 1)
+        {
+            int next_idx = find_x_edge(
+                edge_types,
+                start_xs,
+                start_zs,
+                edge_ys,
+                edge_used,
+                edge_type,
+                end_x,
+                fixed_z,
+                y,
+                eps
+            );
+
+            if (next_idx < 0)
+            {
+                searching = 0;
+            }
+            else
+            {
+                end_x = end_xs[next_idx];
+                edge_used[next_idx] = 1;
+            }
+        }
+
+        vector p0 = set(float(start_x) * unit, y, float(fixed_z) * unit);
+        vector p1 = set(float(end_x) * unit, y, float(fixed_z) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+
+        int new_pr = addprim(0, "polyline", pt0, pt1);
+
+        vector cd = set(1.0, 0.15, 0.1);
+
+        if (edge_type == "roof_back")
+        {
+            cd = set(0.1, 0.35, 1.0);
+        }
+
+        setpointattrib(0, "Cd", pt0, cd, "set");
+        setpointattrib(0, "Cd", pt1, cd, "set");
+
+        setprimattrib(0, "roof_edge_type", new_pr, edge_type, "set");
+        setprimattrib(0, "roof_segment_type", new_pr, "cornice_segment", "set");
+
+        setprimattrib(0, "roof_y", new_pr, y, "set");
+        setprimattrib(0, "roof_source_floor", new_pr, source_floor, "set");
+
+        setprimattrib(0, "grid_start_x", new_pr, start_x, "set");
+        setprimattrib(0, "grid_end_x", new_pr, end_x, "set");
+        setprimattrib(0, "grid_start_z", new_pr, fixed_z, "set");
+        setprimattrib(0, "grid_end_z", new_pr, fixed_z, "set");
+
+        setprimattrib(0, "length_grid", new_pr, end_x - start_x, "set");
+        setprimattrib(0, "Cd", new_pr, cd, "set");
+
+        segment_count++;
+    }
+
+
+    // ===============================
+    // roof_left / roof_right：沿 Z 合并
+    // ===============================
+
+    else if (edge_type == "roof_left" || edge_type == "roof_right")
+    {
+        int fixed_x = start_x;
+
+        int searching = 1;
+
+        while (searching == 1)
+        {
+            int next_idx = find_z_edge(
+                edge_types,
+                start_xs,
+                start_zs,
+                edge_ys,
+                edge_used,
+                edge_type,
+                fixed_x,
+                end_z,
+                y,
+                eps
+            );
+
+            if (next_idx < 0)
+            {
+                searching = 0;
+            }
+            else
+            {
+                end_z = end_zs[next_idx];
+                edge_used[next_idx] = 1;
+            }
+        }
+
+        vector p0 = set(float(fixed_x) * unit, y, float(start_z) * unit);
+        vector p1 = set(float(fixed_x) * unit, y, float(end_z) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+
+        int new_pr = addprim(0, "polyline", pt0, pt1);
+
+        vector cd = set(0.1, 0.9, 0.25);
+
+        if (edge_type == "roof_right")
+        {
+            cd = set(1.0, 0.85, 0.1);
+        }
+
+        setpointattrib(0, "Cd", pt0, cd, "set");
+        setpointattrib(0, "Cd", pt1, cd, "set");
+
+        setprimattrib(0, "roof_edge_type", new_pr, edge_type, "set");
+        setprimattrib(0, "roof_segment_type", new_pr, "cornice_segment", "set");
+
+        setprimattrib(0, "roof_y", new_pr, y, "set");
+        setprimattrib(0, "roof_source_floor", new_pr, source_floor, "set");
+
+        setprimattrib(0, "grid_start_x", new_pr, fixed_x, "set");
+        setprimattrib(0, "grid_end_x", new_pr, fixed_x, "set");
+        setprimattrib(0, "grid_start_z", new_pr, start_z, "set");
+        setprimattrib(0, "grid_end_z", new_pr, end_z, "set");
+
+        setprimattrib(0, "length_grid", new_pr, end_z - start_z, "set");
+        setprimattrib(0, "Cd", new_pr, cd, "set");
+
+        segment_count++;
+    }
+}
+
+
+// ===============================
+// 删除原始 1 grid 屋顶边缘线
+// ===============================
+
+for (int pr = src_prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}
+
+
+setdetailattrib(0, "roof_edge_segment_status", "roof_edge_segments_created", "set");
+setdetailattrib(0, "roof_edge_input_count", edge_count, "set");
+setdetailattrib(0, "roof_edge_segment_count", segment_count, "set");

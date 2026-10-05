@@ -1,0 +1,624 @@
+// ==========================================
+// 09D_UPPER_CORNER_REPLACE
+// V2：二楼及以上转角墙替换
+//
+// 作用：
+// 1. 只处理 global_floor > 0 的 plain_wall
+// 2. 找到高层 front/back/left/right 外墙相交转角
+// 3. 删除转角处 1 grid 普通墙
+// 4. 添加 300x100 高层转角墙
+// 5. 重建剩余普通墙
+//
+// 注意：
+// 这个节点必须放在高层窗墙替换之前
+// ==========================================
+
+
+function int find_slot(
+    const string slot_facade[];
+    const int slot_x[];
+    const int slot_z[];
+    const string target_facade;
+    const int target_x;
+    const int target_z)
+{
+    for (int i = 0; i < len(slot_x); i++)
+    {
+        if (
+            slot_facade[i] == target_facade &&
+            slot_x[i] == target_x &&
+            slot_z[i] == target_z
+        )
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+function int corner_exists(
+    const int corner_x[];
+    const int corner_z[];
+    const string corner_name[];
+    const int test_x;
+    const int test_z;
+    const string test_name)
+{
+    for (int i = 0; i < len(corner_x); i++)
+    {
+        if (
+            corner_x[i] == test_x &&
+            corner_z[i] == test_z &&
+            corner_name[i] == test_name
+        )
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+function void add_upper_plain_module(
+    const int geo;
+    const int start_x;
+    const int start_z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const int global_floor;
+    const string facade;
+    const int module_grid)
+{
+    string asset_id = "";
+    string path = "";
+
+    if (module_grid == 4)
+    {
+        asset_id = "SM_Building_01_Wall_300x400_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x400_01.SM_Building_01_Wall_300x400_01";
+    }
+    else if (module_grid == 2)
+    {
+        asset_id = "SM_Building_01_Wall_300x200_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x200_01.SM_Building_01_Wall_300x200_01";
+    }
+    else
+    {
+        asset_id = "SM_Building_01_Wall_300x100_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_300x100_01.SM_Building_01_Wall_300x100_01";
+    }
+
+    vector pos = set(0, 0, 0);
+    float rot_y = 0.0;
+
+    if (facade == "front")
+    {
+        pos = set(float(start_x) * unit, floor_bottom_y, float(start_z) * unit);
+        rot_y = 0.0;
+    }
+    else if (facade == "back")
+    {
+        pos = set(float(start_x + module_grid) * unit, floor_bottom_y, float(start_z) * unit);
+        rot_y = 180.0;
+    }
+    else if (facade == "left")
+    {
+        pos = set(float(start_x) * unit, floor_bottom_y, float(start_z + module_grid) * unit);
+        rot_y = 90.0;
+    }
+    else if (facade == "right")
+    {
+        pos = set(float(start_x) * unit, floor_bottom_y, float(start_z) * unit);
+        rot_y = -90.0;
+    }
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "plain_wall", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "upper_corner_rebuild_source", pt, "upper_plain_rebuilt_after_corner", "set");
+}
+
+
+function void add_upper_corner_module(
+    const int geo;
+    const int corner_x;
+    const int corner_z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const int global_floor;
+    const float rot_y;
+    const string corner_name)
+{
+    string asset_id = "SM_Building_01_Wall_CRN_300x100_03";
+    string path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_CRN_300x100_03.SM_Building_01_Wall_CRN_300x100_03";
+
+    vector pos = set(float(corner_x) * unit, floor_bottom_y, float(corner_z) * unit);
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "corner_wall", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, "corner", "set");
+    setpointattrib(geo, "corner_name", pt, corner_name, "set");
+    setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, 1, "set");
+    setpointattrib(geo, "width_cm", pt, 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 100.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "upper_corner_rebuild_source", pt, "upper_corner_created", "set");
+}
+
+
+// ===============================
+// 基础数据
+// ===============================
+
+int pt_count = npoints(0);
+float unit = chf("../grid_unit");
+
+int min_floor = 999999;
+int max_floor = -999999;
+
+for (int i = 0; i < pt_count; i++)
+{
+    if (
+        point(0, "module_type", i) == "plain_wall" &&
+        point(0, "global_floor", i) > 0
+    )
+    {
+        int gf = point(0, "global_floor", i);
+        min_floor = min(min_floor, gf);
+        max_floor = max(max_floor, gf);
+    }
+}
+
+if (max_floor < min_floor)
+{
+    setdetailattrib(0, "upper_corner_status", "no_upper_plain_walls", "set");
+    return;
+}
+
+int total_corner_count = 0;
+
+
+// ===============================
+// 逐层处理高层转角
+// ===============================
+
+for (int current_floor = min_floor; current_floor <= max_floor; current_floor++)
+{
+    string slot_facade[];
+    int slot_x[];
+    int slot_z[];
+    int slot_is_corner[];
+
+    int remove_ids[];
+
+    float current_floor_bottom_y = 0.0;
+    float current_floor_height = chf("../upper_floor_height");
+
+    // 收集当前楼层普通墙 slot
+    for (int i = 0; i < pt_count; i++)
+    {
+        string module_type = point(0, "module_type", i);
+        string facade = point(0, "facade", i);
+        int global_floor = point(0, "global_floor", i);
+
+        if (
+            module_type != "plain_wall" ||
+            global_floor != current_floor
+        )
+        {
+            continue;
+        }
+
+        vector P = point(0, "P", i);
+        int grid_width = point(0, "grid_width", i);
+
+        float gx = P.x / unit;
+        float gz = P.z / unit;
+
+        int anchor_x = gx >= 0 ? int(floor(gx + 0.5)) : int(ceil(gx - 0.5));
+        int anchor_z = gz >= 0 ? int(floor(gz + 0.5)) : int(ceil(gz - 0.5));
+
+        current_floor_bottom_y = point(0, "floor_bottom_y", i);
+        current_floor_height = point(0, "floor_height", i);
+
+        append(remove_ids, i);
+
+        for (int k = 0; k < grid_width; k++)
+        {
+            int sx = anchor_x;
+            int sz = anchor_z;
+
+            if (facade == "front")
+            {
+                sx = anchor_x + k;
+                sz = anchor_z;
+            }
+            else if (facade == "back")
+            {
+                sx = anchor_x - grid_width + k;
+                sz = anchor_z;
+            }
+            else if (facade == "left")
+            {
+                sx = anchor_x;
+                sz = anchor_z - grid_width + k;
+            }
+            else if (facade == "right")
+            {
+                sx = anchor_x;
+                sz = anchor_z + k;
+            }
+            else
+            {
+                continue;
+            }
+
+            append(slot_facade, facade);
+            append(slot_x, sx);
+            append(slot_z, sz);
+            append(slot_is_corner, 0);
+        }
+    }
+
+    int slot_count = len(slot_x);
+
+    if (slot_count <= 0)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 检测当前楼层转角
+    // ===============================
+
+    int corner_x[];
+    int corner_z[];
+    float corner_rot[];
+    string corner_name[];
+
+    string f_front = "front";
+    string f_back = "back";
+    string f_left = "left";
+    string f_right = "right";
+
+    for (int i = 0; i < slot_count; i++)
+    {
+        string facade = slot_facade[i];
+        int x = slot_x[i];
+        int z = slot_z[i];
+
+        if (facade == "front")
+        {
+            int left_idx = find_slot(slot_facade, slot_x, slot_z, f_left, x, z);
+
+            if (left_idx >= 0)
+            {
+                string cname = "front_left_corner";
+
+                if (corner_exists(corner_x, corner_z, corner_name, x, z, cname) == 0)
+                {
+                    append(corner_x, x);
+                    append(corner_z, z);
+                    append(corner_rot, 0.0);
+                    append(corner_name, cname);
+                }
+
+                slot_is_corner[i] = 1;
+                slot_is_corner[left_idx] = 1;
+            }
+
+            int right_idx = find_slot(slot_facade, slot_x, slot_z, f_right, x + 1, z);
+
+            if (right_idx >= 0)
+            {
+                string cname = "front_right_corner";
+
+                if (corner_exists(corner_x, corner_z, corner_name, x + 1, z, cname) == 0)
+                {
+                    append(corner_x, x + 1);
+                    append(corner_z, z);
+                    append(corner_rot, -90.0);
+                    append(corner_name, cname);
+                }
+
+                slot_is_corner[i] = 1;
+                slot_is_corner[right_idx] = 1;
+            }
+        }
+        else if (facade == "back")
+        {
+            int left_idx = find_slot(slot_facade, slot_x, slot_z, f_left, x, z - 1);
+
+            if (left_idx >= 0)
+            {
+                string cname = "back_left_corner";
+
+                if (corner_exists(corner_x, corner_z, corner_name, x, z, cname) == 0)
+                {
+                    append(corner_x, x);
+                    append(corner_z, z);
+                    append(corner_rot, 90.0);
+                    append(corner_name, cname);
+                }
+
+                slot_is_corner[i] = 1;
+                slot_is_corner[left_idx] = 1;
+            }
+
+            int right_idx = find_slot(slot_facade, slot_x, slot_z, f_right, x + 1, z - 1);
+
+            if (right_idx >= 0)
+            {
+                string cname = "back_right_corner";
+
+                if (corner_exists(corner_x, corner_z, corner_name, x + 1, z, cname) == 0)
+                {
+                    append(corner_x, x + 1);
+                    append(corner_z, z);
+                    append(corner_rot, 180.0);
+                    append(corner_name, cname);
+                }
+
+                slot_is_corner[i] = 1;
+                slot_is_corner[right_idx] = 1;
+            }
+        }
+    }
+
+
+    // 添加当前楼层转角墙
+    for (int c = 0; c < len(corner_x); c++)
+    {
+        add_upper_corner_module(
+            0,
+            corner_x[c],
+            corner_z[c],
+            unit,
+            current_floor_bottom_y,
+            current_floor_height,
+            current_floor,
+            corner_rot[c],
+            corner_name[c]
+        );
+
+        total_corner_count++;
+    }
+
+
+    // ===============================
+    // 计算 slot 范围
+    // ===============================
+
+    int min_x = slot_x[0];
+    int max_x = slot_x[0];
+    int min_z = slot_z[0];
+    int max_z = slot_z[0];
+
+    for (int i = 0; i < slot_count; i++)
+    {
+        min_x = min(min_x, slot_x[i]);
+        max_x = max(max_x, slot_x[i]);
+        min_z = min(min_z, slot_z[i]);
+        max_z = max(max_z, slot_z[i]);
+    }
+
+
+    // ===============================
+    // 重建 front / back 普通墙
+    // ===============================
+
+    for (int z = min_z; z <= max_z; z++)
+    {
+        for (int rf = 0; rf < 2; rf++)
+        {
+            string rebuild_facade = f_front;
+
+            if (rf == 1)
+            {
+                rebuild_facade = f_back;
+            }
+
+            int x = min_x;
+
+            while (x <= max_x)
+            {
+                int idx = find_slot(slot_facade, slot_x, slot_z, rebuild_facade, x, z);
+
+                if (idx < 0 || slot_is_corner[idx] == 1)
+                {
+                    x++;
+                    continue;
+                }
+
+                int start_x = x;
+                int end_x = x + 1;
+
+                x++;
+
+                while (x <= max_x)
+                {
+                    int next_idx = find_slot(slot_facade, slot_x, slot_z, rebuild_facade, x, z);
+
+                    if (next_idx < 0 || slot_is_corner[next_idx] == 1)
+                    {
+                        break;
+                    }
+
+                    end_x = x + 1;
+                    x++;
+                }
+
+                int length_grid = end_x - start_x;
+                int used = 0;
+
+                while (used < length_grid)
+                {
+                    int remain = length_grid - used;
+                    int module_grid = 1;
+
+                    if (remain >= 4)
+                    {
+                        module_grid = 4;
+                    }
+                    else if (remain >= 2)
+                    {
+                        module_grid = 2;
+                    }
+                    else
+                    {
+                        module_grid = 1;
+                    }
+
+                    add_upper_plain_module(
+                        0,
+                        start_x + used,
+                        z,
+                        unit,
+                        current_floor_bottom_y,
+                        current_floor_height,
+                        current_floor,
+                        rebuild_facade,
+                        module_grid
+                    );
+
+                    used += module_grid;
+                }
+            }
+        }
+    }
+
+
+    // ===============================
+    // 重建 left / right 普通墙
+    // ===============================
+
+    for (int x = min_x; x <= max_x; x++)
+    {
+        for (int rf = 0; rf < 2; rf++)
+        {
+            string rebuild_facade = f_left;
+
+            if (rf == 1)
+            {
+                rebuild_facade = f_right;
+            }
+
+            int z = min_z;
+
+            while (z <= max_z)
+            {
+                int idx = find_slot(slot_facade, slot_x, slot_z, rebuild_facade, x, z);
+
+                if (idx < 0 || slot_is_corner[idx] == 1)
+                {
+                    z++;
+                    continue;
+                }
+
+                int start_z = z;
+                int end_z = z + 1;
+
+                z++;
+
+                while (z <= max_z)
+                {
+                    int next_idx = find_slot(slot_facade, slot_x, slot_z, rebuild_facade, x, z);
+
+                    if (next_idx < 0 || slot_is_corner[next_idx] == 1)
+                    {
+                        break;
+                    }
+
+                    end_z = z + 1;
+                    z++;
+                }
+
+                int length_grid = end_z - start_z;
+                int used = 0;
+
+                while (used < length_grid)
+                {
+                    int remain = length_grid - used;
+                    int module_grid = 1;
+
+                    if (remain >= 4)
+                    {
+                        module_grid = 4;
+                    }
+                    else if (remain >= 2)
+                    {
+                        module_grid = 2;
+                    }
+                    else
+                    {
+                        module_grid = 1;
+                    }
+
+                    add_upper_plain_module(
+                        0,
+                        x,
+                        start_z + used,
+                        unit,
+                        current_floor_bottom_y,
+                        current_floor_height,
+                        current_floor,
+                        rebuild_facade,
+                        module_grid
+                    );
+
+                    used += module_grid;
+                }
+            }
+        }
+    }
+
+
+    // 删除当前楼层原始高层普通墙点
+    for (int r = len(remove_ids) - 1; r >= 0; r--)
+    {
+        removepoint(0, remove_ids[r]);
+    }
+}
+
+setdetailattrib(0, "upper_corner_status", "upper_corners_created", "set");
+setdetailattrib(0, "upper_corner_count", total_corner_count, "set");

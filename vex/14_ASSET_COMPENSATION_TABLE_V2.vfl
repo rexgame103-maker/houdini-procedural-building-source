@@ -1,0 +1,169 @@
+// ==========================================
+// 14_ASSET_COMPENSATION_TABLE_V2
+// V2：资产表补偿数据
+//
+// 作用：
+// 根据 asset_id 写入每个资产自己的固定补偿。
+// 当前先接入已使用的普通墙资产。
+// 后面门、窗、转角、屋顶都继续在这里扩展。
+// ==========================================
+
+
+// 默认值
+f@asset_rotation_offset_y = 0.0;
+v@asset_static_offset = set(0.0, 0.0, 0.0);
+
+s@asset_compensation_source = "default_none";
+
+
+// ===============================
+// 普通墙：一楼 400cm
+// ===============================
+
+if (s@asset_id == "SM_Building_01_Wall_400x100_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_plain_wall_400x100";
+}
+else if (s@asset_id == "SM_Building_01_Wall_400x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_plain_wall_400x200";
+}
+else if (s@asset_id == "SM_Building_01_Wall_400x400_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_plain_wall_400x400";
+}
+else if (s@asset_id == "SM_Building_01_WallWindow_400x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_ground_window_400x200";
+}
+
+// ===============================
+// 普通墙：二楼及以上 300cm
+// ===============================
+
+else if (s@asset_id == "SM_Building_01_Wall_300x100_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_plain_wall_300x100";
+}
+else if (s@asset_id == "SM_Building_01_Wall_300x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_plain_wall_300x200";
+}
+else if (s@asset_id == "SM_Building_01_Wall_300x400_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_plain_wall_300x400";
+}
+
+else if (s@asset_id == "SM_Building_01_WallDoor_400x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_ground_door_400x200";
+}
+
+else if (s@asset_id == "SM_Building_01_Wall_CRN_400x100_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_ground_corner_400x100";
+}
+
+else if (s@asset_id == "SM_Building_01_Wall_CRN_300x100_03")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_upper_corner_300x100";
+}
+
+else if (s@asset_id == "SM_Building_01_WallWindow_300x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_upper_window_300x200_01";
+}
+
+else if (s@asset_id == "SM_Building_01_WallWindow_300x200_02")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_upper_window_300x200_02";
+}
+else if (s@asset_id == "SM_Building_01_WallWindow_300x200_03")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_upper_window_300x200_03";
+}
+
+else if (s@asset_id == "SM_Building_01_WallWindow_300x200_04")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_upper_window_300x200_04";
+}
+
+else if (s@asset_id == "SM_Building_01_WallDoor_300x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_upper_door_300x200";
+}
+
+else if (s@asset_id == "SM_Building_01_WallWindow_300x200_05")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_side_upper_window_300x200_05";
+}
+
+else if (s@asset_id == "SM_Building_01_Roof_100x100_01")
+{
+    f@asset_rotation_offset_y = 0.0;
+
+    // 屋顶资产 Pivot 补偿
+    // 向楼体右边移动 100cm = X + 1
+    // 向楼体背面移动 100cm = Z + 1
+    v@asset_static_offset = set(1.0, 0.0, 1.0);
+
+    s@asset_compensation_source = "table_roof_fill_100x100_offset_x1_z1";
+}
+
+else if (s@asset_id == "SM_Building_01_CorniceTop_100x100_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_cornice_edge_100x100";
+}
+else if (s@asset_id == "SM_Building_01_CorniceTop_100x200_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_cornice_edge_100x200";
+}
+else if (s@asset_id == "SM_Building_01_CorniceTop_100x400_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_cornice_edge_100x400";
+}
+
+else if (s@asset_id == "SM_Building_01_CorniceTop_CRN_100x100_01")
+{
+    f@asset_rotation_offset_y = 90.0;
+    v@asset_static_offset = set(0.0, 0.0, 0.0);
+    s@asset_compensation_source = "table_cornice_corner_100x100";
+}

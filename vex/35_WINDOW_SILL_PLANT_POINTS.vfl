@@ -1,0 +1,413 @@
+// ==========================================
+// 35_WINDOW_SILL_PLANT_POINTS
+// V2.4A：窗台盆栽生成
+//
+// 当前规则：
+// 1. 只基于高层窗墙生成
+// 2. 只处理 front
+// 3. 不处理 left / right / back
+// 4. 不处理一楼
+// 5. 不处理门墙
+// 6. 普通 300x200 高层窗墙生成 1 个盆栽
+// 7. 300x400 高层宽窗墙可生成 1 或 2 个盆栽
+// 8. 本节点作为独立挂件支线，最后删除输入墙体点，只保留盆栽点
+// ==========================================
+
+
+int src_count = npoints(0);
+int plant_count = 0;
+
+
+// ===============================
+// 盆栽资产
+// ===============================
+
+string plant_assets[] = array(
+    "SM_PottedPlants_01_WallPlant_01",
+    "SM_PottedPlants_01_WallPlant_02",
+    "SM_PottedPlants_01_WallPlant_03"
+);
+
+string plant_paths[] = array(
+    "/Game/CityStreetStylizedPack/Environment/Props/PottedPlants_01/SM_PottedPlants_01_WallPlant_01.SM_PottedPlants_01_WallPlant_01",
+    "/Game/CityStreetStylizedPack/Environment/Props/PottedPlants_01/SM_PottedPlants_01_WallPlant_02.SM_PottedPlants_01_WallPlant_02",
+    "/Game/CityStreetStylizedPack/Environment/Props/PottedPlants_01/SM_PottedPlants_01_WallPlant_03.SM_PottedPlants_01_WallPlant_03"
+);
+
+
+// ===============================
+// HDA 参数
+// ===============================
+
+int enable_plants = chi("../enable_window_sill_plants");
+
+float plant_chance = clamp(
+    chf("../window_sill_plant_chance"),
+    0.0,
+    1.0
+);
+
+int plant_seed = chi("../window_sill_plant_seed");
+
+float forward_offset = chf("../window_sill_plant_forward_offset_cm") / 100.0;
+float y_offset = chf("../window_sill_plant_y_offset_cm") / 100.0;
+
+int enable_random_side = chi("../enable_window_sill_plant_random_side_offset");
+
+float random_side_min = chf("../window_sill_plant_side_random_min_cm") / 100.0;
+float random_side_max = chf("../window_sill_plant_side_random_max_cm") / 100.0;
+
+int variant_mode = chi("../window_sill_plant_variant_mode");
+
+int wide_count_mode = chi("../wide_window_plant_count_mode");
+float wide_spacing = chf("../wide_window_plant_spacing_cm") / 100.0;
+
+float rot_offset_y = chf("../window_sill_plant_rotation_offset_y");
+
+
+// 防止随机最小值大于最大值
+if (random_side_min > random_side_max)
+{
+    float tmp = random_side_min;
+    random_side_min = random_side_max;
+    random_side_max = tmp;
+}
+
+
+// ===============================
+// 如果关闭，则本支线不输出任何点
+// ===============================
+
+if (enable_plants == 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "window_sill_plant_count", 0, "set");
+    setdetailattrib(0, "window_sill_plant_status", "disabled", "set");
+    return;
+}
+
+
+// ===============================
+// 遍历输入墙体点
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    string asset_id = point(0, "asset_id", i);
+    string module_type = point(0, "module_type", i);
+    string facade = point(0, "facade", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+
+    // ===============================
+    // 检测当前窗墙是否已经生成 down 空调
+    // 如果有 down 空调，则不生成窗台盆栽
+    // input 1 = 33_AC_WALL_ANCHOR_POINTS
+    // ===============================
+
+    int has_down_ac = 0;
+    int ac_count = npoints(1);
+
+    for (int a = 0; a < ac_count; a++)
+    {
+        string ac_module_type = point(1, "module_type", a);
+
+        if (ac_module_type != "wall_air_conditioner")
+        {
+            continue;
+        }
+
+        string ac_slot = point(1, "ac_slot", a);
+
+        if (ac_slot != "down")
+        {
+            continue;
+        }
+
+        int source_wall_pt = point(1, "source_wall_pt", a);
+
+        if (source_wall_pt == i)
+        {
+            has_down_ac = 1;
+            break;
+        }
+    }
+
+    if (has_down_ac == 1)
+    {
+        continue;
+    }
+
+    // 只处理正面
+    if (facade != "front")
+    {
+        continue;
+    }
+
+    // 只处理高层，不处理一楼
+    if (global_floor <= 0)
+    {
+        continue;
+    }
+
+    // 只处理高层窗墙
+    if (module_type != "window_wall_upper")
+    {
+        continue;
+    }
+
+    // 必须是真正的窗墙资产
+    if (find(asset_id, "WallWindow") < 0)
+    {
+        continue;
+    }
+
+    // 一楼窗墙 400 高不参与
+    if (find(asset_id, "400x") >= 0)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 概率控制
+    // ===============================
+
+    float r_spawn = rand(float(plant_seed) + float(i) * 13.371);
+
+    if (r_spawn > plant_chance)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 读取窗墙基础信息
+    // ===============================
+
+    vector base_pos = point(0, "P", i);
+
+    int grid_width = point(0, "grid_width", i);
+    float width_cm = point(0, "width_cm", i);
+
+    float module_width = 2.0;
+
+    if (grid_width > 0)
+    {
+        module_width = float(grid_width);
+    }
+    else if (width_cm > 0.0)
+    {
+        module_width = width_cm / 100.0;
+    }
+
+    // 正面墙：
+    // forward = 朝外方向
+    // side    = 沿墙向右方向
+    vector forward = set(0, 0, -1);
+    vector side = set(1, 0, 0);
+
+
+    // ===============================
+    // 判断是否为高层宽窗墙
+    // ===============================
+
+    int is_wide_window = 0;
+
+    if (asset_id == "SM_Building_01_WallWindow_300x400_01")
+    {
+        is_wide_window = 1;
+    }
+
+    if (module_width >= 4.0)
+    {
+        is_wide_window = 1;
+    }
+
+
+    // ===============================
+    // 决定当前窗墙生成几个盆栽
+    // ===============================
+
+    int local_plant_count = 1;
+
+    if (is_wide_window == 1 && wide_count_mode == 1)
+    {
+        local_plant_count = 2;
+    }
+
+
+    // ===============================
+    // 旋转
+    //
+    // 注意：
+    // 普通高层窗墙 rot_y 通常是墙面逻辑旋转。
+    // 高层宽窗墙为了自身显示正确，之前额外 rot_y + 90。
+    // 盆栽不应该继承宽窗墙这个额外旋转，
+    // 所以宽窗墙来源要减回 90。
+    // ===============================
+
+    float src_rot_y = point(0, "rot_y_deg", i);
+
+    if (is_wide_window == 1)
+    {
+        src_rot_y -= 90.0;
+    }
+
+    float plant_rot_y = src_rot_y + rot_offset_y;
+    vector4 plant_orient = quaternion(radians(plant_rot_y), set(0, 1, 0));
+
+
+    // ===============================
+    // 在当前窗墙上生成盆栽
+    // ===============================
+
+    for (int p = 0; p < local_plant_count; p++)
+    {
+        // -------------------------------
+        // 计算沿窗墙左右方向的位置
+        // -------------------------------
+
+        float side_offset = module_width * 0.5;
+
+        // 宽窗墙双盆栽：
+        // 以窗墙中心为基准，左右分开
+        if (local_plant_count == 2)
+        {
+            if (p == 0)
+            {
+                side_offset = module_width * 0.5 - wide_spacing * 0.5;
+            }
+            else
+            {
+                side_offset = module_width * 0.5 + wide_spacing * 0.5;
+            }
+        }
+
+        // 左右随机偏移
+        if (enable_random_side == 1)
+        {
+            float r_side = rand(
+                float(plant_seed) +
+                float(i) * 29.173 +
+                float(p) * 7.319
+            );
+
+            float random_side_offset = fit01(
+                r_side,
+                random_side_min,
+                random_side_max
+            );
+
+            side_offset += random_side_offset;
+        }
+
+
+        // -------------------------------
+        // 最终位置
+        // -------------------------------
+
+        vector plant_pos = base_pos;
+
+        // 移到窗墙宽度中心 / 或双盆栽左右位置
+        plant_pos += side * side_offset;
+
+        // 从墙面向外推出
+        plant_pos += forward * forward_offset;
+
+        // 高度
+        plant_pos.y += y_offset;
+
+
+        // -------------------------------
+        // 选择盆栽变体
+        // -------------------------------
+
+        int variant_index = 0;
+
+        if (variant_mode == 0)
+        {
+            float r_variant = rand(
+                float(plant_seed) +
+                float(i) * 41.917 +
+                float(p) * 11.173
+            );
+
+            variant_index = int(floor(r_variant * 3.0));
+            variant_index = clamp(variant_index, 0, 2);
+        }
+        else
+        {
+            variant_index = clamp(variant_mode - 1, 0, 2);
+        }
+
+        string plant_asset = plant_assets[variant_index];
+        string plant_path = plant_paths[variant_index];
+
+
+        // -------------------------------
+        // 创建盆栽点
+        // -------------------------------
+
+        int pt = addpoint(0, plant_pos);
+
+        setpointattrib(0, "asset_id", pt, plant_asset, "set");
+        setpointattrib(0, "module_type", pt, "window_sill_plant", "set");
+        setpointattrib(0, "unreal_instance", pt, plant_path, "set");
+
+        setpointattrib(0, "facade", pt, facade, "set");
+        setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+        setpointattrib(0, "source_window_pt", pt, i, "set");
+        setpointattrib(0, "source_window_asset_id", pt, asset_id, "set");
+        setpointattrib(0, "source_window_grid_width", pt, int(module_width), "set");
+
+        setpointattrib(0, "is_window_sill_plant", pt, 1, "set");
+        setpointattrib(0, "is_from_wide_window", pt, is_wide_window, "set");
+        setpointattrib(0, "window_sill_plant_index", pt, p, "set");
+
+        // 尺寸这里先给一个安全值，主要用于检查，不参与真实缩放
+        setpointattrib(0, "width_cm", pt, 100.0, "set");
+        setpointattrib(0, "height_cm", pt, 100.0, "set");
+        setpointattrib(0, "depth_cm", pt, 50.0, "set");
+        setpointattrib(0, "thickness_cm", pt, 0.0, "set");
+
+        setpointattrib(0, "rot_y_deg", pt, plant_rot_y, "set");
+        setpointattrib(0, "orient", pt, plant_orient, "set");
+        setpointattrib(0, "scale", pt, set(1.0, 1.0, 1.0), "set");
+
+        plant_count++;
+    }
+}
+
+
+// ===============================
+// 删除输入墙体点
+// 本节点是挂件输出支线，只保留新增的盆栽点
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+setdetailattrib(0, "window_sill_plant_count", plant_count, "set");
+
+if (plant_count > 0)
+{
+    setdetailattrib(0, "window_sill_plant_status", "created", "set");
+}
+else
+{
+    setdetailattrib(0, "window_sill_plant_status", "no_plant_created", "set");
+}

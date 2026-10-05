@@ -1,0 +1,114 @@
+// ==========================================
+// 24_FRONT_BALCONY_INSTANCE_POINTS
+// V2.1A：正面阳台实例点
+//
+// 输入：front_balcony_anchor
+// 输出：front_balcony 实例点
+//
+// 注意：
+// 1. 当前暂不填真实 unreal_instance
+// 2. 当前暂不接最终 OUT_MODULE_POINTS
+// 3. 等真实资产填入资产表后，再接入最终 Merge
+// ==========================================
+
+int src_count = npoints(0);
+
+int created_count = 0;
+
+int enable_variant = chi("../enable_front_balcony_variant");
+float variant_chance = clamp(chf("../front_balcony_variant_chance"), 0.0, 1.0);
+int variant_seed = chi("../front_balcony_variant_seed");
+
+for (int i = 0; i < src_count; i++)
+{
+    string module_type = point(0, "module_type", i);
+
+    if (module_type != "front_balcony_anchor")
+    {
+        continue;
+    }
+
+    vector anchor_pos = point(0, "P", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    // 默认阳台：Balcony_01
+    string balcony_asset = "SM_Building_01_Balcony_01";
+    string balcony_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Balcony_01.SM_Building_01_Balcony_01";
+    
+    float width_cm = 277.0;
+    float depth_cm = 120.0;
+    float height_cm = 113.0;
+    
+    string variant_role = "default_balcony";
+    string variant_note = "初始阳台";
+    
+    // 可替换阳台：Balcony_02
+    if (enable_variant == 1)
+    {
+        float rv = rand(float(variant_seed) + float(i) * 19.17 + float(global_floor) * 7.31);
+    
+        if (rv < variant_chance)
+        {
+            balcony_asset = "SM_Building_01_Balcony_02";
+            balcony_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Balcony_02.SM_Building_01_Balcony_02";
+    
+            width_cm = 311.0;
+            depth_cm = 138.0;
+            height_cm = 113.0;
+    
+            variant_role = "replace_balcony";
+            variant_note = "可替换初始阳台";
+        }
+    }
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+
+    int pt = addpoint(0, anchor_pos);
+
+    setpointattrib(0, "asset_id", pt, balcony_asset, "set");
+    setpointattrib(0, "module_type", pt, "front_balcony", "set");
+    setpointattrib(0, "unreal_instance", pt, balcony_path, "set");
+
+    setpointattrib(0, "facade", pt, "front", "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "balcony_source", pt, "upper_front_door", "set");
+    setpointattrib(0, "pivot_type", pt, "balcony_inner_bottom_center", "set");
+    setpointattrib(0, "replacement_group", pt, "front_balcony", "set");
+    setpointattrib(0, "replacement_group", pt, "front_balcony", "set");
+    setpointattrib(0, "variant_role", pt, variant_role, "set");
+    setpointattrib(0, "variant_note", pt, variant_note, "set");
+
+    // 阳台真实资产尺寸
+    setpointattrib(0, "width_cm", pt, width_cm, "set");
+    setpointattrib(0, "depth_cm", pt, depth_cm, "set");
+    setpointattrib(0, "height_cm", pt, height_cm, "set");
+
+    // 不是标准 100cm 模块，不强行按 grid_width 做填充
+    setpointattrib(0, "grid_width", pt, 0, "set");
+    setpointattrib(0, "grid_depth", pt, 0, "set");
+
+    setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(0, "floor_height", pt, floor_height, "set");
+
+    // front 阳台真实资产需要向左旋转 90 度
+    float balcony_rot_y = 90.0;
+    
+    setpointattrib(0, "rot_y_deg", pt, balcony_rot_y, "set");
+    setpointattrib(0, "orient", pt, quaternion(radians(balcony_rot_y), set(0, 1, 0)), "set");
+    setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+    created_count++;
+}
+
+
+// 删除原始 anchor 点，只保留 instance 点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+
+setdetailattrib(0, "front_balcony_instance_status", "placeholder_instance_points_created", "set");
+setdetailattrib(0, "front_balcony_instance_created_count", created_count, "set");

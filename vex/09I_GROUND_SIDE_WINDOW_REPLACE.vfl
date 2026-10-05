@@ -1,0 +1,173 @@
+int enable = chi("../enable_ground_side_windows");
+float chance = clamp(chf("../ground_side_window_chance"), 0.0, 1.0);
+int seed = chi("../ground_side_window_seed");
+float unit = chf("../grid_unit");
+
+string win_asset = "SM_Building_01_WallWindow_400x200_03";
+string win_path  = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallWindow_400x200_03.SM_Building_01_WallWindow_400x200_03";
+
+string plain2_asset = "SM_Building_01_Wall_400x200_01";
+string plain2_path  = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x200_01.SM_Building_01_Wall_400x200_01";
+
+string plain1_asset = "SM_Building_01_Wall_400x100_01";
+string plain1_path  = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x100_01.SM_Building_01_Wall_400x100_01";
+
+if (enable == 0)
+{
+    return;
+}
+
+int src_count = npoints(0);
+int remove_ids[];
+int created_count = 0;
+int rebuilt_plain_count = 0;
+
+for (int i = 0; i < src_count; i++)
+{
+    int global_floor = point(0, "global_floor", i);
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int grid_width = point(0, "grid_width", i);
+
+    if (global_floor != 0)
+    {
+        continue;
+    }
+
+    if (facade != "left" && facade != "right")
+    {
+        continue;
+    }
+
+    if (module_type != "plain_wall")
+    {
+        continue;
+    }
+
+    if (grid_width < 2)
+    {
+        continue;
+    }
+
+    vector oldP = point(0, "P", i);
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+
+    int x = int(floor(oldP.x / unit + 0.5));
+    int start_z = 0;
+
+    if (facade == "left")
+    {
+        start_z = int(floor(oldP.z / unit + 0.5)) - grid_width;
+    }
+    else
+    {
+        start_z = int(floor(oldP.z / unit + 0.5));
+    }
+
+    int used = 0;
+
+    while (used < grid_width)
+    {
+        int remain = grid_width - used;
+        int module_grid = remain >= 2 ? 2 : 1;
+
+        int make_window = 0;
+
+        if (module_grid == 2)
+        {
+            float r = rand(seed + i * 17.31 + used * 9.73 + (facade == "left" ? 101.0 : 202.0));
+
+            if (r < chance)
+            {
+                make_window = 1;
+            }
+        }
+
+        string asset_id;
+        string path;
+
+        if (make_window == 1)
+        {
+            asset_id = win_asset;
+            path = win_path;
+        }
+        else if (module_grid == 2)
+        {
+            asset_id = plain2_asset;
+            path = plain2_path;
+        }
+        else
+        {
+            asset_id = plain1_asset;
+            path = plain1_path;
+        }
+
+        vector pos = set(0, 0, 0);
+        float rot_y = 0.0;
+
+        if (facade == "left")
+        {
+            pos = set(float(x) * unit, floor_bottom_y, float(start_z + used + module_grid) * unit);
+            rot_y = 90.0;
+        }
+        else
+        {
+            pos = set(float(x) * unit, floor_bottom_y, float(start_z + used) * unit);
+            rot_y = -90.0;
+        }
+
+        // 新增一楼侧面窗墙需要额外 +90
+        if (make_window == 1)
+        {
+            rot_y += 90.0;
+        }
+
+        int pt = addpoint(0, pos);
+
+        setpointattrib(0, "asset_id", pt, asset_id, "set");
+        setpointattrib(0, "module_type", pt, "plain_wall", "set");
+        setpointattrib(0, "unreal_instance", pt, path, "set");
+
+        setpointattrib(0, "facade", pt, facade, "set");
+        setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+        setpointattrib(0, "grid_width", pt, module_grid, "set");
+        setpointattrib(0, "width_cm", pt, float(module_grid) * 100.0, "set");
+        setpointattrib(0, "height_cm", pt, 400.0, "set");
+        setpointattrib(0, "depth_cm", pt, 25.0, "set");
+        setpointattrib(0, "thickness_cm", pt, 25.0, "set");
+
+        setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+        setpointattrib(0, "floor_height", pt, floor_height, "set");
+
+        setpointattrib(0, "rot_y_deg", pt, rot_y, "set");
+        setpointattrib(0, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+        setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+        if (make_window == 1)
+        {
+            setpointattrib(0, "ground_side_window_applied", pt, "yes", "set");
+            created_count++;
+        }
+        else
+        {
+            setpointattrib(0, "ground_side_window_applied", pt, "no", "set");
+            rebuilt_plain_count++;
+        }
+
+        used += module_grid;
+    }
+
+    append(remove_ids, i);
+}
+
+for (int r = len(remove_ids) - 1; r >= 0; r--)
+{
+    removepoint(0, remove_ids[r]);
+}
+
+setdetailattrib(0, "ground_side_window_status", "ground_side_windows_rebuilt", "set");
+setdetailattrib(0, "ground_side_window_created_count", created_count, "set");
+setdetailattrib(0, "ground_side_window_rebuilt_plain_count", rebuilt_plain_count, "set");

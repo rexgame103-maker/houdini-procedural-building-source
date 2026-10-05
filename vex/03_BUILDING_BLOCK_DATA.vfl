@@ -1,0 +1,608 @@
+// ==========================================
+// 03_BUILDING_BLOCK_DATA
+// V2：一个点 = 一个楼体块
+// 修正版：
+// 1. 防止底部镂空
+// 2. Stack 体块必须完整落在父体块顶部
+// 3. Compact Stack 下方大，上方小
+// 4. 修正 VEX Read-only expression 报错
+// ==========================================
+
+
+// 随机整数函数：返回 min 到 max，包含两端
+function int rand_int(
+    const float seed;
+    const int minv;
+    const int maxv)
+{
+    int fixed_maxv = maxv;
+
+    if (fixed_maxv < minv)
+    {
+        fixed_maxv = minv;
+    }
+
+    int range = fixed_maxv - minv + 1;
+    return minv + int(floor(rand(seed) * range));
+}
+
+
+// 计算体块高度
+function float calc_block_height(
+    const int floors;
+    const float ground_h;
+    const float upper_h)
+{
+    if (floors <= 1)
+    {
+        return ground_h;
+    }
+
+    return ground_h + float(floors - 1) * upper_h;
+}
+
+
+// 检查新体块是否和已有体块发生 3D 穿插
+function int has_block_overlap(
+    const int test_min_x;
+    const int test_max_x;
+    const int test_min_z;
+    const int test_max_z;
+    const float test_bottom_y;
+    const float test_top_y;
+    const int mins_x[];
+    const int maxs_x[];
+    const int mins_z[];
+    const int maxs_z[];
+    const float bottoms_y[];
+    const float tops_y[])
+{
+    int count = len(mins_x);
+
+    for (int i = 0; i < count; i++)
+    {
+        int overlap_x = (test_min_x < maxs_x[i]) && (test_max_x > mins_x[i]);
+        int overlap_z = (test_min_z < maxs_z[i]) && (test_max_z > mins_z[i]);
+        int overlap_y = (test_bottom_y < tops_y[i]) && (test_top_y > bottoms_y[i]);
+
+        if (overlap_x && overlap_z && overlap_y)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+// attach 模式只允许找落地体块作为父体块，避免横向贴到空中的体块
+function int find_ground_parent(
+    const int preferred;
+    const float bottoms_y[])
+{
+    int count = len(bottoms_y);
+
+    if (count <= 0)
+    {
+        return -1;
+    }
+
+    if (bottoms_y[preferred] == 0.0)
+    {
+        return preferred;
+    }
+
+    for (int step = 0; step < count; step++)
+    {
+        int idx = (preferred + step) % count;
+
+        if (bottoms_y[idx] == 0.0)
+        {
+            return idx;
+        }
+    }
+
+    return preferred;
+}
+
+
+// ===============================
+// 读取参数
+// ===============================
+
+int block_count = max(1, chi("../block_count"));
+int random_seed = chi("../random_seed");
+
+int min_w = max(1, chi("../block_min_width_grid"));
+int max_w = max(min_w, chi("../block_max_width_grid"));
+
+int min_d = max(1, chi("../block_min_depth_grid"));
+int max_d = max(min_d, chi("../block_max_depth_grid"));
+
+int min_f = max(1, chi("../block_min_floor_count"));
+int max_f = max(min_f, chi("../block_max_floor_count"));
+
+float ground_h = chf("../ground_floor_height");
+float upper_h  = chf("../upper_floor_height");
+
+float stack_chance = clamp(chf("../block_stack_chance"), 0.0, 1.0);
+float attach_chance = clamp(chf("../block_attach_chance"), 0.0, 1.0);
+float block_ground_ratio = clamp(chf("../block_ground_ratio"), 0.0, 1.0);
+
+int max_offset = max(0, chi("../max_block_offset_grid"));
+int block_layout_mode = chi("../block_layout_mode");
+
+int min_attach_contact_grid = max(1, chi("../min_attach_contact_grid"));
+
+
+// ===============================
+// 已生成体块的数据缓存
+// ===============================
+
+int mins_x[];
+int maxs_x[];
+int mins_z[];
+int maxs_z[];
+float bottoms_y[];
+float tops_y[];
+int floors_cache[];
+
+
+// ===============================
+// 生成体块
+// ===============================
+
+for (int i = 0; i < block_count; i++)
+{
+    int initial_width = rand_int(random_seed + i * 11.37, min_w, max_w);
+    int initial_depth = rand_int(random_seed + i * 23.91, min_d, max_d);
+    int initial_floors = rand_int(random_seed + i * 37.42, min_f, max_f);
+
+    // Compact Stack：第一个底部体块强制最大
+    if (block_layout_mode == 3 && i == 0)
+    {
+        initial_width = max_w;
+        initial_depth = max_d;
+        initial_floors = max_f;
+    }
+
+    int final_width = initial_width;
+    int final_depth = initial_depth;
+    int final_floors = initial_floors;
+
+    int min_x = 0;
+    int min_z = 0;
+    float bottom_y = 0.0;
+
+    string place_mode = "base";
+    string support_status = "grounded";
+
+    int parent_id = -1;
+    int side_id = -1;
+
+    int placed = 0;
+
+    // 第一个体块固定放在地面原点
+    if (i == 0)
+    {
+        placed = 1;
+        place_mode = "base";
+        support_status = "grounded";
+    }
+    else
+    {
+        int existing_count = len(mins_x);
+
+        // 最多尝试 40 次，避免随机到重叠位置
+        for (int attempt = 0; attempt < 40; attempt++)
+        {
+            int try_width = initial_width;
+            int try_depth = initial_depth;
+            int try_floors = initial_floors;
+
+            parent_id = rand_int(random_seed + i * 51.73 + attempt * 9.17, 0, existing_count - 1);
+
+            float r_stack = rand(random_seed + i * 67.13 + attempt * 3.11);
+            float r_attach = rand(random_seed + i * 79.29 + attempt * 5.37);
+
+            float effective_stack_chance = stack_chance;
+            float effective_attach_chance = attach_chance;
+            
+            // ===============================
+            // block_ground_ratio 控制落地 / 叠放比例
+            // ===============================
+            //
+            // block_ground_ratio 越高：越倾向落地 attach / near
+            // block_ground_ratio 越低：越倾向 stack
+            //
+            // 注意：这里不是直接替代 block_stack_chance，
+            // 而是在原有模式基础上做比例调节。
+            
+            effective_stack_chance *= (1.0 - block_ground_ratio);
+            effective_attach_chance *= block_ground_ratio;
+
+            // block_layout_mode:
+            // 0 = Mixed Old City
+            // 1 = Horizontal Street
+            // 2 = Depth Street
+            // 3 = Compact Stack
+
+            if (block_layout_mode == 1)
+            {
+                // 横向街区：减少叠放，更倾向落地贴合
+                effective_stack_chance = stack_chance * 0.15;
+                effective_attach_chance = max(attach_chance, 0.9);
+            }
+            else if (block_layout_mode == 2)
+            {
+                // 纵深街区：减少叠放，更倾向落地贴合
+                effective_stack_chance = stack_chance * 0.15;
+                effective_attach_chance = max(attach_chance, 0.9);
+            }
+            else if (block_layout_mode == 3)
+            {
+                // Compact Stack：
+                // 仍然偏向叠放，但保留 block_ground_ratio 的控制权
+                effective_stack_chance = max(effective_stack_chance, 0.65);
+                effective_attach_chance = min(effective_attach_chance, 0.35);
+            }
+
+            // ===============================
+            // Stack 模式
+            // 允许离地，但必须完整落在父体块顶部范围内
+            // ===============================
+
+            if (r_stack < effective_stack_chance)
+            {
+                place_mode = "stack";
+                support_status = "stacked_inside_parent";
+                side_id = -1;
+
+                int parent_min_x = mins_x[parent_id];
+                int parent_max_x = maxs_x[parent_id];
+                int parent_min_z = mins_z[parent_id];
+                int parent_max_z = maxs_z[parent_id];
+
+                int parent_w = parent_max_x - parent_min_x;
+                int parent_d = parent_max_z - parent_min_z;
+
+                // Compact Stack：上层体块不能比父体块更大
+                // 父体块足够大时，上层尽量缩小 1 格
+                if (block_layout_mode == 3)
+                {
+                    int max_child_w = parent_w;
+                    int max_child_d = parent_d;
+
+                    if (parent_w > min_w)
+                    {
+                        max_child_w = parent_w - 1;
+                    }
+
+                    if (parent_d > min_d)
+                    {
+                        max_child_d = parent_d - 1;
+                    }
+
+                    int min_child_w = min(min_w, max_child_w);
+                    int min_child_d = min(min_d, max_child_d);
+
+                    try_width = rand_int(random_seed + i * 201.17 + attempt * 2.31, min_child_w, max_child_w);
+                    try_depth = rand_int(random_seed + i * 217.63 + attempt * 2.79, min_child_d, max_child_d);
+
+                    int parent_floors = floors_cache[parent_id];
+                    int max_child_floors = max(min_f, parent_floors);
+
+                    try_floors = rand_int(random_seed + i * 233.41 + attempt * 3.19, min_f, max_child_floors);
+                }
+                else
+                {
+                    // 其他模式：如果随机体块比父体块大，就压到父体块范围内
+                    try_width = min(try_width, parent_w);
+                    try_depth = min(try_depth, parent_d);
+                }
+
+                // Stack 不允许超出父体块边界，避免底部镂空
+                int min_allowed_x = parent_min_x;
+                int max_allowed_x = parent_max_x - try_width;
+
+                int min_allowed_z = parent_min_z;
+                int max_allowed_z = parent_max_z - try_depth;
+
+                if (max_allowed_x < min_allowed_x)
+                {
+                    max_allowed_x = min_allowed_x;
+                }
+
+                if (max_allowed_z < min_allowed_z)
+                {
+                    max_allowed_z = min_allowed_z;
+                }
+
+                min_x = rand_int(random_seed + i * 91.44 + attempt * 7.13, min_allowed_x, max_allowed_x);
+                min_z = rand_int(random_seed + i * 103.55 + attempt * 8.41, min_allowed_z, max_allowed_z);
+
+                bottom_y = tops_y[parent_id];
+            }
+
+            // ===============================
+            // Attach 模式
+            // 只能落地贴合，不允许贴到空中体块旁边形成悬空
+            // ===============================
+
+            else if (r_attach < effective_attach_chance)
+            {
+                place_mode = "attach";
+                support_status = "grounded_attach";
+
+                parent_id = find_ground_parent(parent_id, bottoms_y);
+
+                int parent_min_x = mins_x[parent_id];
+                int parent_max_x = maxs_x[parent_id];
+                int parent_min_z = mins_z[parent_id];
+                int parent_max_z = maxs_z[parent_id];
+
+                // side_id:
+                // 0 = front
+                // 1 = back
+                // 2 = left
+                // 3 = right
+
+                if (block_layout_mode == 1)
+                {
+                    // Horizontal Street：只在左右方向扩展
+                    side_id = rand_int(random_seed + i * 117.31 + attempt * 4.29, 2, 3);
+                }
+                else if (block_layout_mode == 2)
+                {
+                    // Depth Street：只在前后方向扩展
+                    side_id = rand_int(random_seed + i * 117.31 + attempt * 4.29, 0, 1);
+                }
+                else
+                {
+                    // Mixed Old City / Compact Stack：四个方向都允许
+                    side_id = rand_int(random_seed + i * 117.31 + attempt * 4.29, 0, 3);
+                }
+
+                // ===============================
+                // Attach 吸附规则
+                // 前后贴合：沿 X 方向尽量对齐
+                // 左右贴合：沿 Z 方向尽量对齐
+                // ===============================
+                
+                int align_mode = rand_int(random_seed + i * 245.77 + attempt * 4.13, 0, 2);
+                
+                // align_mode:
+                // 0 = 对齐父体块左/前边
+                // 1 = 居中对齐
+                // 2 = 对齐父体块右/后边
+                
+                if (side_id == 0)
+                {
+                    // front：贴在父体块前侧，X 方向吸附
+                    if (align_mode == 0)
+                    {
+                        min_x = parent_min_x;
+                    }
+                    else if (align_mode == 1)
+                    {
+                        min_x = int(floor((parent_min_x + parent_max_x - try_width) / 2.0));
+                    }
+                    else
+                    {
+                        min_x = parent_max_x - try_width;
+                    }
+                
+                    min_z = parent_min_z - try_depth;
+                }
+                else if (side_id == 1)
+                {
+                    // back：贴在父体块后侧，X 方向吸附
+                    if (align_mode == 0)
+                    {
+                        min_x = parent_min_x;
+                    }
+                    else if (align_mode == 1)
+                    {
+                        min_x = int(floor((parent_min_x + parent_max_x - try_width) / 2.0));
+                    }
+                    else
+                    {
+                        min_x = parent_max_x - try_width;
+                    }
+                
+                    min_z = parent_max_z;
+                }
+                else if (side_id == 2)
+                {
+                    // left：贴在父体块左侧，Z 方向吸附
+                    min_x = parent_min_x - try_width;
+                
+                    if (align_mode == 0)
+                    {
+                        min_z = parent_min_z;
+                    }
+                    else if (align_mode == 1)
+                    {
+                        min_z = int(floor((parent_min_z + parent_max_z - try_depth) / 2.0));
+                    }
+                    else
+                    {
+                        min_z = parent_max_z - try_depth;
+                    }
+                }
+                else
+                {
+                    // right：贴在父体块右侧，Z 方向吸附
+                    min_x = parent_max_x;
+                
+                    if (align_mode == 0)
+                    {
+                        min_z = parent_min_z;
+                    }
+                    else if (align_mode == 1)
+                    {
+                        min_z = int(floor((parent_min_z + parent_max_z - try_depth) / 2.0));
+                    }
+                    else
+                    {
+                        min_z = parent_max_z - try_depth;
+                    }
+                }
+
+                bottom_y = 0.0;
+            }
+
+            // ===============================
+            // Near 模式
+            // 备用模式，只能落地
+            // ===============================
+
+            else
+            {
+                place_mode = "near";
+                support_status = "grounded_near";
+
+                min_x = rand_int(random_seed + i * 181.12 + attempt * 4.91, -max_offset, max_offset);
+                min_z = rand_int(random_seed + i * 193.77 + attempt * 5.62, -max_offset, max_offset);
+
+                bottom_y = 0.0;
+                side_id = -1;
+                parent_id = -1;
+            }
+
+            float try_height = calc_block_height(try_floors, ground_h, upper_h);
+
+            int test_max_x = min_x + try_width;
+            int test_max_z = min_z + try_depth;
+            float test_top_y = bottom_y + try_height;
+
+            int overlap = has_block_overlap(
+                min_x,
+                test_max_x,
+                min_z,
+                test_max_z,
+                bottom_y,
+                test_top_y,
+                mins_x,
+                maxs_x,
+                mins_z,
+                maxs_z,
+                bottoms_y,
+                tops_y
+            );
+
+            // ===============================
+            // Attach 最小接触长度检查
+            // ===============================
+            
+            int contact_ok = 1;
+            
+            if (place_mode == "attach" && parent_id >= 0)
+            {
+                int parent_min_x = mins_x[parent_id];
+                int parent_max_x = maxs_x[parent_id];
+                int parent_min_z = mins_z[parent_id];
+                int parent_max_z = maxs_z[parent_id];
+            
+                int contact_len = 0;
+            
+                // front / back：检查 X 方向接触长度
+                if (side_id == 0 || side_id == 1)
+                {
+                    int contact_min_x = max(min_x, parent_min_x);
+                    int contact_max_x = min(test_max_x, parent_max_x);
+            
+                    contact_len = contact_max_x - contact_min_x;
+                }
+            
+                // left / right：检查 Z 方向接触长度
+                else if (side_id == 2 || side_id == 3)
+                {
+                    int contact_min_z = max(min_z, parent_min_z);
+                    int contact_max_z = min(test_max_z, parent_max_z);
+            
+                    contact_len = contact_max_z - contact_min_z;
+                }
+            
+                if (contact_len < min_attach_contact_grid)
+                {
+                    contact_ok = 0;
+                }
+            }
+            
+            if (overlap == 0 && contact_ok == 1)
+            {
+                final_width = try_width;
+                final_depth = try_depth;
+                final_floors = try_floors;
+            
+                placed = 1;
+                break;
+            }
+        }
+    }
+
+    // 如果 40 次都没找到合适位置，就放到所有体块右侧的地面上
+    // 这样不会穿插，也不会悬空
+    if (placed == 0)
+    {
+        place_mode = "fallback";
+        support_status = "grounded_fallback";
+
+        int global_max_x = maxs_x[0];
+
+        for (int k = 0; k < len(maxs_x); k++)
+        {
+            global_max_x = max(global_max_x, maxs_x[k]);
+        }
+
+        min_x = global_max_x + 1;
+        min_z = 0;
+        bottom_y = 0.0;
+
+        parent_id = -1;
+        side_id = -1;
+
+        final_width = initial_width;
+        final_depth = initial_depth;
+        final_floors = initial_floors;
+    }
+
+    int max_x = min_x + final_width;
+    int max_z = min_z + final_depth;
+
+    float height = calc_block_height(final_floors, ground_h, upper_h);
+    float top_y = bottom_y + height;
+
+    int pt = addpoint(0, set(min_x, bottom_y, min_z));
+
+    setpointattrib(0, "block_id", pt, i, "set");
+    setpointattrib(0, "parent_id", pt, parent_id, "set");
+
+    setpointattrib(0, "place_mode", pt, place_mode, "set");
+    setpointattrib(0, "support_status", pt, support_status, "set");
+    setpointattrib(0, "side_id", pt, side_id, "set");
+
+    setpointattrib(0, "width_grid", pt, final_width, "set");
+    setpointattrib(0, "depth_grid", pt, final_depth, "set");
+    setpointattrib(0, "floor_count", pt, final_floors, "set");
+
+    setpointattrib(0, "min_x_grid", pt, min_x, "set");
+    setpointattrib(0, "max_x_grid", pt, max_x, "set");
+    setpointattrib(0, "min_z_grid", pt, min_z, "set");
+    setpointattrib(0, "max_z_grid", pt, max_z, "set");
+
+    setpointattrib(0, "bottom_y", pt, bottom_y, "set");
+    setpointattrib(0, "top_y", pt, top_y, "set");
+    setpointattrib(0, "height", pt, height, "set");
+
+    setpointattrib(0, "is_base_block", pt, i == 0, "set");
+
+    append(mins_x, min_x);
+    append(maxs_x, max_x);
+    append(mins_z, min_z);
+    append(maxs_z, max_z);
+    append(bottoms_y, bottom_y);
+    append(tops_y, top_y);
+    append(floors_cache, final_floors);
+}

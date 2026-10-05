@@ -1,0 +1,211 @@
+// ==========================================
+// 22_FRONT_BALCONY_ANCHOR_POINTS
+// V2.1A：正面阳台挂点生成
+//
+// 规则：
+// 1. 只处理 facade == front
+// 2. 只处理 global_floor > 0
+// 3. 只处理 module_type == door_wall_upper
+// 4. 一个正面高层门墙生成一个 balcony anchor
+// 5. 阳台挂点位于门墙底部、水平居中、贴墙内侧
+// 6. 当前只生成挂点，不实例化真实资产
+// ==========================================
+
+int enable_balcony = chi("../enable_front_balcony");
+float chance = clamp(chf("../front_balcony_chance"), 0.0, 1.0);
+int seed = chi("../front_balcony_seed");
+
+float unit = chf("../grid_unit");
+
+float balcony_w_cm = chf("../front_balcony_width_cm");
+float balcony_d_cm = chf("../front_balcony_depth_cm");
+float balcony_h_cm = chf("../front_balcony_height_cm");
+float y_offset_cm = chf("../front_balcony_y_offset_cm");
+
+int src_count = npoints(0);
+
+int created_count = 0;
+
+if (enable_balcony == 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "front_balcony_status", "disabled", "set");
+    setdetailattrib(0, "front_balcony_created_count", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 遍历现有模块点，寻找正面高层门墙
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int global_floor = point(0, "global_floor", i);
+
+    if (facade != "front")
+    {
+        continue;
+    }
+
+    if (global_floor <= 0)
+    {
+        continue;
+    }
+
+    if (module_type != "door_wall_upper")
+    {
+        continue;
+    }
+    
+    // 判断这个正面门墙下方是否还有同位置的正面墙体
+    // 如果下方没有墙，说明它很可能是堆叠楼体的一楼，门前是屋顶平台，不生成正面阳台
+    int door_grid_width_check = point(0, "grid_width", i);
+    vector checkP = point(0, "P", i);
+    
+    int cur_start_x = int(floor(checkP.x / unit + 0.5));
+    int cur_end_x = cur_start_x + door_grid_width_check;
+    int cur_z = int(floor(checkP.z / unit + 0.5));
+    
+    int has_front_wall_below = 0;
+    
+    for (int j = 0; j < src_count; j++)
+    {
+        if (j == i)
+        {
+            continue;
+        }
+    
+        if (point(0, "global_floor", j) != global_floor - 1)
+        {
+            continue;
+        }
+    
+        if (point(0, "facade", j) != "front")
+        {
+            continue;
+        }
+    
+        string below_type = point(0, "module_type", j);
+    
+        if (
+            below_type != "plain_wall" &&
+            below_type != "door_wall_ground" &&
+            below_type != "door_wall_upper" &&
+            below_type != "window_wall_ground" &&
+            below_type != "window_wall_upper"
+        )
+        {
+            continue;
+        }
+    
+        vector belowP = point(0, "P", j);
+        int below_z = int(floor(belowP.z / unit + 0.5));
+    
+        if (below_z != cur_z)
+        {
+            continue;
+        }
+    
+        int below_w = point(0, "grid_width", j);
+        int below_start_x = int(floor(belowP.x / unit + 0.5));
+        int below_end_x = below_start_x + below_w;
+    
+        int overlap = (below_start_x < cur_end_x) && (below_end_x > cur_start_x);
+    
+        if (overlap)
+        {
+            has_front_wall_below = 1;
+            break;
+        }
+    }
+    
+    if (has_front_wall_below == 0)
+    {
+        continue;
+    }
+
+    float r = rand(float(seed) + float(i) * 17.31 + float(global_floor) * 5.73);
+
+    if (r > chance)
+    {
+        continue;
+    }
+
+    vector door_pos = point(0, "P", i);
+
+    int door_grid_width = point(0, "grid_width", i);
+    float door_width_m = float(door_grid_width) * unit;
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+
+    // 正面门墙点通常在模块左下起点
+    // 阳台挂点改为门墙水平中心
+    vector anchor_pos = door_pos;
+
+    anchor_pos.x = door_pos.x + door_width_m * 0.5;
+    anchor_pos.y = floor_bottom_y + y_offset_cm / 100.0;
+    float z_offset_cm = chf("../front_balcony_z_offset_cm");
+
+    // front = Z-
+    // 负值会让阳台更向外，正值会让阳台更靠墙内
+    anchor_pos.z = door_pos.z + z_offset_cm / 100.0;
+
+    int pt = addpoint(0, anchor_pos);
+
+    setpointattrib(0, "module_type", pt, "front_balcony_anchor", "set");
+    setpointattrib(0, "facade", pt, "front", "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "balcony_source", pt, "upper_front_door", "set");
+    setpointattrib(0, "source_door_point", pt, i, "set");
+
+    setpointattrib(0, "width_cm", pt, balcony_w_cm, "set");
+    setpointattrib(0, "depth_cm", pt, balcony_d_cm, "set");
+    setpointattrib(0, "height_cm", pt, balcony_h_cm, "set");
+
+    setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(0, "floor_height", pt, floor_height, "set");
+
+    // front 阳台向 Z- 方向外挑
+    setpointattrib(0, "balcony_out_dir", pt, set(0, 0, -1), "set");
+
+    setpointattrib(0, "rot_y_deg", pt, 0.0, "set");
+    setpointattrib(0, "orient", pt, quaternion(0, set(0, 1, 0)), "set");
+    setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+    created_count++;
+}
+
+
+// ===============================
+// 删除原始墙体点，只保留阳台挂点
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+if (created_count > 0)
+{
+    setdetailattrib(0, "front_balcony_status", "front_balcony_anchors_created", "set");
+}
+else
+{
+    setdetailattrib(0, "front_balcony_status", "no_front_upper_door_found", "set");
+}
+
+setdetailattrib(0, "front_balcony_created_count", created_count, "set");

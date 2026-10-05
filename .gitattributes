@@ -1,0 +1,8 @@
+*.vfl -text
+*.hda binary
+*.png binary
+*.md text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.csv -text
+*.ds -text

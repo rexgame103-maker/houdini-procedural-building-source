@@ -1,0 +1,77 @@
+// ==========================================
+// 15_ROOF_TOP_EXPOSED_DETECTION
+// V2：检测顶部外露占用格
+//
+// 每个 occupied cell：
+// 如果它正上方没有同 X/Z 的占用格，
+// 那它的顶部就是 roof candidate。
+// 修正版：避免 setpointattrib 类型歧义
+// ==========================================
+
+int pt_count = npoints(0);
+float eps = 0.001;
+
+int top_exposed_count = 0;
+
+for (int i = 0; i < pt_count; i++)
+{
+    int x = point(0, "cell_x", i);
+    int z = point(0, "cell_z", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    float floor_top_y = point(0, "floor_top_y", i);
+
+    int has_cell_above = 0;
+
+    for (int j = 0; j < pt_count; j++)
+    {
+        if (i == j)
+        {
+            continue;
+        }
+
+        int ox = point(0, "cell_x", j);
+        int oz = point(0, "cell_z", j);
+
+        if (ox != x || oz != z)
+        {
+            continue;
+        }
+
+        float other_bottom_y = point(0, "floor_bottom_y", j);
+
+        if (abs(other_bottom_y - floor_top_y) <= eps)
+        {
+            has_cell_above = 1;
+            break;
+        }
+    }
+
+    int is_top_exposed = 1 - has_cell_above;
+
+    setpointattrib(0, "is_top_exposed", i, is_top_exposed, "set");
+
+    if (is_top_exposed == 1)
+    {
+        top_exposed_count++;
+
+        setpointattrib(0, "roof_cell_x", i, x, "set");
+        setpointattrib(0, "roof_cell_z", i, z, "set");
+        setpointattrib(0, "roof_y", i, floor_top_y, "set");
+        setpointattrib(0, "roof_source_floor", i, global_floor, "set");
+
+        setpointattrib(0, "Cd", i, set(1.0, 0.8, 0.1), "set");
+    }
+    else
+    {
+        setpointattrib(0, "roof_cell_x", i, x, "set");
+        setpointattrib(0, "roof_cell_z", i, z, "set");
+        setpointattrib(0, "roof_y", i, floor_top_y, "set");
+        setpointattrib(0, "roof_source_floor", i, global_floor, "set");
+
+        setpointattrib(0, "Cd", i, set(0.15, 0.15, 0.15), "set");
+    }
+}
+
+setdetailattrib(0, "roof_top_exposed_cell_count", top_exposed_count, "set");

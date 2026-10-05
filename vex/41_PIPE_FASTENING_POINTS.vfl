@@ -1,0 +1,183 @@
+// ==========================================
+// 41_PIPE_FASTENING_POINTS
+// V2.6A：生成墙面支架
+//
+// 资产：
+// SM_Drains_01_Fastening_01
+//
+// 规则：
+// 1. 基于 pipe_anchor 生成
+// 2. 每隔 N 节直管生成一个支架
+// 3. 默认放在管道表面附近
+// 4. 偏移和旋转全部暴露给参数调试
+// ==========================================
+
+int enable = chi("../enable_pipe_fastening");
+
+string fastening_asset = "SM_Drains_01_Fastening_01";
+string fastening_path  = "/Game/CityStreetStylizedPack/Environment/Props/Drains_01/SM_Drains_01_Fastening_01.SM_Drains_01_Fastening_01";
+
+int interval_segments = max(1, chi("../pipe_fastening_interval_segments"));
+int start_segment = max(0, chi("../pipe_fastening_start_segment"));
+
+int seed = chi("../pipe_fastening_seed");
+
+float y_rand_min = chf("../pipe_fastening_y_random_min_cm") / 100.0;
+float y_rand_max = chf("../pipe_fastening_y_random_max_cm") / 100.0;
+
+float surface_offset = chf("../pipe_fastening_surface_offset_cm") / 100.0;
+float along_offset = chf("../pipe_fastening_along_wall_offset_cm") / 100.0;
+float y_offset = chf("../pipe_fastening_y_offset_cm") / 100.0;
+
+float rot_x = chf("../pipe_fastening_rot_x");
+float rot_y = chf("../pipe_fastening_rot_y");
+float rot_z = chf("../pipe_fastening_rot_z");
+float base_rot_y_front = chf("../pipe_fastening_front_base_rot_y");
+float base_rot_y_back  = chf("../pipe_fastening_back_base_rot_y");
+float base_rot_y_left  = chf("../pipe_fastening_left_base_rot_y");
+float base_rot_y_right = chf("../pipe_fastening_right_base_rot_y");
+
+float tube_height_m = 1.0;
+
+int src_count = npoints(0);
+int fastening_count = 0;
+
+if (enable == 1)
+{
+    for (int i = 0; i < src_count; i++)
+    {
+        string module_type = point(0, "module_type", i);
+
+        if (module_type != "pipe_anchor")
+        {
+            continue;
+        }
+
+        vector anchor_pos = point(0, "P", i);
+
+        int segment_count = point(0, "pipe_segment_count", i);
+        segment_count = max(1, segment_count);
+        
+        // ===============================
+        // 读取管道背后墙体最高高度
+        // 如果 38 里算出来的 pipe_wall_top_y 不合理，
+        // 就先使用管道自身顶部高度作为兜底，避免支架全部被过滤。
+        // ===============================
+        
+        
+
+        string facade = point(0, "pipe_facade", i);
+
+        vector wall_normal = point(0, "pipe_wall_normal", i);
+        vector wall_tangent = point(0, "pipe_wall_tangent", i);
+
+        // 从 start_segment 开始，每隔 interval_segments 生成一个支架
+        for (int s = start_segment; s < segment_count; s += interval_segments)
+        {
+            // 最顶部那一节直管不生成支架
+            if (s >= segment_count - 1)
+            {
+                continue;
+            }
+        
+            vector pos = anchor_pos;
+        
+            // 放到当前直管段中部附近
+            pos.y += float(s) * tube_height_m + tube_height_m * 0.5;
+        
+            
+
+            // 随机上下轻微偏移
+            float r = rand(seed + i * 19.73 + s * 5.17);
+            float y_rand = lerp(y_rand_min, y_rand_max, r);
+
+            pos.y += y_offset + y_rand;
+
+            // 移到管道表面附近
+            // wall_normal 是从墙面向外的方向
+            pos += wall_normal * surface_offset;
+
+            // 沿墙面方向微调
+            pos += wall_tangent * along_offset;
+
+            int pt = addpoint(0, pos);
+
+            setpointattrib(0, "asset_id", pt, fastening_asset, "set");
+            setpointattrib(0, "module_type", pt, "pipe_fastening", "set");
+            setpointattrib(0, "unreal_instance", pt, fastening_path, "set");
+
+            setpointattrib(0, "facade", pt, facade, "set");
+            setpointattrib(0, "pipe_facade", pt, facade, "set");
+
+            setpointattrib(0, "pipe_run_id", pt, i, "set");
+            setpointattrib(0, "pipe_fastening_segment_index", pt, s, "set");
+            setpointattrib(0, "pipe_segment_count", pt, segment_count, "set");
+
+            setpointattrib(0, "pipe_wall_normal", pt, wall_normal, "set");
+            setpointattrib(0, "pipe_wall_tangent", pt, wall_tangent, "set");
+
+            setpointattrib(0, "width_cm", pt, 69.0, "set");
+            setpointattrib(0, "depth_cm", pt, 33.0, "set");
+            setpointattrib(0, "height_cm", pt, 100.0, "set");
+            setpointattrib(0, "thickness_cm", pt, 33.0, "set");
+
+            setpointattrib(0, "grid_width", pt, 1, "set");
+            setpointattrib(0, "grid_depth", pt, 1, "set");
+
+            // ===============================
+            // 根据墙面自动决定支架基础朝向
+            // ===============================
+            
+            float facade_base_y = 0.0;
+            
+            if (facade == "front")
+            {
+                facade_base_y = base_rot_y_front;
+            }
+            else if (facade == "back")
+            {
+                facade_base_y = base_rot_y_back;
+            }
+            else if (facade == "left")
+            {
+                facade_base_y = base_rot_y_left;
+            }
+            else if (facade == "right")
+            {
+                facade_base_y = base_rot_y_right;
+            }
+            
+            // 最终 Y 旋转 = 墙面基础旋转 + 手动微调旋转
+            float final_rot_y = facade_base_y + rot_y;
+            
+            vector4 qx = quaternion(radians(rot_x), set(1, 0, 0));
+            vector4 qy = quaternion(radians(final_rot_y), set(0, 1, 0));
+            vector4 qz = quaternion(radians(rot_z), set(0, 0, 1));
+            
+            vector4 q = qy * qx * qz;
+            
+            setpointattrib(0, "orient", pt, q, "set");
+            setpointattrib(0, "rot_y_deg", pt, final_rot_y, "set");
+
+            setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+            setpointattrib(0, "pscale", pt, 1.0, "set");
+
+            setpointattrib(0, "asset_table_found", pt, 1, "set");
+            setpointattrib(0, "asset_table_status", pt, "pipe_manual", "set");
+            setpointattrib(0, "table_module_type", pt, "pipe_fastening", "set");
+            setpointattrib(0, "table_unreal_asset_path", pt, fastening_path, "set");
+
+            setpointattrib(0, "Cd", pt, set(1.0, 0.35, 0.05), "set");
+
+            fastening_count++;
+        }
+    }
+}
+
+// 删除输入 anchor，只保留 fastening 点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "pipe_fastening_count", fastening_count, "set");

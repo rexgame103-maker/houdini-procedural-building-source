@@ -1,0 +1,570 @@
+// ==========================================
+// 37_ROOF_PROP_POINTS
+// V2.4C_02：屋顶放置物生成
+//
+// 修正内容：
+// 1. Random 模式不再按屋顶顺序填充
+// 2. 每个物品随机选择一个可用屋顶平台
+// 3. roof_prop_row_spacing_cm 在 Random 模式下作为最小间距
+// 4. Row Same Type 模式根据 spacing 计算平台容量
+// 5. spacing 过大时自动减少可放数量，避免 clamp 后重叠
+// ==========================================
+
+
+// ===============================
+// 基础数据
+// ===============================
+
+int src_prim_count = nprimitives(0);
+int src_point_count = npoints(0);
+
+int created_count = 0;
+
+
+// ===============================
+// 屋顶物品资产
+// ===============================
+
+string prop_assets[] = array(
+    "SM_Antennas_01_Antenna_MED_01",
+    "SM_Antennas_01_Antenna_LRG_02",
+    "SM_Antennas_01_Antenna_LRG_01"
+);
+
+string prop_paths[] = array(
+    "/Game/CityStreetStylizedPack/Environment/Props/Antennas_01/SM_Antennas_01_Antenna_MED_01.SM_Antennas_01_Antenna_MED_01",
+    "/Game/CityStreetStylizedPack/Environment/Props/Antennas_01/SM_Antennas_01_Antenna_LRG_02.SM_Antennas_01_Antenna_LRG_02",
+    "/Game/CityStreetStylizedPack/Environment/Props/Antennas_01/SM_Antennas_01_Antenna_LRG_01.SM_Antennas_01_Antenna_LRG_01"
+);
+
+float prop_width_cm[] = array(
+    121.0,
+    204.0,
+    563.0
+);
+
+float prop_depth_cm[] = array(
+    211.0,
+    204.0,
+    422.0
+);
+
+float prop_height_cm[] = array(
+    380.0,
+    915.0,
+    1125.0
+);
+
+// 前两个物品需要屋顶长宽 >= 3 grid
+// 第三个大型物品需要屋顶长宽 >= 6 grid
+int prop_min_roof_grid[] = array(
+    3,
+    3,
+    6
+);
+
+
+// ===============================
+// HDA 参数
+// ===============================
+
+int enable_roof_props = chi("../enable_roof_props");
+int placement_mode = chi("../roof_prop_placement_mode");
+
+int max_prop_count = max(0, chi("../roof_prop_count"));
+int seed = chi("../roof_prop_seed");
+
+float edge_margin = max(0.0, chf("../roof_prop_edge_margin_cm") / 100.0);
+float spacing = max(0.1, chf("../roof_prop_row_spacing_cm") / 100.0);
+float random_offset = max(0.0, chf("../roof_prop_random_offset_cm") / 100.0);
+
+int enable_random_rotation = chi("../enable_roof_prop_random_rotation");
+float y_offset = chf("../roof_prop_y_offset_cm") / 100.0;
+
+float unit = chf("../grid_unit");
+
+
+// ===============================
+// 如果关闭，则本支线不输出任何点
+// ===============================
+
+if (enable_roof_props == 0 || max_prop_count <= 0)
+{
+    for (int pr = src_prim_count - 1; pr >= 0; pr--)
+    {
+        removeprim(0, pr, 0);
+    }
+
+    for (int pt = src_point_count - 1; pt >= 0; pt--)
+    {
+        removepoint(0, pt);
+    }
+
+    setdetailattrib(0, "roof_prop_status", "disabled", "set");
+    setdetailattrib(0, "roof_prop_count_created", 0, "set");
+    return;
+}
+
+
+if (src_prim_count <= 0)
+{
+    setdetailattrib(0, "roof_prop_status", "no_roof_rectangle", "set");
+    setdetailattrib(0, "roof_prop_count_created", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 收集可用屋顶平台
+// ===============================
+
+int roof_prims[];
+int roof_min_x_grid[];
+int roof_max_x_grid[];
+int roof_min_z_grid[];
+int roof_max_z_grid[];
+
+int roof_width_grid[];
+int roof_depth_grid[];
+
+float roof_y_values[];
+int roof_source_floors[];
+
+int row_used_count[];
+int row_capacity[];
+int row_asset_index[];
+
+
+for (int pr = 0; pr < src_prim_count; pr++)
+{
+    int min_x_grid = prim(0, "min_x_grid", pr);
+    int max_x_grid = prim(0, "max_x_grid", pr);
+    int min_z_grid = prim(0, "min_z_grid", pr);
+    int max_z_grid = prim(0, "max_z_grid", pr);
+
+    int width_grid = prim(0, "width_grid", pr);
+    int depth_grid = prim(0, "depth_grid", pr);
+
+    float roof_y = prim(0, "roof_y", pr);
+    int roof_source_floor = prim(0, "roof_source_floor", pr);
+
+    if (width_grid <= 0)
+    {
+        width_grid = max_x_grid - min_x_grid;
+    }
+
+    if (depth_grid <= 0)
+    {
+        depth_grid = max_z_grid - min_z_grid;
+    }
+
+    // 平台本身太小，直接跳过
+    if (width_grid < 3 || depth_grid < 3)
+    {
+        continue;
+    }
+
+    float safe_min_x = float(min_x_grid) * unit + edge_margin;
+    float safe_max_x = float(max_x_grid) * unit - edge_margin;
+    float safe_min_z = float(min_z_grid) * unit + edge_margin;
+    float safe_max_z = float(max_z_grid) * unit - edge_margin;
+
+    if (safe_max_x <= safe_min_x || safe_max_z <= safe_min_z)
+    {
+        continue;
+    }
+
+    // 至少能放前两个中小型物品才进入屋顶池
+    int has_allowed_asset = 0;
+
+    for (int a = 0; a < len(prop_assets); a++)
+    {
+        int need_grid = prop_min_roof_grid[a];
+
+        if (width_grid >= need_grid && depth_grid >= need_grid)
+        {
+            has_allowed_asset = 1;
+            break;
+        }
+    }
+
+    if (has_allowed_asset == 0)
+    {
+        continue;
+    }
+
+    append(roof_prims, pr);
+
+    append(roof_min_x_grid, min_x_grid);
+    append(roof_max_x_grid, max_x_grid);
+    append(roof_min_z_grid, min_z_grid);
+    append(roof_max_z_grid, max_z_grid);
+
+    append(roof_width_grid, width_grid);
+    append(roof_depth_grid, depth_grid);
+
+    append(roof_y_values, roof_y);
+    append(roof_source_floors, roof_source_floor);
+
+    append(row_used_count, 0);
+
+    // Row 模式平台容量：
+    // 根据安全范围宽度和 spacing 算。
+    // spacing 越大，可放数量越少。
+    float safe_width_m = safe_max_x - safe_min_x;
+
+    int cap = int(floor(safe_width_m / spacing)) + 1;
+    cap = max(1, cap);
+
+    append(row_capacity, cap);
+
+    // 给每个平台随机选一个 Row 模式资产
+    int allowed_for_roof[];
+
+    for (int a = 0; a < len(prop_assets); a++)
+    {
+        int need_grid = prop_min_roof_grid[a];
+
+        if (width_grid >= need_grid && depth_grid >= need_grid)
+        {
+            append(allowed_for_roof, a);
+        }
+    }
+
+    int row_asset = allowed_for_roof[0];
+
+    float r_asset = rand(float(seed) + float(pr) * 53.119);
+    int pick = int(floor(r_asset * float(len(allowed_for_roof))));
+    pick = clamp(pick, 0, len(allowed_for_roof) - 1);
+
+    row_asset = allowed_for_roof[pick];
+
+    append(row_asset_index, row_asset);
+}
+
+
+// ===============================
+// 没有可用屋顶平台
+// ===============================
+
+if (len(roof_prims) <= 0)
+{
+    for (int pr = src_prim_count - 1; pr >= 0; pr--)
+    {
+        removeprim(0, pr, 0);
+    }
+
+    for (int pt = src_point_count - 1; pt >= 0; pt--)
+    {
+        removepoint(0, pt);
+    }
+
+    setdetailattrib(0, "roof_prop_status", "no_available_roof", "set");
+    setdetailattrib(0, "roof_prop_count_created", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 已放置点缓存，用于 Random 模式最小间距检测
+// ===============================
+
+int placed_roof_prim[];
+float placed_x[];
+float placed_z[];
+
+
+// ===============================
+// 生成屋顶物品
+// ===============================
+
+int max_attempts = max_prop_count * 80;
+
+for (int attempt = 0; attempt < max_attempts; attempt++)
+{
+    if (created_count >= max_prop_count)
+    {
+        break;
+    }
+
+    // 每一次都随机选择一个屋顶平台
+    float r_roof = rand(float(seed) + float(attempt) * 17.733);
+    int roof_index = int(floor(r_roof * float(len(roof_prims))));
+    roof_index = clamp(roof_index, 0, len(roof_prims) - 1);
+
+    int pr = roof_prims[roof_index];
+
+    int min_x_grid = roof_min_x_grid[roof_index];
+    int max_x_grid = roof_max_x_grid[roof_index];
+    int min_z_grid = roof_min_z_grid[roof_index];
+    int max_z_grid = roof_max_z_grid[roof_index];
+
+    int width_grid = roof_width_grid[roof_index];
+    int depth_grid = roof_depth_grid[roof_index];
+
+    float roof_y = roof_y_values[roof_index];
+    int roof_source_floor = roof_source_floors[roof_index];
+
+
+    // ===============================
+    // 当前屋顶允许的资产池
+    // ===============================
+
+    int allowed_indices[];
+
+    for (int a = 0; a < len(prop_assets); a++)
+    {
+        int need_grid = prop_min_roof_grid[a];
+
+        if (width_grid >= need_grid && depth_grid >= need_grid)
+        {
+            append(allowed_indices, a);
+        }
+    }
+
+    if (len(allowed_indices) <= 0)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 选择资产
+    // ===============================
+
+    int prop_index = allowed_indices[0];
+
+    if (placement_mode == 0)
+    {
+        // Random：每个物品随机类型
+        float r_asset = rand(
+            float(seed) +
+            float(attempt) * 29.317 +
+            float(pr) * 7.771
+        );
+
+        int pick = int(floor(r_asset * float(len(allowed_indices))));
+        pick = clamp(pick, 0, len(allowed_indices) - 1);
+
+        prop_index = allowed_indices[pick];
+    }
+    else
+    {
+        // Row Same Type：同一个屋顶平台使用固定同一种资产
+        prop_index = row_asset_index[roof_index];
+
+        // 如果当前平台 row 已满，换下一次随机尝试
+        if (row_used_count[roof_index] >= row_capacity[roof_index])
+        {
+            continue;
+        }
+    }
+
+
+    // ===============================
+    // 安全范围
+    // ===============================
+
+    float min_x = float(min_x_grid) * unit + edge_margin;
+    float max_x = float(max_x_grid) * unit - edge_margin;
+
+    float min_z = float(min_z_grid) * unit + edge_margin;
+    float max_z = float(max_z_grid) * unit - edge_margin;
+
+    if (max_x <= min_x || max_z <= min_z)
+    {
+        continue;
+    }
+
+
+    // ===============================
+    // 计算位置
+    // ===============================
+
+    float x = 0.0;
+    float z = 0.0;
+
+    if (placement_mode == 0)
+    {
+        // Random 模式：在当前随机屋顶内部随机位置
+        float rx = rand(float(seed) + float(attempt) * 41.713 + float(pr) * 3.19);
+        float rz = rand(float(seed) + float(attempt) * 47.219 + float(pr) * 5.31);
+
+        x = fit01(rx, min_x, max_x);
+        z = fit01(rz, min_z, max_z);
+
+        if (random_offset > 0.0)
+        {
+            float rox = fit01(
+                rand(float(seed) + float(attempt) * 61.337),
+                -random_offset,
+                random_offset
+            );
+
+            float roz = fit01(
+                rand(float(seed) + float(attempt) * 67.771),
+                -random_offset,
+                random_offset
+            );
+
+            x += rox;
+            z += roz;
+
+            x = clamp(x, min_x, max_x);
+            z = clamp(z, min_z, max_z);
+        }
+
+        // Random 模式下，spacing 作为最小距离。
+        // 只检查同一个屋顶平台上的物品。
+        int too_close = 0;
+
+        for (int p = 0; p < len(placed_roof_prim); p++)
+        {
+            if (placed_roof_prim[p] != pr)
+            {
+                continue;
+            }
+
+            float dx = x - placed_x[p];
+            float dz = z - placed_z[p];
+
+            float dist = length(set(dx, 0, dz));
+
+            if (dist < spacing)
+            {
+                too_close = 1;
+                break;
+            }
+        }
+
+        if (too_close == 1)
+        {
+            continue;
+        }
+    }
+    else
+    {
+        // Row Same Type：
+        // 当前屋顶平台按 spacing 沿 X 方向排布。
+        // 不使用 clamp 把多个点压到一起，而是通过 row_capacity 控制数量。
+
+        int slot = row_used_count[roof_index];
+        int cap = row_capacity[roof_index];
+
+        float center_x = (min_x + max_x) * 0.5;
+        float center_z = (min_z + max_z) * 0.5;
+
+        float total_row_width = spacing * float(cap - 1);
+        float start_x = center_x - total_row_width * 0.5;
+
+        x = start_x + float(slot) * spacing;
+        z = center_z;
+
+        // 理论上不会越界，因为 cap 已经按 safe_width 算过。
+        // 但这里仍然做一次安全判断，不用 clamp，避免重叠。
+        if (x < min_x || x > max_x)
+        {
+            continue;
+        }
+
+        row_used_count[roof_index] = row_used_count[roof_index] + 1;
+    }
+
+
+    vector pos = set(
+        x,
+        roof_y + y_offset,
+        z
+    );
+
+
+    // ===============================
+    // 旋转
+    // ===============================
+
+    float rot_y = 0.0;
+
+    if (enable_random_rotation == 1)
+    {
+        float r_rot = rand(
+            float(seed) +
+            float(attempt) * 79.313 +
+            float(pr) * 11.771
+        );
+
+        rot_y = floor(r_rot * 4.0) * 90.0;
+    }
+
+    vector4 orient = quaternion(
+        radians(rot_y),
+        set(0, 1, 0)
+    );
+
+
+    // ===============================
+    // 创建屋顶物品点
+    // ===============================
+
+    int pt = addpoint(0, pos);
+
+    setpointattrib(0, "asset_id", pt, prop_assets[prop_index], "set");
+    setpointattrib(0, "module_type", pt, "roof_prop", "set");
+    setpointattrib(0, "unreal_instance", pt, prop_paths[prop_index], "set");
+
+    setpointattrib(0, "facade", pt, "roof", "set");
+    setpointattrib(0, "roof_source_floor", pt, roof_source_floor, "set");
+    setpointattrib(0, "roof_rect_prim", pt, pr, "set");
+
+    setpointattrib(0, "roof_prop_index", pt, prop_index, "set");
+    setpointattrib(0, "roof_prop_placement_mode", pt, placement_mode, "set");
+
+    setpointattrib(0, "width_cm", pt, prop_width_cm[prop_index], "set");
+    setpointattrib(0, "depth_cm", pt, prop_depth_cm[prop_index], "set");
+    setpointattrib(0, "height_cm", pt, prop_height_cm[prop_index], "set");
+    setpointattrib(0, "thickness_cm", pt, 0.0, "set");
+
+    setpointattrib(0, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(0, "orient", pt, orient, "set");
+    setpointattrib(0, "scale", pt, set(1.0, 1.0, 1.0), "set");
+
+    setpointattrib(0, "is_roof_prop", pt, 1, "set");
+
+    append(placed_roof_prim, pr);
+    append(placed_x, x);
+    append(placed_z, z);
+
+    created_count++;
+}
+
+
+// ===============================
+// 删除输入 roof rectangle geometry
+// 本节点是挂件输出支线，只保留屋顶物品点
+// ===============================
+
+for (int pr = src_prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 0);
+}
+
+for (int pt = src_point_count - 1; pt >= 0; pt--)
+{
+    removepoint(0, pt);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+setdetailattrib(0, "roof_prop_count_created", created_count, "set");
+setdetailattrib(0, "roof_prop_available_roof_count", len(roof_prims), "set");
+
+if (created_count > 0)
+{
+    setdetailattrib(0, "roof_prop_status", "created", "set");
+}
+else
+{
+    setdetailattrib(0, "roof_prop_status", "no_roof_prop_created", "set");
+}

@@ -1,0 +1,180 @@
+// ==========================================
+// 13_HDA_PARAMETER_PRECHECK
+// V2：HDA 输出前检查
+// 不删除点，不改变实例，只写入 Detail 检查信息
+// ==========================================
+
+int pt_count = npoints(0);
+
+int valid_count = 0;
+int invalid_count = 0;
+
+int wall_100_count = 0;
+int wall_200_count = 0;
+int wall_400_count = 0;
+
+int floor0_count = 0;
+int upper_count = 0;
+
+int front_count = 0;
+int back_count = 0;
+int left_count = 0;
+int right_count = 0;
+
+for (int i = 0; i < pt_count; i++)
+{
+    int enabled = point(0, "unreal_output_enabled", i);
+
+    if (enabled == 1)
+    {
+        valid_count++;
+    }
+    else
+    {
+        invalid_count++;
+    }
+
+    int grid_width = point(0, "grid_width", i);
+
+    if (grid_width == 1)
+    {
+        wall_100_count++;
+    }
+    else if (grid_width == 2)
+    {
+        wall_200_count++;
+    }
+    else if (grid_width == 4)
+    {
+        wall_400_count++;
+    }
+
+    int global_floor = point(0, "global_floor", i);
+
+    if (global_floor == 0)
+    {
+        floor0_count++;
+    }
+    else
+    {
+        upper_count++;
+    }
+
+    string facade = point(0, "facade", i);
+
+    if (facade == "front")
+    {
+        front_count++;
+    }
+    else if (facade == "back")
+    {
+        back_count++;
+    }
+    else if (facade == "left")
+    {
+        left_count++;
+    }
+    else if (facade == "right")
+    {
+        right_count++;
+    }
+}
+
+
+// ===============================
+// 写入 Detail 检查结果
+// ===============================
+
+setdetailattrib(0, "hda_stage", "V2_plain_wall_output", "set");
+
+setdetailattrib(0, "hda_total_module_count", pt_count, "set");
+setdetailattrib(0, "hda_valid_module_count", valid_count, "set");
+setdetailattrib(0, "hda_invalid_module_count", invalid_count, "set");
+
+setdetailattrib(0, "hda_wall_100_count", wall_100_count, "set");
+setdetailattrib(0, "hda_wall_200_count", wall_200_count, "set");
+setdetailattrib(0, "hda_wall_400_count", wall_400_count, "set");
+
+setdetailattrib(0, "hda_ground_floor_module_count", floor0_count, "set");
+setdetailattrib(0, "hda_upper_floor_module_count", upper_count, "set");
+
+setdetailattrib(0, "hda_front_module_count", front_count, "set");
+setdetailattrib(0, "hda_back_module_count", back_count, "set");
+setdetailattrib(0, "hda_left_module_count", left_count, "set");
+setdetailattrib(0, "hda_right_module_count", right_count, "set");
+
+
+// ===============================
+// 当前阶段是否可以进入 Unreal 测试
+// ===============================
+
+int hda_ready = 1;
+string hda_message = "ready_for_unreal_plain_wall_test";
+
+if (pt_count <= 0)
+{
+    hda_ready = 0;
+    hda_message = "no_module_points";
+}
+
+if (invalid_count > 0)
+{
+    hda_ready = 0;
+    hda_message = "has_invalid_module_points";
+}
+
+setdetailattrib(0, "hda_ready_for_unreal_test", hda_ready, "set");
+setdetailattrib(0, "hda_precheck_message", hda_message, "set");
+
+
+// ===============================
+// 记录后面需要暴露给 Unreal 的核心参数
+// ===============================
+
+string expose_params = "";
+
+expose_params += "block_count;";
+expose_params += "random_seed;";
+expose_params += "grid_unit;";
+expose_params += "block_min_width_grid;";
+expose_params += "block_max_width_grid;";
+expose_params += "block_min_depth_grid;";
+expose_params += "block_max_depth_grid;";
+expose_params += "block_min_floor_count;";
+expose_params += "block_max_floor_count;";
+expose_params += "ground_floor_height;";
+expose_params += "upper_floor_height;";
+expose_params += "block_attach_chance;";
+expose_params += "block_stack_chance;";
+expose_params += "block_ground_ratio;";
+expose_params += "max_block_offset_grid;";
+expose_params += "min_attach_contact_grid;";
+expose_params += "block_layout_mode;";
+
+expose_params += "enable_ground_door;";
+expose_params += "enable_ground_windows;";
+expose_params += "ground_window_interval;";
+expose_params += "ground_window_offset;";
+expose_params += "enable_upper_windows;";
+expose_params += "upper_window_interval;";
+expose_params += "upper_window_offset;";
+expose_params += "upper_window_variant_mode;";
+expose_params += "upper_window_variant_seed;";
+expose_params += "upper_window_01_weight;";
+expose_params += "ground_door_seed;";
+expose_params += "ground_windows_per_door;";
+expose_params += "enable_upper_doors;";
+expose_params += "upper_door_chance;";
+expose_params += "upper_door_seed;";
+expose_params += "upper_door_layout_mode;";
+expose_params += "enable_side_upper_windows;";
+expose_params += "enable_side_upper_doors;";
+expose_params += "side_upper_window_chance;";
+expose_params += "side_upper_seed;";
+expose_params += "side_upper_door_base_depth;";
+expose_params += "side_upper_door_extra_depth;";
+expose_params += "side_upper_door_layout_mode;";
+expose_params += "side_upper_vertical_door_ratio;";
+
+
+setdetailattrib(0, "hda_expose_parameter_list", expose_params, "set");

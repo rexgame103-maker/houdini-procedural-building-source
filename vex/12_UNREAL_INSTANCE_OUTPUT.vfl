@@ -1,0 +1,82 @@
+// ==========================================
+// 12_UNREAL_INSTANCE_OUTPUT
+// V2：整理输出给 Unreal 的实例点
+// Run Over: Points
+// ==========================================
+
+
+// ===============================
+// 无效模块点直接标记，不删除
+// 先不删除是为了方便排查
+// ===============================
+
+if (i@is_valid_unreal_module != 1)
+{
+    i@unreal_output_enabled = 0;
+    return;
+}
+
+i@unreal_output_enabled = 1;
+
+
+// ===============================
+// Unreal Houdini Engine 实例核心属性
+// ===============================
+//
+// s@unreal_instance 已经在 09 里写入，
+// 这里不重新生成，只确保它存在。
+//
+// v@P       = 模块位置
+// p@orient  = 模块旋转
+// v@scale   = 模块缩放
+// s@unreal_instance = Unreal 静态网格路径
+// ===============================
+
+if (s@unreal_instance == "")
+{
+    i@unreal_output_enabled = 0;
+    s@validation_message += "missing_unreal_instance_on_output;";
+}
+
+
+// ===============================
+// 输出分组属性
+// 后面在 Unreal 或 Houdini 里检查会更方便
+// ===============================
+
+s@unreal_output_type = "static_mesh_instance";
+
+s@building_system = "V2_BlockStack";
+s@generation_stage = "plain_wall_only";
+
+
+// ===============================
+// 保留模块信息
+// ===============================
+
+s@module_type = s@module_type;
+s@asset_id = s@asset_id;
+s@facade = s@facade;
+
+i@global_floor = i@global_floor;
+i@grid_width = i@grid_width;
+
+f@width_cm = f@width_cm;
+f@height_cm = f@height_cm;
+f@depth_cm = f@depth_cm;
+
+
+// ===============================
+// 颜色标记
+// 绿色 = 可以输出
+// 红色 = 有问题
+// ===============================
+
+if (i@unreal_output_enabled == 1)
+{
+    v@Cd = set(0.0, 0.8, 0.2);
+}
+else
+{
+    v@Cd = set(1.0, 0.0, 0.0);
+}

@@ -1,0 +1,107 @@
+// ==========================================
+// 39_PIPE_STRAIGHT_TUBE_POINTS
+// V2.6A：根据 pipe_anchor 生成直管段
+//
+// 当前只生成：
+// SM_Drains_01_Tube_01
+// 不生成接缝 / 支架 / 顶部端头 / 底部弯头
+// ==========================================
+
+string tube_asset = "SM_Drains_01_Tube_01";
+string tube_path  = "/Game/CityStreetStylizedPack/Environment/Props/Drains_01/SM_Drains_01_Tube_01.SM_Drains_01_Tube_01";
+
+float tube_height_m = 1.0; // 100cm = 1 Houdini unit
+
+int src_count = npoints(0);
+int tube_count = 0;
+
+for (int i = 0; i < src_count; i++)
+{
+    string module_type = point(0, "module_type", i);
+
+    if (module_type != "pipe_anchor")
+    {
+        continue;
+    }
+
+    vector anchor_pos = point(0, "P", i);
+
+    int segment_count = point(0, "pipe_segment_count", i);
+    segment_count = max(1, segment_count);
+
+    string facade = point(0, "pipe_facade", i);
+
+    vector wall_normal = point(0, "pipe_wall_normal", i);
+    vector wall_tangent = point(0, "pipe_wall_tangent", i);
+
+    for (int s = 0; s < segment_count; s++)
+    {
+        vector pos = anchor_pos;
+        pos.y += float(s) * tube_height_m;
+
+        int pt = addpoint(0, pos);
+
+        setpointattrib(0, "asset_id", pt, tube_asset, "set");
+        setpointattrib(0, "module_type", pt, "pipe_tube", "set");
+        setpointattrib(0, "unreal_instance", pt, tube_path, "set");
+        
+        // ===============================
+        // 补齐 Unreal 输出链常用属性
+        // ===============================
+        
+        setpointattrib(0, "grid_width", pt, 1, "set");
+        setpointattrib(0, "grid_depth", pt, 1, "set");
+        
+        setpointattrib(0, "thickness_cm", pt, 40.0, "set");
+        
+        setpointattrib(0, "variant_role", pt, "pipe", "set");
+        setpointattrib(0, "replacement_group", pt, "pipe", "set");
+        
+        setpointattrib(0, "asset_table_found", pt, 1, "set");
+        setpointattrib(0, "asset_table_status", pt, "pipe_manual", "set");
+        
+        setpointattrib(0, "table_module_type", pt, "pipe_tube", "set");
+        setpointattrib(0, "table_unreal_asset_path", pt, tube_path, "set");
+        
+        setpointattrib(0, "asset_rotation_offset_y", pt, 0.0, "set");
+        setpointattrib(0, "asset_static_offset", pt, set(0, 0, 0), "set");
+
+        setpointattrib(0, "facade", pt, facade, "set");
+        setpointattrib(0, "pipe_facade", pt, facade, "set");
+
+        setpointattrib(0, "pipe_run_id", pt, i, "set");
+        setpointattrib(0, "pipe_segment_index", pt, s, "set");
+        setpointattrib(0, "pipe_segment_count", pt, segment_count, "set");
+
+        setpointattrib(0, "pipe_wall_normal", pt, wall_normal, "set");
+        setpointattrib(0, "pipe_wall_tangent", pt, wall_tangent, "set");
+
+        setpointattrib(0, "width_cm", pt, 40.0, "set");
+        setpointattrib(0, "depth_cm", pt, 40.0, "set");
+        setpointattrib(0, "height_cm", pt, 100.0, "set");
+
+        // 先给默认旋转，后面如果 UE 里方向不对，再单独加旋转补偿参数
+        setpointattrib(0, "rot_y_deg", pt, 0.0, "set");
+        vector4 q = quaternion(radians(0.0), set(0, 1, 0));
+        setpointattrib(0, "orient", pt, q, "set");
+
+        setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+        // Debug 显示
+        setpointattrib(0, "Cd", pt, set(0.0, 0.9, 0.9), "set");
+        
+        // 注意：unreal_instance 会读取 pscale。
+        // 这里必须保持 1，否则真实管道资产会被缩小。
+        setpointattrib(0, "pscale", pt, 1.0, "set");
+
+        tube_count++;
+    }
+}
+
+// 删除输入的 pipe_anchor，只保留直管点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "pipe_tube_count", tube_count, "set");

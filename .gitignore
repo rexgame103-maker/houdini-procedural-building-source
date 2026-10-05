@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.hip
+*.hipnc
+backup/
+.DS_Store
+Thumbs.db

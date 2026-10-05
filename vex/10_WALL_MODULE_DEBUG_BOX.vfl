@@ -1,0 +1,103 @@
+// ==========================================
+// 10_WALL_MODULE_DEBUG_BOX
+// V2：把普通墙模块点显示成 Debug Box
+// 用于检查模块是否沿外轮廓正确排列
+// ==========================================
+
+int src_count = npoints(0);
+
+for (int i = 0; i < src_count; i++)
+{
+    vector P = point(0, "P", i);
+    vector4 q = point(0, "orient", i);
+
+    float w = point(0, "width_cm", i) / 100.0;
+    float h = point(0, "height_cm", i) / 100.0;
+    float d = point(0, "depth_cm", i) / 100.0;
+
+    string facade = point(0, "facade", i);
+    string asset_id = point(0, "asset_id", i);
+    string module_type = point(0, "module_type", i);
+
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = point(0, "grid_width", i);
+
+    vector cd = set(0.45, 0.45, 0.45);
+
+    // 稍微按朝向区分，方便检查方向
+    if (facade == "front")
+    {
+        cd = set(0.55, 0.55, 0.55);
+    }
+    else if (facade == "back")
+    {
+        cd = set(0.35, 0.35, 0.35);
+    }
+    else if (facade == "left")
+    {
+        cd = set(0.45, 0.55, 0.45);
+    }
+    else if (facade == "right")
+    {
+        cd = set(0.55, 0.50, 0.40);
+    }
+
+    vector local[] = array(
+        set(0, 0, 0),
+        set(w, 0, 0),
+        set(w, h, 0),
+        set(0, h, 0),
+
+        set(0, 0, d),
+        set(w, 0, d),
+        set(w, h, d),
+        set(0, h, d)
+    );
+
+    int pts[];
+
+    foreach (vector lp; local)
+    {
+        int pt = addpoint(0, P + qrotate(q, lp));
+
+        setpointattrib(0, "Cd", pt, cd, "set");
+        setpointattrib(0, "facade", pt, facade, "set");
+        setpointattrib(0, "global_floor", pt, global_floor, "set");
+        setpointattrib(0, "asset_id", pt, asset_id, "set");
+        setpointattrib(0, "module_type", pt, module_type, "set");
+
+        append(pts, pt);
+    }
+
+    int prim_front  = addprim(0, "poly", pts[0], pts[1], pts[2], pts[3]);
+    int prim_back   = addprim(0, "poly", pts[4], pts[7], pts[6], pts[5]);
+    int prim_bottom = addprim(0, "poly", pts[0], pts[4], pts[5], pts[1]);
+    int prim_right  = addprim(0, "poly", pts[1], pts[5], pts[6], pts[2]);
+    int prim_top    = addprim(0, "poly", pts[3], pts[2], pts[6], pts[7]);
+    int prim_left   = addprim(0, "poly", pts[0], pts[3], pts[7], pts[4]);
+
+    int prims[] = array(
+        prim_front,
+        prim_back,
+        prim_bottom,
+        prim_right,
+        prim_top,
+        prim_left
+    );
+
+    foreach (int pr; prims)
+    {
+        setprimattrib(0, "Cd", pr, cd, "set");
+        setprimattrib(0, "facade", pr, facade, "set");
+        setprimattrib(0, "global_floor", pr, global_floor, "set");
+        setprimattrib(0, "grid_width", pr, grid_width, "set");
+        setprimattrib(0, "asset_id", pr, asset_id, "set");
+        setprimattrib(0, "module_type", pr, module_type, "set");
+    }
+}
+
+// 删除原始模块点，只保留 Debug Box
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}

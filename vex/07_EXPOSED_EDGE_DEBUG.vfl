@@ -1,0 +1,144 @@
+// ==========================================
+// 07_EXPOSED_EDGE_DEBUG
+// V2：外露边调试预览
+//
+// 每条线 = 一个将来可能生成外墙的位置
+// front = Z-
+// back  = Z+
+// left  = X-
+// right = X+
+// ==========================================
+
+int src_count = npoints(0);
+float unit = chf("../grid_unit");
+
+float debug_y_offset = 0.05;
+
+for (int i = 0; i < src_count; i++)
+{
+    int x = point(0, "cell_x", i);
+    int z = point(0, "cell_z", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+    float floor_top_y = point(0, "floor_top_y", i);
+
+    int exposed_front = point(0, "exposed_front", i);
+    int exposed_back  = point(0, "exposed_back", i);
+    int exposed_left  = point(0, "exposed_left", i);
+    int exposed_right = point(0, "exposed_right", i);
+
+    float y = floor_bottom_y + debug_y_offset;
+
+    // ===============================
+    // front edge：Z-
+    // ===============================
+
+    if (exposed_front == 1)
+    {
+        vector p0 = set(float(x) * unit, y, float(z) * unit);
+        vector p1 = set(float(x + 1) * unit, y, float(z) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(1.0, 0.1, 0.1), "set");
+        setpointattrib(0, "Cd", pt1, set(1.0, 0.1, 0.1), "set");
+
+        setprimattrib(0, "edge_facade", pr, "front", "set");
+        setprimattrib(0, "global_floor", pr, global_floor, "set");
+        setprimattrib(0, "cell_x", pr, x, "set");
+        setprimattrib(0, "cell_z", pr, z, "set");
+        setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+        setprimattrib(0, "floor_height", pr, floor_height, "set");
+        setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+    }
+
+    // ===============================
+    // back edge：Z+
+    // ===============================
+
+    if (exposed_back == 1)
+    {
+        vector p0 = set(float(x) * unit, y, float(z + 1) * unit);
+        vector p1 = set(float(x + 1) * unit, y, float(z + 1) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(0.1, 0.4, 1.0), "set");
+        setpointattrib(0, "Cd", pt1, set(0.1, 0.4, 1.0), "set");
+
+        setprimattrib(0, "edge_facade", pr, "back", "set");
+        setprimattrib(0, "global_floor", pr, global_floor, "set");
+        setprimattrib(0, "cell_x", pr, x, "set");
+        setprimattrib(0, "cell_z", pr, z, "set");
+        setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+        setprimattrib(0, "floor_height", pr, floor_height, "set");
+        setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+    }
+
+    // ===============================
+    // left edge：X-
+    // ===============================
+
+    if (exposed_left == 1)
+    {
+        vector p0 = set(float(x) * unit, y, float(z) * unit);
+        vector p1 = set(float(x) * unit, y, float(z + 1) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(0.1, 0.9, 0.2), "set");
+        setpointattrib(0, "Cd", pt1, set(0.1, 0.9, 0.2), "set");
+
+        setprimattrib(0, "edge_facade", pr, "left", "set");
+        setprimattrib(0, "global_floor", pr, global_floor, "set");
+        setprimattrib(0, "cell_x", pr, x, "set");
+        setprimattrib(0, "cell_z", pr, z, "set");
+        setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+        setprimattrib(0, "floor_height", pr, floor_height, "set");
+        setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+    }
+
+    // ===============================
+    // right edge：X+
+    // ===============================
+
+    if (exposed_right == 1)
+    {
+        vector p0 = set(float(x + 1) * unit, y, float(z) * unit);
+        vector p1 = set(float(x + 1) * unit, y, float(z + 1) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(1.0, 0.8, 0.1), "set");
+        setpointattrib(0, "Cd", pt1, set(1.0, 0.8, 0.1), "set");
+
+        setprimattrib(0, "edge_facade", pr, "right", "set");
+        setprimattrib(0, "global_floor", pr, global_floor, "set");
+        setprimattrib(0, "cell_x", pr, x, "set");
+        setprimattrib(0, "cell_z", pr, z, "set");
+        setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+        setprimattrib(0, "floor_height", pr, floor_height, "set");
+        setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+    }
+}
+
+// 删除原始 occupancy 点，只保留外露边线
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}

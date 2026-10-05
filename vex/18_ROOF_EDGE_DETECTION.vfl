@@ -1,0 +1,272 @@
+// ==========================================
+// 18_ROOF_EDGE_DETECTION
+// V2：检测屋顶外边缘线
+//
+// 输入：
+// 15_ROOF_TOP_EXPOSED_DETECTION 的 occupancy 点
+//
+// 输出：
+// 每条 polyline = 1 grid 屋顶外边缘
+//
+// roof_front = Z-
+// roof_back  = Z+
+// roof_left  = X-
+// roof_right = X+
+// ==========================================
+
+int src_count = npoints(0);
+float unit = chf("../grid_unit");
+float eps = 0.001;
+
+int edge_count = 0;
+
+
+// 判断同一 roof_y 上，某个 x/z 是否存在 roof cell
+function int has_roof_cell(
+    const int xs[];
+    const int zs[];
+    const float ys[];
+    const int tx;
+    const int tz;
+    const float ty;
+    const float eps)
+{
+    for (int i = 0; i < len(xs); i++)
+    {
+        if (
+            xs[i] == tx &&
+            zs[i] == tz &&
+            abs(ys[i] - ty) <= eps
+        )
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+// 判断某个相邻格子是否从当前 roof_y 开始有楼体
+// 如果有，说明这里是“下层屋顶与上层楼体交接处”
+// 这种边不应该生成屋檐
+function int has_cell_starting_at_y(
+    const int tx;
+    const int tz;
+    const float ty;
+    const float eps)
+{
+    int pt_count = npoints(0);
+
+    for (int i = 0; i < pt_count; i++)
+    {
+        int x = point(0, "cell_x", i);
+        int z = point(0, "cell_z", i);
+
+        if (x != tx || z != tz)
+        {
+            continue;
+        }
+
+        float bottom_y = point(0, "floor_bottom_y", i);
+
+        if (abs(bottom_y - ty) <= eps)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+// ===============================
+// 收集顶部外露 cell
+// ===============================
+
+int roof_x[];
+int roof_z[];
+float roof_y[];
+int roof_floor[];
+
+for (int i = 0; i < src_count; i++)
+{
+    int is_top = point(0, "is_top_exposed", i);
+
+    if (is_top != 1)
+    {
+        continue;
+    }
+
+    int rx = point(0, "roof_cell_x", i);
+    int rz = point(0, "roof_cell_z", i);
+    float ry = point(0, "roof_y", i);
+    int rf = point(0, "roof_source_floor", i);
+    
+    append(roof_x, rx);
+    append(roof_z, rz);
+    append(roof_y, ry);
+    append(roof_floor, rf);
+}
+
+int roof_count = len(roof_x);
+
+if (roof_count <= 0)
+{
+    setdetailattrib(0, "roof_edge_status", "no_roof_cells", "set");
+
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    return;
+}
+
+
+// ===============================
+// 为每个 roof cell 检测四个方向
+// ===============================
+
+for (int i = 0; i < roof_count; i++)
+{
+    int x = roof_x[i];
+    int z = roof_z[i];
+    float y = roof_y[i];
+    int source_floor = roof_floor[i];
+
+    // front：Z-
+    int has_front = has_roof_cell(roof_x, roof_z, roof_y, x, z - 1, y, eps);
+
+    int blocked_by_upper_front = has_cell_starting_at_y(x, z - 1, y, eps);
+
+    if (has_front == 0 && blocked_by_upper_front == 0)
+    {
+        vector p0 = set(float(x) * unit, y, float(z) * unit);
+        vector p1 = set(float(x + 1) * unit, y, float(z) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(1.0, 0.15, 0.1), "set");
+        setpointattrib(0, "Cd", pt1, set(1.0, 0.15, 0.1), "set");
+
+        setprimattrib(0, "roof_edge_type", pr, "roof_front", "set");
+        setprimattrib(0, "roof_y", pr, y, "set");
+        setprimattrib(0, "roof_source_floor", pr, source_floor, "set");
+
+        setprimattrib(0, "grid_start_x", pr, x, "set");
+        setprimattrib(0, "grid_end_x", pr, x + 1, "set");
+        setprimattrib(0, "grid_start_z", pr, z, "set");
+        setprimattrib(0, "grid_end_z", pr, z, "set");
+
+        setprimattrib(0, "length_grid", pr, 1, "set");
+
+        edge_count++;
+    }
+
+    // back：Z+
+    int has_back = has_roof_cell(roof_x, roof_z, roof_y, x, z + 1, y, eps);
+
+    int blocked_by_upper_back = has_cell_starting_at_y(x, z + 1, y, eps);
+
+    if (has_back == 0 && blocked_by_upper_back == 0)
+    {
+        vector p0 = set(float(x) * unit, y, float(z + 1) * unit);
+        vector p1 = set(float(x + 1) * unit, y, float(z + 1) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(0.1, 0.35, 1.0), "set");
+        setpointattrib(0, "Cd", pt1, set(0.1, 0.35, 1.0), "set");
+
+        setprimattrib(0, "roof_edge_type", pr, "roof_back", "set");
+        setprimattrib(0, "roof_y", pr, y, "set");
+        setprimattrib(0, "roof_source_floor", pr, source_floor, "set");
+
+        setprimattrib(0, "grid_start_x", pr, x, "set");
+        setprimattrib(0, "grid_end_x", pr, x + 1, "set");
+        setprimattrib(0, "grid_start_z", pr, z + 1, "set");
+        setprimattrib(0, "grid_end_z", pr, z + 1, "set");
+
+        setprimattrib(0, "length_grid", pr, 1, "set");
+
+        edge_count++;
+    }
+
+    // left：X-
+    int has_left = has_roof_cell(roof_x, roof_z, roof_y, x - 1, z, y, eps);
+
+    int blocked_by_upper_left = has_cell_starting_at_y(x - 1, z, y, eps);
+
+    if (has_left == 0 && blocked_by_upper_left == 0)
+    {
+        vector p0 = set(float(x) * unit, y, float(z) * unit);
+        vector p1 = set(float(x) * unit, y, float(z + 1) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(0.1, 0.9, 0.25), "set");
+        setpointattrib(0, "Cd", pt1, set(0.1, 0.9, 0.25), "set");
+
+        setprimattrib(0, "roof_edge_type", pr, "roof_left", "set");
+        setprimattrib(0, "roof_y", pr, y, "set");
+        setprimattrib(0, "roof_source_floor", pr, source_floor, "set");
+
+        setprimattrib(0, "grid_start_x", pr, x, "set");
+        setprimattrib(0, "grid_end_x", pr, x, "set");
+        setprimattrib(0, "grid_start_z", pr, z, "set");
+        setprimattrib(0, "grid_end_z", pr, z + 1, "set");
+
+        setprimattrib(0, "length_grid", pr, 1, "set");
+
+        edge_count++;
+    }
+
+    // right：X+
+    int has_right = has_roof_cell(roof_x, roof_z, roof_y, x + 1, z, y, eps);
+
+    int blocked_by_upper_right = has_cell_starting_at_y(x + 1, z, y, eps);
+
+    if (has_right == 0 && blocked_by_upper_right == 0)
+    {
+        vector p0 = set(float(x + 1) * unit, y, float(z) * unit);
+        vector p1 = set(float(x + 1) * unit, y, float(z + 1) * unit);
+
+        int pt0 = addpoint(0, p0);
+        int pt1 = addpoint(0, p1);
+        int pr = addprim(0, "polyline", pt0, pt1);
+
+        setpointattrib(0, "Cd", pt0, set(1.0, 0.85, 0.1), "set");
+        setpointattrib(0, "Cd", pt1, set(1.0, 0.85, 0.1), "set");
+
+        setprimattrib(0, "roof_edge_type", pr, "roof_right", "set");
+        setprimattrib(0, "roof_y", pr, y, "set");
+        setprimattrib(0, "roof_source_floor", pr, source_floor, "set");
+
+        setprimattrib(0, "grid_start_x", pr, x + 1, "set");
+        setprimattrib(0, "grid_end_x", pr, x + 1, "set");
+        setprimattrib(0, "grid_start_z", pr, z, "set");
+        setprimattrib(0, "grid_end_z", pr, z + 1, "set");
+
+        setprimattrib(0, "length_grid", pr, 1, "set");
+
+        edge_count++;
+    }
+}
+
+
+// ===============================
+// 删除原始 occupancy 点，只保留屋顶边缘线
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "roof_edge_status", "roof_edges_created", "set");
+setdetailattrib(0, "roof_edge_count", edge_count, "set");

@@ -1,0 +1,1862 @@
+[
+  {
+    "name": "stdswitcher1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "xOrd",
+    "label": "Transform Order",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "rOrd",
+    "label": "Rotate Order",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "tx",
+    "label": "Translate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "ty",
+    "label": "Translate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "tz",
+    "label": "Translate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "rx",
+    "label": "Rotate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "ry",
+    "label": "Rotate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "rz",
+    "label": "Rotate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "sx",
+    "label": "Scale",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "sy",
+    "label": "Scale",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "sz",
+    "label": "Scale",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "px",
+    "label": "Pivot Translate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "py",
+    "label": "Pivot Translate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pz",
+    "label": "Pivot Translate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "prx",
+    "label": "Pivot Rotate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pry",
+    "label": "Pivot Rotate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "prz",
+    "label": "Pivot Rotate",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "scale",
+    "label": "Uniform Scale",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "pre_xform",
+    "label": "Modify Pre-Transform",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "keeppos",
+    "label": "Keep Position When Parenting",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "childcomp",
+    "label": "Child Compensation",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "constraints_on",
+    "label": "Enable Constraints",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "constraints_path",
+    "label": "Constraints",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "lookatpath",
+    "label": "Look At",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "lookupobjpath",
+    "label": "Look Up Object",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "lookup",
+    "label": "Look At Up Vector",
+    "type": "parmTemplateType.String",
+    "value": "on"
+  },
+  {
+    "name": "pathobjpath",
+    "label": "Path Object",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "roll",
+    "label": "Roll",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pos",
+    "label": "Position",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "uparmtype",
+    "label": "Parameterization",
+    "type": "parmTemplateType.Menu",
+    "value": 1
+  },
+  {
+    "name": "pathorient",
+    "label": "Orient Along Path",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "upx",
+    "label": "Orient Up Vector",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "upy",
+    "label": "Orient Up Vector",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "upz",
+    "label": "Orient Up Vector",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "bank",
+    "label": "Auto-Bank factor",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "shop_materialpath",
+    "label": "Material",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "shop_materialopts",
+    "label": "Options",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "tdisplay",
+    "label": "Display",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "display",
+    "label": "Display",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "use_dcolor",
+    "label": "Set Wireframe Color",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "dcolorr",
+    "label": "Wireframe Color",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "dcolorg",
+    "label": "Wireframe Color",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "dcolorb",
+    "label": "Wireframe Color",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "picking",
+    "label": "Viewport Selecting Enabled",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "pickscript",
+    "label": "Select Script",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "caching",
+    "label": "Cache Object Transform",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "vport_shadeopen",
+    "label": "Shade Open Curves In Viewport",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vport_displayassubdiv",
+    "label": "Display as Subdivision in Viewport",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vport_onionskin",
+    "label": "Onion Skinning",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "renderable",
+    "label": "Renderable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "stdswitcher41",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "viewportlod",
+    "label": "Display As",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "vm_rendervisibility",
+    "label": "Render Visibility",
+    "type": "parmTemplateType.String",
+    "value": "*"
+  },
+  {
+    "name": "vm_rendersubd",
+    "label": "Render Polygons As Subdivision (Mantra)",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_subdstyle",
+    "label": "Subdivision Style",
+    "type": "parmTemplateType.String",
+    "value": "mantra_catclark"
+  },
+  {
+    "name": "vm_subdgroup",
+    "label": "Subdivision Group",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "vm_osd_quality",
+    "label": "Open Subdiv Quality",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "vm_osd_vtxinterp",
+    "label": "OSD Vtx Interp",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "vm_osd_fvarinterp",
+    "label": "OSD FVar Interp",
+    "type": "parmTemplateType.Int",
+    "value": 4
+  },
+  {
+    "name": "folder01",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "categories",
+    "label": "Categories",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "reflectmask",
+    "label": "Reflection Mask",
+    "type": "parmTemplateType.String",
+    "value": "*"
+  },
+  {
+    "name": "refractmask",
+    "label": "Refraction Mask",
+    "type": "parmTemplateType.String",
+    "value": "*"
+  },
+  {
+    "name": "lightmask",
+    "label": "Light Mask",
+    "type": "parmTemplateType.String",
+    "value": "*"
+  },
+  {
+    "name": "lightcategories",
+    "label": "Light Selection",
+    "type": "parmTemplateType.String",
+    "value": "*"
+  },
+  {
+    "name": "vm_lpetag",
+    "label": "LPE Tag",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "vm_volumefilter",
+    "label": "Volume Filter",
+    "type": "parmTemplateType.String",
+    "value": "box"
+  },
+  {
+    "name": "vm_volumefilterwidth",
+    "label": "Volume Filter Width",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "vm_matte",
+    "label": "Matte shading",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_rayshade",
+    "label": "Raytrace Shading",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "geo_velocityblur",
+    "label": "Geometry Velocity Blur",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "geo_accelattribute",
+    "label": "Acceleration Attribute",
+    "type": "parmTemplateType.String",
+    "value": "accel"
+  },
+  {
+    "name": "vm_shadingquality",
+    "label": "Shading Quality",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "vm_flatness",
+    "label": "Dicing Flatness",
+    "type": "parmTemplateType.Float",
+    "value": 0.05
+  },
+  {
+    "name": "vm_raypredice",
+    "label": "Ray Predicing",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "vm_curvesurface",
+    "label": "Shade Curves As Surfaces",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_rmbackface",
+    "label": "Backface Removal",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "shop_geometrypath",
+    "label": "Procedural Shader",
+    "type": "parmTemplateType.String",
+    "value": ""
+  },
+  {
+    "name": "vm_forcegeometry",
+    "label": "Force Procedural Geometry Output",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "vm_rendersubdcurves",
+    "label": "Render Polygon Curves As Subdivision (Mantra)",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_renderpoints",
+    "label": "Render As Points (Mantra)",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "vm_renderpointsas",
+    "label": "Render Points As (Mantra)",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "vm_usenforpoints",
+    "label": "Use N For Point Rendering",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_pointscale",
+    "label": "Point Scale",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "vm_pscalediameter",
+    "label": "Treat Point Scale as Diameter Instead of Radius",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_metavolume",
+    "label": "Metaballs as Volume",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_coving",
+    "label": "Coving",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "vm_materialoverride",
+    "label": "Material Override",
+    "type": "parmTemplateType.String",
+    "value": "compact"
+  },
+  {
+    "name": "vm_overridedetail",
+    "label": "Ignore Geometry Attribute Shaders",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "vm_procuseroottransform",
+    "label": "Proc Use Root Transform",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "xn__BuildingGeneration_cra1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "xn__01BuildingLayout_epai1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "block_count",
+    "label": "Building Count",
+    "type": "parmTemplateType.Int",
+    "value": 5
+  },
+  {
+    "name": "random_seed",
+    "label": "Random Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "grid_unit",
+    "label": "grid_unit",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "block_layout_mode",
+    "label": "Layout Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "block_min_width_grid",
+    "label": "Width_Min",
+    "type": "parmTemplateType.Int",
+    "value": 4
+  },
+  {
+    "name": "block_max_width_grid",
+    "label": "Width_Max",
+    "type": "parmTemplateType.Int",
+    "value": 8
+  },
+  {
+    "name": "block_min_depth_grid",
+    "label": "Depth Min",
+    "type": "parmTemplateType.Int",
+    "value": 4
+  },
+  {
+    "name": "block_max_depth_grid",
+    "label": "Depth Max",
+    "type": "parmTemplateType.Int",
+    "value": 7
+  },
+  {
+    "name": "block_min_floor_count",
+    "label": "Floor Count Min",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "block_max_floor_count",
+    "label": "Floor Count Max",
+    "type": "parmTemplateType.Int",
+    "value": 4
+  },
+  {
+    "name": "ground_floor_height",
+    "label": "Ground Floor Height",
+    "type": "parmTemplateType.Float",
+    "value": 4.0
+  },
+  {
+    "name": "upper_floor_height",
+    "label": "Upper Floor Height",
+    "type": "parmTemplateType.Float",
+    "value": 3.0
+  },
+  {
+    "name": "block_ground_ratio",
+    "label": "Ground Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.55
+  },
+  {
+    "name": "block_attach_chance",
+    "label": "Attach Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.7
+  },
+  {
+    "name": "block_stack_chance",
+    "label": "Stack Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.45
+  },
+  {
+    "name": "max_block_offset_grid",
+    "label": "Max Attach Offset Grid",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "min_attach_contact_grid",
+    "label": "Min Attach Contact Grid",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "enable_whitebox_mode",
+    "label": "White Box Mode",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "stdswitcher4_3_51",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "folder21",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "xn__DoorRules_8ia1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "xn__GroundDoor_6ja1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_ground_door",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "door_position_mode",
+    "label": "Door Position",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "ground_door_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "ground_windows_per_door",
+    "label": "Windows Per Door",
+    "type": "parmTemplateType.Int",
+    "value": 4
+  },
+  {
+    "name": "enable_upper_doors",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "upper_door_chance",
+    "label": "chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.15
+  },
+  {
+    "name": "upper_door_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "upper_door_layout_mode",
+    "label": "Layout",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "stdswitcher4_3_5_11",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_ground_windows",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "ground_window_interval",
+    "label": "Interval",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "ground_window_offset",
+    "label": "Offset",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "enable_upper_windows",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "upper_window_interval",
+    "label": "Interval",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "upper_window_offset",
+    "label": "Offset",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "upper_window_variant_mode",
+    "label": "Variant",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "upper_window_variant_seed",
+    "label": "Variant Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "upper_window_01_weight",
+    "label": "Window 01 weight",
+    "type": "parmTemplateType.Float",
+    "value": 2.0
+  },
+  {
+    "name": "enable_upper_wide_window",
+    "label": "Enable Wide Window",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "upper_wide_window_mode",
+    "label": "Wide Window Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "upper_wide_window_chance",
+    "label": "Wide Window Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.25
+  },
+  {
+    "name": "upper_wide_window_seed",
+    "label": "Wide Window Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "xn__DoorRules_2_0ka1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_side_upper_windows",
+    "label": "Enable Windows",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "enable_side_upper_doors",
+    "label": "Enable Doors",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "side_upper_window_chance",
+    "label": "Window Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.35
+  },
+  {
+    "name": "side_upper_vertical_door_ratio",
+    "label": "side_upper_vertical_door_ratio",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "side_upper_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "side_upper_door_base_depth",
+    "label": "Base Depth Generat Door",
+    "type": "parmTemplateType.Int",
+    "value": 12
+  },
+  {
+    "name": "side_upper_door_extra_depth",
+    "label": "Extra Depth Per Door",
+    "type": "parmTemplateType.Int",
+    "value": 6
+  },
+  {
+    "name": "side_upper_door_layout_mode",
+    "label": "Door Layout",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "side_protruding_door_min_segment_grid",
+    "label": "side_protruding_door_min_segment_grid",
+    "type": "parmTemplateType.Int",
+    "value": 4
+  },
+  {
+    "name": "side_inner_corner_no_door_grid",
+    "label": "side_inner_corner_no_door_grid",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "enable_ground_side_windows",
+    "label": "Enable Windows",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "ground_side_window_chance",
+    "label": "Window Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.35
+  },
+  {
+    "name": "ground_side_window_seed",
+    "label": "Window Seed",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "enable_ground_side_doors",
+    "label": "Enable Doors",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "ground_side_door_chance",
+    "label": "Door Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.25
+  },
+  {
+    "name": "ground_side_door_seed",
+    "label": "Door Seed",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "ground_side_door_only_outermost",
+    "label": "Door Only Outermost",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "enable_ground_large_door",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "ground_large_door_chance",
+    "label": "Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.35
+  },
+  {
+    "name": "ground_large_door_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "ground_large_door_position_mode",
+    "label": "Door Position",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "xn__FrontBalconyRules_dqah1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_front_balcony",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "front_balcony_chance",
+    "label": "Chance",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "front_balcony_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "front_balcony_width_cm",
+    "label": "front_balcony_width_cm",
+    "type": "parmTemplateType.Float",
+    "value": 277.0
+  },
+  {
+    "name": "front_balcony_depth_cm",
+    "label": "front_balcony_depth_cm",
+    "type": "parmTemplateType.Float",
+    "value": 120.0
+  },
+  {
+    "name": "front_balcony_height_cm",
+    "label": "front_balcony_height_cm",
+    "type": "parmTemplateType.Float",
+    "value": 113.0
+  },
+  {
+    "name": "front_balcony_y_offset_cm",
+    "label": "H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "front_balcony_z_offset_cm",
+    "label": "L/R Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "enable_front_balcony_variant",
+    "label": "Enable Variant",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "front_balcony_variant_chance",
+    "label": "Variant Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.25
+  },
+  {
+    "name": "front_balcony_variant_seed",
+    "label": "Variant Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "enable_side_balcony",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "side_balcony_chance",
+    "label": "Chance",
+    "type": "parmTemplateType.Float",
+    "value": 1.0
+  },
+  {
+    "name": "side_balcony_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "enable_side_balcony_variant",
+    "label": "Enable Variant",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "side_balcony_variant_chance",
+    "label": "Variant Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.25
+  },
+  {
+    "name": "side_balcony_variant_seed",
+    "label": "Variant Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "side_balcony_protruding_min_floor_count",
+    "label": "Protruding Min Floor",
+    "type": "parmTemplateType.Int",
+    "value": 3
+  },
+  {
+    "name": "side_balcony_protruding_start_local_floor",
+    "label": "Protruding Start Floor",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "side_balcony_y_offset_cm",
+    "label": "H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "side_balcony_wall_offset_cm",
+    "label": "Wall Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "side_protruding_inner_keepout_grid",
+    "label": "side_protruding_inner_keepout_grid",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "enable_side_balcony_stairs",
+    "label": "Enable Stairs",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "stdswitcher4_3_5_31",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_floor_band_beam",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "floor_band_beam_interval",
+    "label": "Interval",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "floor_band_beam_start_floor",
+    "label": "Start Floor",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "floor_band_beam_z_offset_cm",
+    "label": "Floor_band_beam_z_offset_cm",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "ground_floor_band_beam_y_offset_cm",
+    "label": "Ground Floor H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "upper_floor_band_beam_y_offset_cm",
+    "label": "Upper Floor H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "enable_front_door_wall_column",
+    "label": "enable_front_door_wall_column",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "front_door_wall_column_side_offset_cm",
+    "label": "front_door_wall_column_side_offset_cm",
+    "type": "parmTemplateType.Float",
+    "value": 100.0
+  },
+  {
+    "name": "front_door_wall_column_z_offset_cm",
+    "label": "front_door_wall_column_z_offset_cm",
+    "type": "parmTemplateType.Float",
+    "value": -3.0
+  },
+  {
+    "name": "folder41",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_wall_ac",
+    "label": "Enable Wall AC",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "wall_ac_chance",
+    "label": "Wall AC Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.35
+  },
+  {
+    "name": "wall_ac_seed",
+    "label": "Wall AC Seed",
+    "type": "parmTemplateType.Int",
+    "value": 17
+  },
+  {
+    "name": "enable_wall_ac_random_offset",
+    "label": "Enable Wall AC Random Offset",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "wall_ac_random_side_min_cm",
+    "label": "Wall AC Random Side Min",
+    "type": "parmTemplateType.Float",
+    "value": -10.0
+  },
+  {
+    "name": "wall_ac_random_side_max_cm",
+    "label": "Wall AC Random Side Max",
+    "type": "parmTemplateType.Float",
+    "value": 10.0
+  },
+  {
+    "name": "wall_ac_random_y_min_cm",
+    "label": "Wall AC Random H Min",
+    "type": "parmTemplateType.Float",
+    "value": -10.0
+  },
+  {
+    "name": "wall_ac_random_y_max_cm",
+    "label": "Wall AC Random H Max",
+    "type": "parmTemplateType.Float",
+    "value": 10.0
+  },
+  {
+    "name": "wall_ac_right_gap_cm",
+    "label": "Wall AC Right Gap",
+    "type": "parmTemplateType.Float",
+    "value": 45.0
+  },
+  {
+    "name": "wall_ac_pullback_cm",
+    "label": "Wall AC Pullback",
+    "type": "parmTemplateType.Float",
+    "value": 30.0
+  },
+  {
+    "name": "wall_ac_side_y_offset_cm",
+    "label": "Wall AC Side H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 80.0
+  },
+  {
+    "name": "wall_ac_down_y_offset_cm",
+    "label": "Wall AC Down H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 50.0
+  },
+  {
+    "name": "wall_ac_side_inward_tune_cm",
+    "label": "Wall AC Side Inward Tune",
+    "type": "parmTemplateType.Float",
+    "value": 40.0
+  },
+  {
+    "name": "wall_ac_placement_mode",
+    "label": "Wall AC Placement",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "enable_balcony_ac",
+    "label": "Enable Balcony AC",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "balcony_ac_chance",
+    "label": "Balcony AC Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.5
+  },
+  {
+    "name": "balcony_ac_seed",
+    "label": "Balcony AC Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "balcony_ac_forward_offset_cm",
+    "label": "Balcony AC Forward Offset",
+    "type": "parmTemplateType.Float",
+    "value": 60.0
+  },
+  {
+    "name": "balcony_ac_side_offset_cm",
+    "label": "Balcony AC Side Offset",
+    "type": "parmTemplateType.Float",
+    "value": 90.0
+  },
+  {
+    "name": "balcony_ac_y_offset_cm",
+    "label": "Balcony AC H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 40.0
+  },
+  {
+    "name": "enable_roof_props",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "roof_prop_placement_mode",
+    "label": "Placement",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "roof_prop_count",
+    "label": "Count",
+    "type": "parmTemplateType.Int",
+    "value": 2
+  },
+  {
+    "name": "roof_prop_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "roof_prop_edge_margin_cm",
+    "label": "Edge Margin",
+    "type": "parmTemplateType.Float",
+    "value": 100.0
+  },
+  {
+    "name": "roof_prop_row_spacing_cm",
+    "label": "Row Spacing",
+    "type": "parmTemplateType.Float",
+    "value": 250.0
+  },
+  {
+    "name": "roof_prop_random_offset_cm",
+    "label": "Random Offset",
+    "type": "parmTemplateType.Float",
+    "value": 50.0
+  },
+  {
+    "name": "enable_roof_prop_random_rotation",
+    "label": "Enable Random Rotation",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "roof_prop_y_offset_cm",
+    "label": "H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "enable_upper_corner_variant",
+    "label": "Enable Variant",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "upper_corner_variant_mode",
+    "label": "Variant Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "upper_corner_variant_seed",
+    "label": "Variant Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "xn__WindowSillPlantRules_1saef1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_window_sill_plants",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "window_sill_plant_chance",
+    "label": "Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.35
+  },
+  {
+    "name": "window_sill_plant_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "window_sill_plant_rotation_offset_y",
+    "label": "Rotation Offset",
+    "type": "parmTemplateType.Float",
+    "value": 90.0
+  },
+  {
+    "name": "window_sill_plant_forward_offset_cm",
+    "label": "Forward Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "window_sill_plant_y_offset_cm",
+    "label": "H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 60.0
+  },
+  {
+    "name": "enable_window_sill_plant_random_side_offset",
+    "label": "Enable Random Side Offset",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "window_sill_plant_side_random_min_cm",
+    "label": "Side Random Min",
+    "type": "parmTemplateType.Float",
+    "value": -5.0
+  },
+  {
+    "name": "window_sill_plant_side_random_max_cm",
+    "label": "Side Random Max",
+    "type": "parmTemplateType.Float",
+    "value": 5.0
+  },
+  {
+    "name": "window_sill_plant_variant_mode",
+    "label": "Variant Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "wide_window_plant_count_mode",
+    "label": "Wide Window Plant Count",
+    "type": "parmTemplateType.Menu",
+    "value": 1
+  },
+  {
+    "name": "wide_window_plant_spacing_cm",
+    "label": "Wide Window Plant Spacing",
+    "type": "parmTemplateType.Float",
+    "value": 120.0
+  },
+  {
+    "name": "enable_balcony_plants",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 0
+  },
+  {
+    "name": "balcony_plant_chance",
+    "label": "Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.5
+  },
+  {
+    "name": "balcony_plant_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "balcony_plant_forward_offset_cm",
+    "label": "Forward Offset",
+    "type": "parmTemplateType.Float",
+    "value": -5.0
+  },
+  {
+    "name": "balcony_plant_side_offset_cm",
+    "label": "Side Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "balcony_plant_y_offset_cm",
+    "label": "H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 70.0
+  },
+  {
+    "name": "balcony_plant_rotation_offset_y",
+    "label": "Rotation Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "xn__01PipeGeneration_epae1",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_vertical_pipes",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "pipe_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "pipe_chance",
+    "label": "Chance",
+    "type": "parmTemplateType.Float",
+    "value": 0.4
+  },
+  {
+    "name": "pipe_max_count",
+    "label": "Max Count",
+    "type": "parmTemplateType.Int",
+    "value": 6
+  },
+  {
+    "name": "pipe_facade_mode",
+    "label": "Pipe Facade Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "pipe_segment_count_mode",
+    "label": "Segment Count Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 0
+  },
+  {
+    "name": "pipe_segment_count",
+    "label": "Segment Count",
+    "type": "parmTemplateType.Int",
+    "value": 10
+  },
+  {
+    "name": "pipe_segment_min_count",
+    "label": "Segment Min Count",
+    "type": "parmTemplateType.Int",
+    "value": 5
+  },
+  {
+    "name": "pipe_segment_max_count",
+    "label": "Segment Max Count",
+    "type": "parmTemplateType.Int",
+    "value": 12
+  },
+  {
+    "name": "pipe_height_limit_mode",
+    "label": "Height Limit Mode",
+    "type": "parmTemplateType.Menu",
+    "value": 2
+  },
+  {
+    "name": "pipe_wall_offset_cm",
+    "label": "Wall Offset",
+    "type": "parmTemplateType.Float",
+    "value": 50.0
+  },
+  {
+    "name": "pipe_start_y_offset_cm",
+    "label": "Start H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_along_wall_offset_cm",
+    "label": "Along Wall Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_corner_margin_cm",
+    "label": "Corner Margin",
+    "type": "parmTemplateType.Float",
+    "value": 150.0
+  },
+  {
+    "name": "pipe_min_spacing_cm",
+    "label": "Min Spacing",
+    "type": "parmTemplateType.Float",
+    "value": 200.0
+  },
+  {
+    "name": "pipe_tube_offset_normal_cm",
+    "label": "Pipe Tube Offset Normal CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_tube_offset_tangent_cm",
+    "label": "Pipe Tube Offset Tangent CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_tube_offset_y_cm",
+    "label": "Pipe Tube Offset Y CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_tube_rot_x",
+    "label": "Pipe Tube Rot X",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_tube_rot_y",
+    "label": "Pipe Tube Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_tube_rot_z",
+    "label": "Pipe Tube Rot Z",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_connector",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_pipe_connectors",
+    "label": "Enable Pipe Connectors",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "pipe_connector_offset_x_cm",
+    "label": "Pipe Connector Offset X CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_connector_offset_y_cm",
+    "label": "Pipe Connector Offset Y CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_connector_offset_z_cm",
+    "label": "Pipe Connector Offset Z CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_connector_rot_x",
+    "label": "Pipe Connector Rot X",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_connector_rot_y",
+    "label": "Pipe Connector Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_fastening",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_pipe_fastening",
+    "label": "Enable",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "pipe_fastening_interval_segments",
+    "label": "Interval Segments",
+    "type": "parmTemplateType.Int",
+    "value": 3
+  },
+  {
+    "name": "pipe_fastening_start_segment",
+    "label": "Start Segment",
+    "type": "parmTemplateType.Int",
+    "value": 1
+  },
+  {
+    "name": "pipe_fastening_seed",
+    "label": "Seed",
+    "type": "parmTemplateType.Int",
+    "value": 0
+  },
+  {
+    "name": "pipe_fastening_y_random_min_cm",
+    "label": "Pipe Fastening Y Random Min CM",
+    "type": "parmTemplateType.Float",
+    "value": -10.0
+  },
+  {
+    "name": "pipe_fastening_y_random_max_cm",
+    "label": "Pipe Fastening Y Random Max CM",
+    "type": "parmTemplateType.Float",
+    "value": 10.0
+  },
+  {
+    "name": "pipe_fastening_surface_offset_cm",
+    "label": "Pipe Fastening Surface Offset CM",
+    "type": "parmTemplateType.Float",
+    "value": -10.0
+  },
+  {
+    "name": "pipe_fastening_along_wall_offset_cm",
+    "label": "Pipe Fastening Along Wall Offset CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_fastening_y_offset_cm",
+    "label": "H Offset",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_fastening_rot_y",
+    "label": "Pipe Fastening Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 90.0
+  },
+  {
+    "name": "pipe_fastening_rot_z",
+    "label": "Pipe Fastening Rot Z",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_fastening_front_base_rot_y",
+    "label": "Pipe Fastening Front Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 180.0
+  },
+  {
+    "name": "pipe_fastening_back_base_rot_y",
+    "label": "Pipe Fastening Back Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_fastening_left_base_rot_y",
+    "label": "Pipe Fastening Left Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": -90.0
+  },
+  {
+    "name": "pipe_fastening_right_base_rot_y",
+    "label": "Pipe Fastening Right Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 90.0
+  },
+  {
+    "name": "xn__PipeCap_hha",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_pipe_cap",
+    "label": "Enable Pipe Cap",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "pipe_cap_offset_x_cm",
+    "label": "Pipe Cap Offset X CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_cap_offset_y_cm",
+    "label": "Pipe Cap Offset Y CM",
+    "type": "parmTemplateType.Float",
+    "value": 31.0
+  },
+  {
+    "name": "pipe_cap_offset_z_cm",
+    "label": "Pipe Cap Offset Z CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "xn__PipeBottom_4ja",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "enable_pipe_bottom_elbow",
+    "label": "Enable Pipe Bottom Elbow",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  },
+  {
+    "name": "pipe_bottom_elbow_offset_x_cm",
+    "label": "Pipe Bottom Elbow Offset X CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_offset_y_cm",
+    "label": "Pipe Bottom Elbow Offset Y CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_offset_z_cm",
+    "label": "Pipe Bottom Elbow Offset Z CM",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_rot_x",
+    "label": "Pipe Bottom Elbow Rot X",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_rot_y",
+    "label": "Pipe Bottom Elbow Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_rot_z",
+    "label": "Pipe Bottom Elbow Rot Z",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_front_base_rot_y",
+    "label": "Pipe Bottom Elbow Front Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": -90.0
+  },
+  {
+    "name": "pipe_bottom_elbow_back_base_rot_y",
+    "label": "Pipe Bottom Elbow Back Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 90.0
+  },
+  {
+    "name": "pipe_bottom_elbow_left_base_rot_y",
+    "label": "Pipe Bottom Elbow Left Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 0.0
+  },
+  {
+    "name": "pipe_bottom_elbow_right_base_rot_y",
+    "label": "Pipe Bottom Elbow Right Base Rot Y",
+    "type": "parmTemplateType.Float",
+    "value": 180.0
+  },
+  {
+    "name": "stdswitcher4_3_4",
+    "label": "",
+    "type": "parmTemplateType.FolderSet",
+    "value": 0
+  },
+  {
+    "name": "show_block_proxy",
+    "label": "Show Block Proxy",
+    "type": "parmTemplateType.Toggle",
+    "value": 1
+  }
+]

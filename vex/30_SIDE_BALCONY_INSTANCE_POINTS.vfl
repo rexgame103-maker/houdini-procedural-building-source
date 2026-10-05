@@ -1,0 +1,211 @@
+// ==========================================
+// 30_SIDE_BALCONY_INSTANCE_POINTS
+// V2.1D：侧面阳台真实实例点
+//
+// 新增：
+// 1. enable_side_balcony_stairs 控制楼梯阳台系统
+// 2. outer_side + Vertical Column + 最外侧楼房 >= 4 层
+//    → 强制使用 Balcony_03
+// 3. Balcony_03 不参与 Balcony_01 / 02 随机替换
+//
+// 注意：
+// 这里只生成 Balcony_03
+// 暂不生成斜梯 / 挂梯
+// ==========================================
+
+int src_count = npoints(0);
+
+int enable_variant = chi("../enable_side_balcony_variant");
+float variant_chance = clamp(chf("../side_balcony_variant_chance"), 0.0, 1.0);
+int variant_seed = chi("../side_balcony_variant_seed");
+
+int enable_side_balcony_stairs = chi("../enable_side_balcony_stairs");
+int side_upper_door_layout_mode = chi("../side_upper_door_layout_mode");
+
+int created_count = 0;
+int balcony03_count = 0;
+
+for (int i = 0; i < src_count; i++)
+{
+    string module_type = point(0, "module_type", i);
+
+    if (module_type != "side_balcony_anchor")
+    {
+        continue;
+    }
+
+    string facade = point(0, "facade", i);
+
+    if (facade != "left" && facade != "right")
+    {
+        continue;
+    }
+
+    vector anchor_pos = point(0, "P", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    string side_region = point(0, "side_upper_region", i);
+
+    int visible_floor_count = point(0, "visible_floor_count", i);
+    int local_floor_in_region = point(0, "local_floor_in_region", i);
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+
+    // visible_floor_count 只统计 global_floor > 0 的侧面高层墙。
+    // 因为一楼本身不生成侧面阳台，所以这里 +1 得到包含一楼的楼房总层数。
+    int outer_building_floor_count = visible_floor_count + 1;
+
+    // ===============================
+    // Balcony_03 判断
+    // ===============================
+    //
+    // 条件：
+    // 1. 启用楼梯阳台系统
+    // 2. 侧面门墙模式为 Vertical Column
+    // 3. 只处理 outer_side
+    // 4. 最外侧楼房总层数 >= 4
+    //
+    int use_balcony03 = 0;
+
+    if (
+        enable_side_balcony_stairs == 1 &&
+        side_upper_door_layout_mode == 1 &&
+        side_region == "outer_side" &&
+        outer_building_floor_count >= 4
+    )
+    {
+        use_balcony03 = 1;
+    }
+
+    // ===============================
+    // 默认阳台资产
+    // ===============================
+
+    string balcony_asset = "SM_Building_01_Balcony_01";
+    string balcony_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Balcony_01.SM_Building_01_Balcony_01";
+
+    float width_cm = 227.0;
+    float depth_cm = 120.0;
+    float height_cm = 113.0;
+
+    string variant_role = "default_balcony";
+    string variant_note = "初始阳台";
+
+    string side_balcony_rule = "normal_side_balcony";
+
+    // ===============================
+    // 楼梯专用 Balcony_03
+    // 优先级最高
+    // ===============================
+
+    if (use_balcony03 == 1)
+    {
+        balcony_asset = "SM_Building_01_Balcony_03";
+        balcony_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Balcony_03.SM_Building_01_Balcony_03";
+
+        width_cm = 287.0;
+        depth_cm = 120.0;
+        height_cm = 96.0;
+
+        variant_role = "stair_balcony";
+        variant_note = "楼梯系统镂空阳台，仅用于 outer_side vertical column 且楼房四层以上";
+        side_balcony_rule = "balcony03_outer_vertical_stair_rule";
+
+        balcony03_count++;
+    }
+
+    // ===============================
+    // 普通 Balcony_01 / Balcony_02
+    // 只有非 Balcony_03 时才允许随机替换
+    // ===============================
+
+    else
+    {
+        if (enable_variant == 1)
+        {
+            float rv = rand(float(variant_seed) + float(i) * 23.17 + float(global_floor) * 11.31);
+
+            if (rv < variant_chance)
+            {
+                balcony_asset = "SM_Building_01_Balcony_02";
+                balcony_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Balcony_02.SM_Building_01_Balcony_02";
+
+                width_cm = 311.0;
+                depth_cm = 138.0;
+                height_cm = 113.0;
+
+                variant_role = "replace_balcony";
+                variant_note = "可替换初始阳台";
+                side_balcony_rule = "normal_side_balcony_variant";
+            }
+        }
+    }
+
+    int pt = addpoint(0, anchor_pos);
+
+    setpointattrib(0, "asset_id", pt, balcony_asset, "set");
+    setpointattrib(0, "module_type", pt, "side_balcony", "set");
+    setpointattrib(0, "unreal_instance", pt, balcony_path, "set");
+
+    setpointattrib(0, "facade", pt, facade, "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "side_upper_region", pt, side_region, "set");
+    setpointattrib(0, "side_balcony_source", pt, "side_upper_door", "set");
+    setpointattrib(0, "side_balcony_rule", pt, side_balcony_rule, "set");
+
+    setpointattrib(0, "visible_floor_count", pt, visible_floor_count, "set");
+    setpointattrib(0, "local_floor_in_region", pt, local_floor_in_region, "set");
+    setpointattrib(0, "outer_building_floor_count", pt, outer_building_floor_count, "set");
+
+    setpointattrib(0, "is_side_stair_balcony", pt, use_balcony03, "set");
+
+    setpointattrib(0, "replacement_group", pt, "side_balcony", "set");
+    setpointattrib(0, "variant_role", pt, variant_role, "set");
+    setpointattrib(0, "variant_note", pt, variant_note, "set");
+
+    setpointattrib(0, "pivot_type", pt, "balcony_inner_bottom_center", "set");
+
+    setpointattrib(0, "width_cm", pt, width_cm, "set");
+    setpointattrib(0, "depth_cm", pt, depth_cm, "set");
+    setpointattrib(0, "height_cm", pt, height_cm, "set");
+
+    setpointattrib(0, "grid_width", pt, 0, "set");
+    setpointattrib(0, "grid_depth", pt, 0, "set");
+
+    setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(0, "floor_height", pt, floor_height, "set");
+
+    // 已测试正确：
+    // right 向 X+ 外挑
+    // left  向 X- 外挑
+    float balcony_rot_y = 0.0;
+
+    if (facade == "right")
+    {
+        balcony_rot_y = 0.0;
+    }
+    else if (facade == "left")
+    {
+        balcony_rot_y = 180.0;
+    }
+
+    setpointattrib(0, "rot_y_deg", pt, balcony_rot_y, "set");
+    setpointattrib(0, "orient", pt, quaternion(radians(balcony_rot_y), set(0, 1, 0)), "set");
+    setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+    created_count++;
+}
+
+
+// 删除原始 anchor 点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "side_balcony_instance_status", "side_balcony_instance_points_created", "set");
+setdetailattrib(0, "side_balcony_instance_created_count", created_count, "set");
+setdetailattrib(0, "side_balcony03_created_count", balcony03_count, "set");

@@ -1,0 +1,494 @@
+// ==========================================
+// 20_ROOF_CORNICE_EDGE_MODULE_POINTS
+// V2：把屋顶边缘段拆成 400 / 200 / 100cm 屋檐边模块点
+//
+// 44A 修正版：
+// 1. 自动检测屋檐角点 / T 型交接点
+// 2. 屋檐边遇到角点时自动断开
+// 3. 角点交给 21_ROOF_CORNICE_CORNER_MODULE_POINTS 处理
+// ==========================================
+
+
+function int corner_exists(
+    const int xs[];
+    const int zs[];
+    const float ys[];
+    const int test_x;
+    const int test_z;
+    const float test_y;
+    const float eps)
+{
+    for (int i = 0; i < len(xs); i++)
+    {
+        if (
+            xs[i] == test_x &&
+            zs[i] == test_z &&
+            abs(ys[i] - test_y) <= eps
+        )
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+function int cell_touches_corner_x(
+    const int corner_x[];
+    const int corner_z[];
+    const float corner_y[];
+    const int cell_start_x;
+    const int fixed_z;
+    const float y;
+    const float eps)
+{
+    int cell_end_x = cell_start_x + 1;
+
+    for (int i = 0; i < len(corner_x); i++)
+    {
+        if (abs(corner_y[i] - y) > eps)
+        {
+            continue;
+        }
+
+        if (corner_z[i] != fixed_z)
+        {
+            continue;
+        }
+
+        if (corner_x[i] == cell_start_x || corner_x[i] == cell_end_x)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+function int cell_touches_corner_z(
+    const int corner_x[];
+    const int corner_z[];
+    const float corner_y[];
+    const int fixed_x;
+    const int cell_start_z;
+    const float y;
+    const float eps)
+{
+    int cell_end_z = cell_start_z + 1;
+
+    for (int i = 0; i < len(corner_x); i++)
+    {
+        if (abs(corner_y[i] - y) > eps)
+        {
+            continue;
+        }
+
+        if (corner_x[i] != fixed_x)
+        {
+            continue;
+        }
+
+        if (corner_z[i] == cell_start_z || corner_z[i] == cell_end_z)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+void add_cornice_edge_module(
+    const int geo;
+    const vector pos;
+    const string facade;
+    const int module_grid;
+    const float roof_y;
+    const int source_floor;
+    const float rot_y)
+{
+    string asset_id = "";
+    string path = "";
+
+    if (module_grid == 4)
+    {
+        asset_id = "SM_Building_01_CorniceTop_100x400_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_CorniceTop_100x400_01.SM_Building_01_CorniceTop_100x400_01";
+    }
+    else if (module_grid == 2)
+    {
+        asset_id = "SM_Building_01_CorniceTop_100x200_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_CorniceTop_100x200_01.SM_Building_01_CorniceTop_100x200_01";
+    }
+    else
+    {
+        asset_id = "SM_Building_01_CorniceTop_100x100_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_CorniceTop_100x100_01.SM_Building_01_CorniceTop_100x100_01";
+    }
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, "cornice_edge", "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+
+    setpointattrib(geo, "global_floor", pt, source_floor, "set");
+    setpointattrib(geo, "roof_source_floor", pt, source_floor, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, 58.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 100.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 58.0, "set");
+
+    setpointattrib(geo, "roof_y", pt, roof_y, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "cornice_source", pt, "roof_edge_segment_split_corner_avoid", "set");
+}
+
+
+// ===============================
+// 收集屋顶边缘段
+// ===============================
+
+int prim_count = nprimitives(0);
+float unit = chf("../grid_unit");
+float eps = 0.001;
+
+int geo_id = 0;
+
+string edge_types[];
+int start_xs[];
+int end_xs[];
+int start_zs[];
+int end_zs[];
+float roof_ys[];
+int source_floors[];
+
+for (int pr = 0; pr < prim_count; pr++)
+{
+    string segment_type = prim(0, "roof_segment_type", pr);
+
+    if (segment_type != "cornice_segment")
+    {
+        continue;
+    }
+
+    string edge_type = prim(0, "roof_edge_type", pr);
+
+    int sx = prim(0, "grid_start_x", pr);
+    int ex = prim(0, "grid_end_x", pr);
+    int sz = prim(0, "grid_start_z", pr);
+    int ez = prim(0, "grid_end_z", pr);
+
+    float y = prim(0, "roof_y", pr);
+    int source_floor = prim(0, "roof_source_floor", pr);
+
+    append(edge_types, edge_type);
+    append(start_xs, sx);
+    append(end_xs, ex);
+    append(start_zs, sz);
+    append(end_zs, ez);
+    append(roof_ys, y);
+    append(source_floors, source_floor);
+}
+
+int segment_count = len(edge_types);
+
+if (segment_count <= 0)
+{
+    setdetailattrib(0, "roof_cornice_edge_status", "no_cornice_segments", "set");
+
+    for (int pr = prim_count - 1; pr >= 0; pr--)
+    {
+        removeprim(0, pr, 1);
+    }
+
+    return;
+}
+
+
+// ===============================
+// 检测屋檐角点 / T 型交接点
+// ===============================
+
+int corner_x[];
+int corner_z[];
+float corner_y[];
+
+for (int h = 0; h < segment_count; h++)
+{
+    string ht = edge_types[h];
+
+    if (ht != "roof_front" && ht != "roof_back")
+    {
+        continue;
+    }
+
+    int h_min_x = min(start_xs[h], end_xs[h]);
+    int h_max_x = max(start_xs[h], end_xs[h]);
+    int h_z = start_zs[h];
+    float h_y = roof_ys[h];
+
+    for (int v = 0; v < segment_count; v++)
+    {
+        string vt = edge_types[v];
+
+        if (vt != "roof_left" && vt != "roof_right")
+        {
+            continue;
+        }
+
+        if (abs(roof_ys[v] - h_y) > eps)
+        {
+            continue;
+        }
+
+        int v_x = start_xs[v];
+        int v_min_z = min(start_zs[v], end_zs[v]);
+        int v_max_z = max(start_zs[v], end_zs[v]);
+
+        if (
+            v_x >= h_min_x &&
+            v_x <= h_max_x &&
+            h_z >= v_min_z &&
+            h_z <= v_max_z
+        )
+        {
+            if (corner_exists(corner_x, corner_z, corner_y, v_x, h_z, h_y, eps) == 0)
+            {
+                append(corner_x, v_x);
+                append(corner_z, h_z);
+                append(corner_y, h_y);
+            }
+        }
+    }
+}
+
+
+// ===============================
+// 按屋檐段生成模块，遇角点自动断开
+// ===============================
+
+int cornice_count = 0;
+int skipped_corner_cell_count = 0;
+
+for (int s = 0; s < segment_count; s++)
+{
+    string edge_type = edge_types[s];
+
+    int start_x = start_xs[s];
+    int end_x = end_xs[s];
+
+    int start_z = start_zs[s];
+    int end_z = end_zs[s];
+
+    float roof_y = roof_ys[s];
+    int source_floor = source_floors[s];
+
+    int length_grid = 0;
+
+    if (edge_type == "roof_front" || edge_type == "roof_back")
+    {
+        length_grid = abs(end_x - start_x);
+    }
+    else
+    {
+        length_grid = abs(end_z - start_z);
+    }
+
+    int used = 0;
+
+    while (used < length_grid)
+    {
+        // ===============================
+        // 跳过触碰角点的 1 grid
+        // ===============================
+
+        int skip_this_cell = 0;
+
+        if (edge_type == "roof_front" || edge_type == "roof_back")
+        {
+            int cell_x = start_x + used;
+            int fixed_z = start_z;
+
+            skip_this_cell = cell_touches_corner_x(
+                corner_x,
+                corner_z,
+                corner_y,
+                cell_x,
+                fixed_z,
+                roof_y,
+                eps
+            );
+        }
+        else
+        {
+            int fixed_x = start_x;
+            int cell_z = start_z + used;
+
+            skip_this_cell = cell_touches_corner_z(
+                corner_x,
+                corner_z,
+                corner_y,
+                fixed_x,
+                cell_z,
+                roof_y,
+                eps
+            );
+        }
+
+        if (skip_this_cell == 1)
+        {
+            skipped_corner_cell_count++;
+            used++;
+            continue;
+        }
+
+
+        // ===============================
+        // 从当前格开始，寻找连续可用长度
+        // ===============================
+
+        int run_start = used;
+        int run_len = 0;
+
+        while (used < length_grid)
+        {
+            int blocked = 0;
+
+            if (edge_type == "roof_front" || edge_type == "roof_back")
+            {
+                int cell_x = start_x + used;
+                int fixed_z = start_z;
+
+                blocked = cell_touches_corner_x(
+                    corner_x,
+                    corner_z,
+                    corner_y,
+                    cell_x,
+                    fixed_z,
+                    roof_y,
+                    eps
+                );
+            }
+            else
+            {
+                int fixed_x = start_x;
+                int cell_z = start_z + used;
+
+                blocked = cell_touches_corner_z(
+                    corner_x,
+                    corner_z,
+                    corner_y,
+                    fixed_x,
+                    cell_z,
+                    roof_y,
+                    eps
+                );
+            }
+
+            if (blocked == 1)
+            {
+                break;
+            }
+
+            run_len++;
+            used++;
+        }
+
+
+        // ===============================
+        // 把这个连续段拆成 400 / 200 / 100
+        // ===============================
+
+        int local_used = 0;
+
+        while (local_used < run_len)
+        {
+            int remain = run_len - local_used;
+            int module_grid = 1;
+
+            if (remain >= 4)
+            {
+                module_grid = 4;
+            }
+            else if (remain >= 2)
+            {
+                module_grid = 2;
+            }
+            else
+            {
+                module_grid = 1;
+            }
+
+            int logical_used = run_start + local_used;
+
+            vector pos = set(0, 0, 0);
+            float rot_y = 0.0;
+            string facade = edge_type;
+
+            if (edge_type == "roof_front")
+            {
+                pos = set(float(start_x + logical_used) * unit, roof_y, float(start_z) * unit);
+                rot_y = 0.0;
+            }
+            else if (edge_type == "roof_back")
+            {
+                pos = set(float(start_x + logical_used + module_grid) * unit, roof_y, float(start_z) * unit);
+                rot_y = 180.0;
+            }
+            else if (edge_type == "roof_left")
+            {
+                pos = set(float(start_x) * unit, roof_y, float(start_z + logical_used + module_grid) * unit);
+                rot_y = 90.0;
+            }
+            else if (edge_type == "roof_right")
+            {
+                pos = set(float(start_x) * unit, roof_y, float(start_z + logical_used) * unit);
+                rot_y = -90.0;
+            }
+            else
+            {
+                local_used += module_grid;
+                continue;
+            }
+
+            add_cornice_edge_module(
+                geo_id,
+                pos,
+                facade,
+                module_grid,
+                roof_y,
+                source_floor,
+                rot_y
+            );
+
+            cornice_count++;
+            local_used += module_grid;
+        }
+    }
+}
+
+
+// ===============================
+// 删除原始屋顶边缘 segment 线，只保留屋檐边模块点
+// ===============================
+
+for (int pr = prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}
+
+setdetailattrib(0, "roof_cornice_edge_status", "cornice_edge_modules_created_corner_avoid", "set");
+setdetailattrib(0, "roof_cornice_edge_module_count", cornice_count, "set");
+setdetailattrib(0, "roof_cornice_reserved_corner_count", len(corner_x), "set");
+setdetailattrib(0, "roof_cornice_skipped_corner_cell_count", skipped_corner_cell_count, "set");

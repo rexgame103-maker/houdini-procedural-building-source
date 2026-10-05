@@ -1,0 +1,138 @@
+// ==========================================
+// 04_BUILDING_BLOCK_PROXY
+// V2：把“楼体块数据点”转换成可视化 Box
+// 一个 Box = 一个楼体块
+// ==========================================
+
+int show_proxy = chi("../show_block_proxy");
+
+int src_count = npoints(0);
+float unit = chf("../grid_unit");
+
+if (show_proxy == 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+    return;
+}
+
+vector colors[] = array(
+    set(0.95, 0.25, 0.15),
+    set(0.95, 0.55, 0.15),
+    set(0.95, 0.85, 0.20),
+    set(0.25, 0.75, 0.35),
+    set(0.20, 0.55, 0.95),
+    set(0.55, 0.35, 0.90),
+    set(0.90, 0.35, 0.70)
+);
+
+for (int i = 0; i < src_count; i++)
+{
+    int block_id = point(0, "block_id", i);
+    int parent_id = point(0, "parent_id", i);
+
+    int min_x_grid = point(0, "min_x_grid", i);
+    int max_x_grid = point(0, "max_x_grid", i);
+    int min_z_grid = point(0, "min_z_grid", i);
+    int max_z_grid = point(0, "max_z_grid", i);
+
+    float bottom_y = point(0, "bottom_y", i);
+    float top_y = point(0, "top_y", i);
+
+    int width_grid = point(0, "width_grid", i);
+    int depth_grid = point(0, "depth_grid", i);
+    int floor_count = point(0, "floor_count", i);
+
+    string place_mode = point(0, "place_mode", i);
+
+    float min_x = min_x_grid * unit;
+    float max_x = max_x_grid * unit;
+    float min_z = min_z_grid * unit;
+    float max_z = max_z_grid * unit;
+
+    vector cd = colors[block_id % len(colors)];
+
+    vector corners[] = array(
+        set(min_x, bottom_y, min_z), // 0 front-left-bottom
+        set(max_x, bottom_y, min_z), // 1 front-right-bottom
+        set(max_x, top_y,    min_z), // 2 front-right-top
+        set(min_x, top_y,    min_z), // 3 front-left-top
+
+        set(min_x, bottom_y, max_z), // 4 back-left-bottom
+        set(max_x, bottom_y, max_z), // 5 back-right-bottom
+        set(max_x, top_y,    max_z), // 6 back-right-top
+        set(min_x, top_y,    max_z)  // 7 back-left-top
+    );
+
+    int pts[];
+
+    foreach (vector p; corners)
+    {
+        int pt = addpoint(0, p);
+
+        setpointattrib(0, "Cd", pt, cd, "set");
+        setpointattrib(0, "block_id", pt, block_id, "set");
+        setpointattrib(0, "parent_id", pt, parent_id, "set");
+        setpointattrib(0, "place_mode", pt, place_mode, "set");
+
+        append(pts, pt);
+    }
+
+    int prim_front  = addprim(0, "poly", pts[0], pts[1], pts[2], pts[3]);
+    int prim_back   = addprim(0, "poly", pts[4], pts[7], pts[6], pts[5]);
+    int prim_bottom = addprim(0, "poly", pts[0], pts[4], pts[5], pts[1]);
+    int prim_right  = addprim(0, "poly", pts[1], pts[5], pts[6], pts[2]);
+    int prim_top    = addprim(0, "poly", pts[3], pts[2], pts[6], pts[7]);
+    int prim_left   = addprim(0, "poly", pts[0], pts[3], pts[7], pts[4]);
+
+    int prims[] = array(
+        prim_front,
+        prim_back,
+        prim_bottom,
+        prim_right,
+        prim_top,
+        prim_left
+    );
+
+    string face_names[] = array(
+        "front",
+        "back",
+        "bottom",
+        "right",
+        "top",
+        "left"
+    );
+
+    for (int pidx = 0; pidx < len(prims); pidx++)
+    {
+        int pr = prims[pidx];
+
+        setprimattrib(0, "Cd", pr, cd, "set");
+
+        setprimattrib(0, "block_id", pr, block_id, "set");
+        setprimattrib(0, "parent_id", pr, parent_id, "set");
+        setprimattrib(0, "place_mode", pr, place_mode, "set");
+
+        setprimattrib(0, "block_face", pr, face_names[pidx], "set");
+
+        setprimattrib(0, "width_grid", pr, width_grid, "set");
+        setprimattrib(0, "depth_grid", pr, depth_grid, "set");
+        setprimattrib(0, "floor_count", pr, floor_count, "set");
+
+        setprimattrib(0, "min_x_grid", pr, min_x_grid, "set");
+        setprimattrib(0, "max_x_grid", pr, max_x_grid, "set");
+        setprimattrib(0, "min_z_grid", pr, min_z_grid, "set");
+        setprimattrib(0, "max_z_grid", pr, max_z_grid, "set");
+
+        setprimattrib(0, "bottom_y", pr, bottom_y, "set");
+        setprimattrib(0, "top_y", pr, top_y, "set");
+    }
+}
+
+// 删除原始体块数据点，只保留 Box 预览几何
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}

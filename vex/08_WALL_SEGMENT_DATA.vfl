@@ -1,0 +1,439 @@
+// ==========================================
+// 08_WALL_SEGMENT_DATA
+// V2：把连续的 1格外露边合并成更长的墙段
+//
+// 输出：
+// 每条 polyline = 一段连续外墙边
+// length_grid = 这段墙的长度，单位 100cm 格
+// ==========================================
+
+int src_count = npoints(0);
+float unit = chf("../grid_unit");
+
+int min_x = 999999;
+int max_x = -999999;
+int min_z = 999999;
+int max_z = -999999;
+int min_floor = 999999;
+int max_floor = -999999;
+
+for (int i = 0; i < src_count; i++)
+{
+    int x = point(0, "cell_x", i);
+    int z = point(0, "cell_z", i);
+    int gf = point(0, "global_floor", i);
+
+    min_x = min(min_x, x);
+    max_x = max(max_x, x);
+    min_z = min(min_z, z);
+    max_z = max(max_z, z);
+    min_floor = min(min_floor, gf);
+    max_floor = max(max_floor, gf);
+}
+
+float debug_y_offset = 0.10;
+
+
+// ===============================
+// front / back：沿 X 方向合并
+// ===============================
+
+for (int gf = min_floor; gf <= max_floor; gf++)
+{
+    for (int z = min_z; z <= max_z; z++)
+    {
+        // ---------- front ----------
+        int x = min_x;
+
+        while (x <= max_x)
+        {
+            int exposed = 0;
+            float floor_bottom_y = 0;
+            float floor_height = 0;
+            float floor_top_y = 0;
+
+            for (int p = 0; p < src_count; p++)
+            {
+                if (
+                    point(0, "global_floor", p) == gf &&
+                    point(0, "cell_x", p) == x &&
+                    point(0, "cell_z", p) == z &&
+                    point(0, "exposed_front", p) == 1
+                )
+                {
+                    exposed = 1;
+                    floor_bottom_y = point(0, "floor_bottom_y", p);
+                    floor_height = point(0, "floor_height", p);
+                    floor_top_y = point(0, "floor_top_y", p);
+                    break;
+                }
+            }
+
+            if (exposed == 0)
+            {
+                x++;
+                continue;
+            }
+
+            int start_x = x;
+            int end_x = x + 1;
+
+            x++;
+
+            while (x <= max_x)
+            {
+                int next_exposed = 0;
+
+                for (int p = 0; p < src_count; p++)
+                {
+                    if (
+                        point(0, "global_floor", p) == gf &&
+                        point(0, "cell_x", p) == x &&
+                        point(0, "cell_z", p) == z &&
+                        point(0, "exposed_front", p) == 1
+                    )
+                    {
+                        next_exposed = 1;
+                        break;
+                    }
+                }
+
+                if (next_exposed == 0)
+                {
+                    break;
+                }
+
+                end_x = x + 1;
+                x++;
+            }
+
+            float y = floor_bottom_y + debug_y_offset;
+
+            vector p0 = set(float(start_x) * unit, y, float(z) * unit);
+            vector p1 = set(float(end_x) * unit, y, float(z) * unit);
+
+            int pt0 = addpoint(0, p0);
+            int pt1 = addpoint(0, p1);
+            int pr = addprim(0, "polyline", pt0, pt1);
+
+            setpointattrib(0, "Cd", pt0, set(1.0, 0.1, 0.1), "set");
+            setpointattrib(0, "Cd", pt1, set(1.0, 0.1, 0.1), "set");
+
+            setprimattrib(0, "segment_type", pr, "wall_segment", "set");
+            setprimattrib(0, "edge_facade", pr, "front", "set");
+            setprimattrib(0, "global_floor", pr, gf, "set");
+
+            setprimattrib(0, "grid_start_x", pr, start_x, "set");
+            setprimattrib(0, "grid_end_x", pr, end_x, "set");
+            setprimattrib(0, "grid_start_z", pr, z, "set");
+            setprimattrib(0, "grid_end_z", pr, z, "set");
+
+            setprimattrib(0, "length_grid", pr, end_x - start_x, "set");
+
+            setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+            setprimattrib(0, "floor_height", pr, floor_height, "set");
+            setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+        }
+
+
+        // ---------- back ----------
+        x = min_x;
+
+        while (x <= max_x)
+        {
+            int exposed = 0;
+            float floor_bottom_y = 0;
+            float floor_height = 0;
+            float floor_top_y = 0;
+
+            for (int p = 0; p < src_count; p++)
+            {
+                if (
+                    point(0, "global_floor", p) == gf &&
+                    point(0, "cell_x", p) == x &&
+                    point(0, "cell_z", p) == z &&
+                    point(0, "exposed_back", p) == 1
+                )
+                {
+                    exposed = 1;
+                    floor_bottom_y = point(0, "floor_bottom_y", p);
+                    floor_height = point(0, "floor_height", p);
+                    floor_top_y = point(0, "floor_top_y", p);
+                    break;
+                }
+            }
+
+            if (exposed == 0)
+            {
+                x++;
+                continue;
+            }
+
+            int start_x = x;
+            int end_x = x + 1;
+
+            x++;
+
+            while (x <= max_x)
+            {
+                int next_exposed = 0;
+
+                for (int p = 0; p < src_count; p++)
+                {
+                    if (
+                        point(0, "global_floor", p) == gf &&
+                        point(0, "cell_x", p) == x &&
+                        point(0, "cell_z", p) == z &&
+                        point(0, "exposed_back", p) == 1
+                    )
+                    {
+                        next_exposed = 1;
+                        break;
+                    }
+                }
+
+                if (next_exposed == 0)
+                {
+                    break;
+                }
+
+                end_x = x + 1;
+                x++;
+            }
+
+            int edge_z = z + 1;
+            float y = floor_bottom_y + debug_y_offset;
+
+            vector p0 = set(float(start_x) * unit, y, float(edge_z) * unit);
+            vector p1 = set(float(end_x) * unit, y, float(edge_z) * unit);
+
+            int pt0 = addpoint(0, p0);
+            int pt1 = addpoint(0, p1);
+            int pr = addprim(0, "polyline", pt0, pt1);
+
+            setpointattrib(0, "Cd", pt0, set(0.1, 0.4, 1.0), "set");
+            setpointattrib(0, "Cd", pt1, set(0.1, 0.4, 1.0), "set");
+
+            setprimattrib(0, "segment_type", pr, "wall_segment", "set");
+            setprimattrib(0, "edge_facade", pr, "back", "set");
+            setprimattrib(0, "global_floor", pr, gf, "set");
+
+            setprimattrib(0, "grid_start_x", pr, start_x, "set");
+            setprimattrib(0, "grid_end_x", pr, end_x, "set");
+            setprimattrib(0, "grid_start_z", pr, edge_z, "set");
+            setprimattrib(0, "grid_end_z", pr, edge_z, "set");
+
+            setprimattrib(0, "length_grid", pr, end_x - start_x, "set");
+
+            setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+            setprimattrib(0, "floor_height", pr, floor_height, "set");
+            setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+        }
+    }
+}
+
+
+// ===============================
+// left / right：沿 Z 方向合并
+// ===============================
+
+for (int gf = min_floor; gf <= max_floor; gf++)
+{
+    for (int x = min_x; x <= max_x; x++)
+    {
+        // ---------- left ----------
+        int z = min_z;
+
+        while (z <= max_z)
+        {
+            int exposed = 0;
+            float floor_bottom_y = 0;
+            float floor_height = 0;
+            float floor_top_y = 0;
+
+            for (int p = 0; p < src_count; p++)
+            {
+                if (
+                    point(0, "global_floor", p) == gf &&
+                    point(0, "cell_x", p) == x &&
+                    point(0, "cell_z", p) == z &&
+                    point(0, "exposed_left", p) == 1
+                )
+                {
+                    exposed = 1;
+                    floor_bottom_y = point(0, "floor_bottom_y", p);
+                    floor_height = point(0, "floor_height", p);
+                    floor_top_y = point(0, "floor_top_y", p);
+                    break;
+                }
+            }
+
+            if (exposed == 0)
+            {
+                z++;
+                continue;
+            }
+
+            int start_z = z;
+            int end_z = z + 1;
+
+            z++;
+
+            while (z <= max_z)
+            {
+                int next_exposed = 0;
+
+                for (int p = 0; p < src_count; p++)
+                {
+                    if (
+                        point(0, "global_floor", p) == gf &&
+                        point(0, "cell_x", p) == x &&
+                        point(0, "cell_z", p) == z &&
+                        point(0, "exposed_left", p) == 1
+                    )
+                    {
+                        next_exposed = 1;
+                        break;
+                    }
+                }
+
+                if (next_exposed == 0)
+                {
+                    break;
+                }
+
+                end_z = z + 1;
+                z++;
+            }
+
+            float y = floor_bottom_y + debug_y_offset;
+
+            vector p0 = set(float(x) * unit, y, float(start_z) * unit);
+            vector p1 = set(float(x) * unit, y, float(end_z) * unit);
+
+            int pt0 = addpoint(0, p0);
+            int pt1 = addpoint(0, p1);
+            int pr = addprim(0, "polyline", pt0, pt1);
+
+            setpointattrib(0, "Cd", pt0, set(0.1, 0.9, 0.2), "set");
+            setpointattrib(0, "Cd", pt1, set(0.1, 0.9, 0.2), "set");
+
+            setprimattrib(0, "segment_type", pr, "wall_segment", "set");
+            setprimattrib(0, "edge_facade", pr, "left", "set");
+            setprimattrib(0, "global_floor", pr, gf, "set");
+
+            setprimattrib(0, "grid_start_x", pr, x, "set");
+            setprimattrib(0, "grid_end_x", pr, x, "set");
+            setprimattrib(0, "grid_start_z", pr, start_z, "set");
+            setprimattrib(0, "grid_end_z", pr, end_z, "set");
+
+            setprimattrib(0, "length_grid", pr, end_z - start_z, "set");
+
+            setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+            setprimattrib(0, "floor_height", pr, floor_height, "set");
+            setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+        }
+
+
+        // ---------- right ----------
+        z = min_z;
+
+        while (z <= max_z)
+        {
+            int exposed = 0;
+            float floor_bottom_y = 0;
+            float floor_height = 0;
+            float floor_top_y = 0;
+
+            for (int p = 0; p < src_count; p++)
+            {
+                if (
+                    point(0, "global_floor", p) == gf &&
+                    point(0, "cell_x", p) == x &&
+                    point(0, "cell_z", p) == z &&
+                    point(0, "exposed_right", p) == 1
+                )
+                {
+                    exposed = 1;
+                    floor_bottom_y = point(0, "floor_bottom_y", p);
+                    floor_height = point(0, "floor_height", p);
+                    floor_top_y = point(0, "floor_top_y", p);
+                    break;
+                }
+            }
+
+            if (exposed == 0)
+            {
+                z++;
+                continue;
+            }
+
+            int start_z = z;
+            int end_z = z + 1;
+
+            z++;
+
+            while (z <= max_z)
+            {
+                int next_exposed = 0;
+
+                for (int p = 0; p < src_count; p++)
+                {
+                    if (
+                        point(0, "global_floor", p) == gf &&
+                        point(0, "cell_x", p) == x &&
+                        point(0, "cell_z", p) == z &&
+                        point(0, "exposed_right", p) == 1
+                    )
+                    {
+                        next_exposed = 1;
+                        break;
+                    }
+                }
+
+                if (next_exposed == 0)
+                {
+                    break;
+                }
+
+                end_z = z + 1;
+                z++;
+            }
+
+            int edge_x = x + 1;
+            float y = floor_bottom_y + debug_y_offset;
+
+            vector p0 = set(float(edge_x) * unit, y, float(start_z) * unit);
+            vector p1 = set(float(edge_x) * unit, y, float(end_z) * unit);
+
+            int pt0 = addpoint(0, p0);
+            int pt1 = addpoint(0, p1);
+            int pr = addprim(0, "polyline", pt0, pt1);
+
+            setpointattrib(0, "Cd", pt0, set(1.0, 0.8, 0.1), "set");
+            setpointattrib(0, "Cd", pt1, set(1.0, 0.8, 0.1), "set");
+
+            setprimattrib(0, "segment_type", pr, "wall_segment", "set");
+            setprimattrib(0, "edge_facade", pr, "right", "set");
+            setprimattrib(0, "global_floor", pr, gf, "set");
+
+            setprimattrib(0, "grid_start_x", pr, edge_x, "set");
+            setprimattrib(0, "grid_end_x", pr, edge_x, "set");
+            setprimattrib(0, "grid_start_z", pr, start_z, "set");
+            setprimattrib(0, "grid_end_z", pr, end_z, "set");
+
+            setprimattrib(0, "length_grid", pr, end_z - start_z, "set");
+
+            setprimattrib(0, "floor_bottom_y", pr, floor_bottom_y, "set");
+            setprimattrib(0, "floor_height", pr, floor_height, "set");
+            setprimattrib(0, "floor_top_y", pr, floor_top_y, "set");
+        }
+    }
+}
+
+
+// 删除原始 occupancy 点，只保留墙段线
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}

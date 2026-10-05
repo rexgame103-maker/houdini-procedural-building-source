@@ -1,0 +1,435 @@
+{
+  "asset_type": "REX::dev::HDA_BlockStack_Building_V2::2.0",
+  "houdini_version": "19.5.773",
+  "scripts": 56,
+  "raw_lines": 14986,
+  "hda_sha256": "8e549c8b42003e1b7fa06629b8aa729b1dd9edae6bab16f7374ca69ffa592c08",
+  "definition_sections": [
+    {
+      "name": "Contents.gz",
+      "bytes": 79513
+    },
+    {
+      "name": "CreateScript",
+      "bytes": 408
+    },
+    {
+      "name": "DialogScript",
+      "bytes": 96498
+    },
+    {
+      "name": "ExtraFileOptions",
+      "bytes": 4
+    },
+    {
+      "name": "Help",
+      "bytes": 0
+    },
+    {
+      "name": "InternalFileOptions",
+      "bytes": 48
+    },
+    {
+      "name": "Tools.shelf",
+      "bytes": 767
+    },
+    {
+      "name": "TypePropertiesOptions",
+      "bytes": 302
+    }
+  ],
+  "files": [
+    {
+      "node": "03_BUILDING_BLOCK_DATA",
+      "file": "vex/03_BUILDING_BLOCK_DATA.vfl",
+      "bytes": 19603,
+      "lines": 608,
+      "sha256": "ed19afaef355a95908ae09c94850b0de4328b2b2d7ae4a0b1349e3e82a1eaad6"
+    },
+    {
+      "node": "04_BUILDING_BLOCK_PROXY",
+      "file": "vex/04_BUILDING_BLOCK_PROXY.vfl",
+      "bytes": 4141,
+      "lines": 138,
+      "sha256": "d253cf71b8de5c34758c755590eff68ec7c3a4a4c4f914479d775929942ff834"
+    },
+    {
+      "node": "05_OCCUPANCY_GRID",
+      "file": "vex/05_OCCUPANCY_GRID.vfl",
+      "bytes": 3381,
+      "lines": 119,
+      "sha256": "974614b6e0733447b6015ac9d5e5edfca7820901d949cbd4af600c0828ff38f2"
+    },
+    {
+      "node": "06_EXPOSED_EDGE_DETECTION",
+      "file": "vex/06_EXPOSED_EDGE_DETECTION.vfl",
+      "bytes": 1902,
+      "lines": 78,
+      "sha256": "2496b04c5f915a3ab00eada2083e812a5e1168f0e5095e024e03eb63d8c0984a"
+    },
+    {
+      "node": "07_EXPOSED_EDGE_DEBUG",
+      "file": "vex/07_EXPOSED_EDGE_DEBUG.vfl",
+      "bytes": 4906,
+      "lines": 144,
+      "sha256": "074d4b533453e4678671ed6af92c2a4fcc6f635f9167323f40ffe2be7b381831"
+    },
+    {
+      "node": "08_WALL_SEGMENT_DATA",
+      "file": "vex/08_WALL_SEGMENT_DATA.vfl",
+      "bytes": 13462,
+      "lines": 439,
+      "sha256": "cf0b001fe9de4090928c83f9349ccdcce9f1d623bc9667e2e7e937c05385b636"
+    },
+    {
+      "node": "09A_GROUND_DOOR_REPLACE",
+      "file": "vex/09A_GROUND_DOOR_REPLACE.vfl",
+      "bytes": 11957,
+      "lines": 447,
+      "sha256": "f58e0bd59c4a066a86582ea93b9bb4e500d96e57871b52a86917bffafbf4d71c"
+    },
+    {
+      "node": "09B_GROUND_WINDOW_REPLACE",
+      "file": "vex/09B_GROUND_WINDOW_REPLACE.vfl",
+      "bytes": 6610,
+      "lines": 244,
+      "sha256": "b1ba489036ef8214efb8523fa719f18040429209dbcc3351090c5e64449c962c"
+    },
+    {
+      "node": "09C_GROUND_CORNER_REPLACE",
+      "file": "vex/09C_GROUND_CORNER_REPLACE.vfl",
+      "bytes": 15759,
+      "lines": 602,
+      "sha256": "7482df01948694706bd4ab07ef8a1439eaca6593111a4783fb5a3603d066707e"
+    },
+    {
+      "node": "09D_UPPER_CORNER_REPLACE",
+      "file": "vex/09D_UPPER_CORNER_REPLACE.vfl",
+      "bytes": 17244,
+      "lines": 624,
+      "sha256": "ddc48576b75797d3d23db5ce96acdf80f89eeffb179bc764d4adbea8db835cfa"
+    },
+    {
+      "node": "09E_UPPER_WINDOW_REPLACE",
+      "file": "vex/09E_UPPER_WINDOW_REPLACE.vfl",
+      "bytes": 9193,
+      "lines": 334,
+      "sha256": "e13f127f44e7296e983383c351f1353ff80455614c5cc65490a202fffdbb4672"
+    },
+    {
+      "node": "09F_UPPER_DOOR_REPLACE",
+      "file": "vex/09F_UPPER_DOOR_REPLACE.vfl",
+      "bytes": 11390,
+      "lines": 436,
+      "sha256": "ddf910be525a4f5b7531d2e4f1b582be834717cef0da9277bf8d84d48cc8b05a"
+    },
+    {
+      "node": "09G_SIDE_UPPER_FACADE_REPLACE",
+      "file": "vex/09G_SIDE_UPPER_FACADE_REPLACE.vfl",
+      "bytes": 27640,
+      "lines": 969,
+      "sha256": "ca64a93136ea6ee746c2816d0a43095776c1280d83a5ff191c7b0d60baa2f4fc"
+    },
+    {
+      "node": "09H_UPPER_CORNER_VARIANT_REPLACE",
+      "file": "vex/09H_UPPER_CORNER_VARIANT_REPLACE.vfl",
+      "bytes": 1791,
+      "lines": 60,
+      "sha256": "e1db67b5a318bc488ddbd0a9d36c8fd89b28f5b595c5aec9d0d857c0c2159184"
+    },
+    {
+      "node": "09I_GROUND_SIDE_WINDOW_REPLACE",
+      "file": "vex/09I_GROUND_SIDE_WINDOW_REPLACE.vfl",
+      "bytes": 4909,
+      "lines": 173,
+      "sha256": "607c014cd2ca7d829a943f6ab6fffd0611cbbf949e6d8161b159c532714607b3"
+    },
+    {
+      "node": "09J_GROUND_SIDE_DOOR_REPLACE",
+      "file": "vex/09J_GROUND_SIDE_DOOR_REPLACE.vfl",
+      "bytes": 5069,
+      "lines": 186,
+      "sha256": "3efc4073b9f3dd8a679e8218f65d71d6ec982c2546f1fc518ab80412ea378917"
+    },
+    {
+      "node": "09K_GROUND_LARGE_DOOR_REPLACE",
+      "file": "vex/09K_GROUND_LARGE_DOOR_REPLACE.vfl",
+      "bytes": 6110,
+      "lines": 247,
+      "sha256": "cf1d7421f4ce2ce134a3974faa5a0ff6c236fad96f660104c6f8cc5340b46aff"
+    },
+    {
+      "node": "09L_UPPER_WIDE_WINDOW_REPLACE",
+      "file": "vex/09L_UPPER_WIDE_WINDOW_REPLACE.vfl",
+      "bytes": 11630,
+      "lines": 455,
+      "sha256": "ae97d7565e2debc5a046ab5b3adf87a4e0e08e6dbccd80056ec9b013acdeac61"
+    },
+    {
+      "node": "09_WALL_MODULE_POINTS",
+      "file": "vex/09_WALL_MODULE_POINTS.vfl",
+      "bytes": 5518,
+      "lines": 182,
+      "sha256": "968edccd06c8506053af22086c74e626e3a6c78b1f2717339650b2b2acc121bc"
+    },
+    {
+      "node": "10A_NORMALIZE_INSTANCE_SCALE",
+      "file": "vex/10A_NORMALIZE_INSTANCE_SCALE.vfl",
+      "bytes": 456,
+      "lines": 13,
+      "sha256": "1ac17dba23decc90469a2a98878b76081bcfba1222a7a437f80579913bd7e108"
+    },
+    {
+      "node": "10_WALL_MODULE_DEBUG_BOX",
+      "file": "vex/10_WALL_MODULE_DEBUG_BOX.vfl",
+      "bytes": 2908,
+      "lines": 103,
+      "sha256": "accd762ae804fe014c0f2cf2bf4a2629b713c62173d752ab5efb623ad911b702"
+    },
+    {
+      "node": "11_VALIDATE_UNREAL_ATTRS",
+      "file": "vex/11_VALIDATE_UNREAL_ATTRS.vfl",
+      "bytes": 3575,
+      "lines": 208,
+      "sha256": "3b1e43c2d033383ea488a4c3c01bf6b64b9aab1da5125d8cad8a4b8066544a82"
+    },
+    {
+      "node": "12_UNREAL_INSTANCE_OUTPUT",
+      "file": "vex/12_UNREAL_INSTANCE_OUTPUT.vfl",
+      "bytes": 1802,
+      "lines": 82,
+      "sha256": "7f19b8293ded037301b7d236c50941e453392b840c6d7ed39efd4b2a1c673914"
+    },
+    {
+      "node": "13_HDA_PARAMETER_PRECHECK",
+      "file": "vex/13_HDA_PARAMETER_PRECHECK.vfl",
+      "bytes": 4834,
+      "lines": 180,
+      "sha256": "12119881f550db63acf0596d69e05416b14e7cf524fad190ca0dd84fb2fe1427"
+    },
+    {
+      "node": "14_ASSET_COMPENSATION_TABLE_V2",
+      "file": "vex/14_ASSET_COMPENSATION_TABLE_V2.vfl",
+      "bytes": 5351,
+      "lines": 169,
+      "sha256": "45521d410ca8cf4e197f57ed3074bc99d90a8678eb29218b849a67baafed3f73"
+    },
+    {
+      "node": "14_FINAL_UNREAL_COMPENSATION_V2",
+      "file": "vex/14_FINAL_UNREAL_COMPENSATION_V2.vfl",
+      "bytes": 3209,
+      "lines": 143,
+      "sha256": "6d51d7b9a6647ba8c872bf6b2f041054a8e7b2b602e4e72862511c00faae26cd"
+    },
+    {
+      "node": "15_ROOF_TOP_EXPOSED_DETECTION",
+      "file": "vex/15_ROOF_TOP_EXPOSED_DETECTION.vfl",
+      "bytes": 2013,
+      "lines": 77,
+      "sha256": "8e9bfa389ecda0ef44f4485ae0d3169caae0e5a06714f87367b0cc98309fe443"
+    },
+    {
+      "node": "16_ROOF_RECTANGLE_AREAS",
+      "file": "vex/16_ROOF_RECTANGLE_AREAS.vfl",
+      "bytes": 5918,
+      "lines": 276,
+      "sha256": "0e9185c023b2c1cd0d985981592b3daa00839bd86b54261ae1a835a0a7a494e2"
+    },
+    {
+      "node": "17_ROOF_FILL_MODULE_POINTS",
+      "file": "vex/17_ROOF_FILL_MODULE_POINTS.vfl",
+      "bytes": 2677,
+      "lines": 79,
+      "sha256": "910374417c6878b657c13d003df6fc3bb8e2d191f0819c0e0a2b64f70fcf5d86"
+    },
+    {
+      "node": "18_ROOF_EDGE_DETECTION",
+      "file": "vex/18_ROOF_EDGE_DETECTION.vfl",
+      "bytes": 7481,
+      "lines": 272,
+      "sha256": "6fa8ce4309384859c7a18b421ff3e3404714ba765b9dde417825c42421f33350"
+    },
+    {
+      "node": "19_ROOF_EDGE_SEGMENTS",
+      "file": "vex/19_ROOF_EDGE_SEGMENTS.vfl",
+      "bytes": 7967,
+      "lines": 329,
+      "sha256": "69606b2f64f68eb6038c237b08ba58546770f010931d87ca7bd80bad1ed2e561"
+    },
+    {
+      "node": "20_ROOF_CORNICE_EDGE_MODULE_POINTS",
+      "file": "vex/20_ROOF_CORNICE_EDGE_MODULE_POINTS.vfl",
+      "bytes": 12194,
+      "lines": 494,
+      "sha256": "9559f51672aaa939014e9e73b60d43c6e9ea725be8f23af1f91245bd0b32702a"
+    },
+    {
+      "node": "21_ROOF_CORNICE_CORNER_MODULE_POINTS",
+      "file": "vex/21_ROOF_CORNICE_CORNER_MODULE_POINTS.vfl",
+      "bytes": 8489,
+      "lines": 359,
+      "sha256": "5cd355a76c5410d16b5455e748242c887f3e78c5f57a8c7b367de226d89b9224"
+    },
+    {
+      "node": "22_FRONT_BALCONY_ANCHOR_POINTS",
+      "file": "vex/22_FRONT_BALCONY_ANCHOR_POINTS.vfl",
+      "bytes": 5894,
+      "lines": 211,
+      "sha256": "80973e0c929e304193d0fac794e4c3c4363528f23ceea069ca38026a0dc5990d"
+    },
+    {
+      "node": "23_FRONT_BALCONY_PROXY_BOX",
+      "file": "vex/23_FRONT_BALCONY_PROXY_BOX.vfl",
+      "bytes": 3709,
+      "lines": 148,
+      "sha256": "194669da23dc18f7fb0fc231ad6d09aec67f5b9b4e55d82dcb35d7b71e34122e"
+    },
+    {
+      "node": "24_FRONT_BALCONY_INSTANCE_POINTS",
+      "file": "vex/24_FRONT_BALCONY_INSTANCE_POINTS.vfl",
+      "bytes": 4010,
+      "lines": 114,
+      "sha256": "bc3eb9d6f76f3bf9593533d0a1355d391d7f8557438369789fd2e351c0a4c6d8"
+    },
+    {
+      "node": "25_FRONT_BALCONY_PRECHECK",
+      "file": "vex/25_FRONT_BALCONY_PRECHECK.vfl",
+      "bytes": 2727,
+      "lines": 102,
+      "sha256": "c52f874c2ee91c157f205bd683c6d5957bd3af339cae90b65802be5646b3e087"
+    },
+    {
+      "node": "26_FLOOR_BAND_BEAM_POINTS",
+      "file": "vex/26_FLOOR_BAND_BEAM_POINTS.vfl",
+      "bytes": 9004,
+      "lines": 323,
+      "sha256": "22a8a4fc03e57ec8e5a96bdd9b4f4d27b8723712d6c20ffffd8876502d5bc1ff"
+    },
+    {
+      "node": "27_FLOOR_BAND_BEAM_CORNER_POINTS",
+      "file": "vex/27_FLOOR_BAND_BEAM_CORNER_POINTS.vfl",
+      "bytes": 8334,
+      "lines": 304,
+      "sha256": "9ee617aefd3f9a6e01d7b8cc9941fddd31f5d088e244fed85e79678871a628b6"
+    },
+    {
+      "node": "28_SIDE_BALCONY_ANCHOR_POINTS",
+      "file": "vex/28_SIDE_BALCONY_ANCHOR_POINTS.vfl",
+      "bytes": 13800,
+      "lines": 537,
+      "sha256": "388f9bc64cfdf95822e5023f13caf1931470a2b2418baf1d4d9b673b8c407ddb"
+    },
+    {
+      "node": "29_SIDE_BALCONY_PROXY_BOX",
+      "file": "vex/29_SIDE_BALCONY_PROXY_BOX.vfl",
+      "bytes": 4383,
+      "lines": 184,
+      "sha256": "a4d915659689de17aad912fc99e50cbcbd8f0fd409de4d01539bb7c091c4eb27"
+    },
+    {
+      "node": "30_SIDE_BALCONY_INSTANCE_POINTS",
+      "file": "vex/30_SIDE_BALCONY_INSTANCE_POINTS.vfl",
+      "bytes": 6933,
+      "lines": 211,
+      "sha256": "421dac27063bd20a9ebc7cf6a07c936d0d313e7154e499e12502e04017e43e90"
+    },
+    {
+      "node": "31_SIDE_BALCONY_STAIR_01_POINTS",
+      "file": "vex/31_SIDE_BALCONY_STAIR_01_POINTS.vfl",
+      "bytes": 6823,
+      "lines": 235,
+      "sha256": "8e5eabc7f29c181f93c4da1bc9cd63ac44fc663195caa52dbcfb2e1468bdcfb1"
+    },
+    {
+      "node": "32_SIDE_BALCONY_STAIR_02_POINTS",
+      "file": "vex/32_SIDE_BALCONY_STAIR_02_POINTS.vfl",
+      "bytes": 6685,
+      "lines": 236,
+      "sha256": "1a94b3980551a73842c040f6bd24b44a44d2ea102669b7f1d2028e03e045674a"
+    },
+    {
+      "node": "33_AC_WALL_ANCHOR_POINTS",
+      "file": "vex/33_AC_WALL_ANCHOR_POINTS.vfl",
+      "bytes": 10874,
+      "lines": 412,
+      "sha256": "b584f041a7cdd44a084c8711e92e038e98e999c2d4ae3ebe9862e74b9ba8bb81"
+    },
+    {
+      "node": "34_AC_BALCONY_INSTANCE_POINTS",
+      "file": "vex/34_AC_BALCONY_INSTANCE_POINTS.vfl",
+      "bytes": 4613,
+      "lines": 170,
+      "sha256": "a615a2ade2cb43539428d8b313764a749f375a13a3c3ab23e33569c86c40ec11"
+    },
+    {
+      "node": "35_WINDOW_SILL_PLANT_POINTS",
+      "file": "vex/35_WINDOW_SILL_PLANT_POINTS.vfl",
+      "bytes": 10696,
+      "lines": 413,
+      "sha256": "15bbb2b9e9cc1ddd078c5e07afda52a02e8deeaf821304d6bd0b67be5109bef0"
+    },
+    {
+      "node": "36_BALCONY_PLANT_POINTS",
+      "file": "vex/36_BALCONY_PLANT_POINTS.vfl",
+      "bytes": 7480,
+      "lines": 291,
+      "sha256": "27a3e167c2c8261c0a642661afacd9db31ece3b2cfb8229836ab319a47a26cfd"
+    },
+    {
+      "node": "37_ROOF_PROP_POINTS",
+      "file": "vex/37_ROOF_PROP_POINTS.vfl",
+      "bytes": 14598,
+      "lines": 570,
+      "sha256": "1cbb7c9612c80776de0866577eba2bd5287ea210c0893049aaadbe30e675ba95"
+    },
+    {
+      "node": "38_PIPE_ANCHOR_POINTS",
+      "file": "vex/38_PIPE_ANCHOR_POINTS.vfl",
+      "bytes": 12640,
+      "lines": 451,
+      "sha256": "4b86e5661e888372f0efcb5ede6439009e078077ccf82a198a10aa0c552b7991"
+    },
+    {
+      "node": "39_PIPE_STRAIGHT_TUBE_POINTS",
+      "file": "vex/39_PIPE_STRAIGHT_TUBE_POINTS.vfl",
+      "bytes": 3754,
+      "lines": 107,
+      "sha256": "067f98bfb9b65cc37805f4f4e27c95104952f2fa26aaeca391d278c27aaf5be6"
+    },
+    {
+      "node": "40_PIPE_CONNECTOR_POINTS",
+      "file": "vex/40_PIPE_CONNECTOR_POINTS.vfl",
+      "bytes": 4064,
+      "lines": 116,
+      "sha256": "8732b4ceb9914b966ee53540ba61f7380edae7eae076efb60e4696acfc2854f3"
+    },
+    {
+      "node": "41_PIPE_FASTENING_POINTS",
+      "file": "vex/41_PIPE_FASTENING_POINTS.vfl",
+      "bytes": 6553,
+      "lines": 183,
+      "sha256": "e32e803541650b89829883776a7d07962dfaa51be800eb25923e30ba04ffca6a"
+    },
+    {
+      "node": "42_PIPE_CAP_POINTS",
+      "file": "vex/42_PIPE_CAP_POINTS.vfl",
+      "bytes": 3374,
+      "lines": 105,
+      "sha256": "8cc9f7fabce45a8fedcbcad6d269a355878891b0e0291f778ef26f812641f0c1"
+    },
+    {
+      "node": "43_PIPE_BOTTOM_ELBOW_POINTS",
+      "file": "vex/43_PIPE_BOTTOM_ELBOW_POINTS.vfl",
+      "bytes": 4603,
+      "lines": 138,
+      "sha256": "4bbdc19b2bf01bb271d6c603d919cb6a1cde116c02311b36e0bfcf4d76e95ee1"
+    },
+    {
+      "node": "44_WHITEBOX_BUILDING_MESH",
+      "file": "vex/44_WHITEBOX_BUILDING_MESH.vfl",
+      "bytes": 4134,
+      "lines": 156,
+      "sha256": "ae77ee245f4ae27d41b07c60292c864c353b125402aeee838c4ff5ce2b0efe50"
+    }
+  ]
+}

@@ -1,0 +1,276 @@
+// ==========================================
+// 16_ROOF_RECTANGLE_AREAS
+// V2：把顶部外露 100cm cell 合并成矩形屋顶区域
+//
+// 输入：
+// is_top_exposed = 1 的 occupancy cell
+//
+// 输出：
+// 每个 primitive = 一个矩形屋顶区域
+// ==========================================
+
+
+function int find_top_cell(
+    const int xs[];
+    const int zs[];
+    const float ys[];
+    const int used[];
+    const int tx;
+    const int tz;
+    const float ty;
+    const float eps)
+{
+    for (int i = 0; i < len(xs); i++)
+    {
+        if (used[i] == 1)
+        {
+            continue;
+        }
+
+        if (
+            xs[i] == tx &&
+            zs[i] == tz &&
+            abs(ys[i] - ty) <= eps
+        )
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+// ===============================
+// 收集顶部外露 cell
+// ===============================
+
+int src_count = npoints(0);
+float unit = chf("../grid_unit");
+float eps = 0.001;
+
+int roof_x[];
+int roof_z[];
+float roof_y[];
+int roof_floor[];
+int roof_used[];
+
+for (int i = 0; i < src_count; i++)
+{
+    int is_top = point(0, "is_top_exposed", i);
+
+    if (is_top != 1)
+    {
+        continue;
+    }
+
+    int x = point(0, "roof_cell_x", i);
+    int z = point(0, "roof_cell_z", i);
+    float y = point(0, "roof_y", i);
+    int gf = point(0, "roof_source_floor", i);
+
+    append(roof_x, x);
+    append(roof_z, z);
+    append(roof_y, y);
+    append(roof_floor, gf);
+    append(roof_used, 0);
+}
+
+int roof_cell_count = len(roof_x);
+
+if (roof_cell_count <= 0)
+{
+    setdetailattrib(0, "roof_rectangle_status", "no_top_cells", "set");
+
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    return;
+}
+
+
+// ===============================
+// 贪心合并矩形
+// ===============================
+
+int rect_count = 0;
+
+for (int i = 0; i < roof_cell_count; i++)
+{
+    if (roof_used[i] == 1)
+    {
+        continue;
+    }
+
+    int start_x = roof_x[i];
+    int start_z = roof_z[i];
+    float y = roof_y[i];
+    int source_floor = roof_floor[i];
+
+    int min_x = start_x;
+    int max_x = start_x + 1;
+
+    int min_z = start_z;
+    int max_z = start_z + 1;
+
+
+    // ===============================
+    // 先沿 X 方向扩展
+    // ===============================
+
+    while (1)
+    {
+        int test_x = max_x;
+        int test_z = start_z;
+
+        int found = find_top_cell(
+            roof_x,
+            roof_z,
+            roof_y,
+            roof_used,
+            test_x,
+            test_z,
+            y,
+            eps
+        );
+
+        if (found < 0)
+        {
+            break;
+        }
+
+        max_x++;
+    }
+
+
+    // ===============================
+    // 再沿 Z 方向扩展
+    // 要求下一整行都存在
+    // ===============================
+
+    while (1)
+    {
+        int test_z = max_z;
+        int row_ok = 1;
+
+        for (int x = min_x; x < max_x; x++)
+        {
+            int found = find_top_cell(
+                roof_x,
+                roof_z,
+                roof_y,
+                roof_used,
+                x,
+                test_z,
+                y,
+                eps
+            );
+
+            if (found < 0)
+            {
+                row_ok = 0;
+                break;
+            }
+        }
+
+        if (row_ok == 0)
+        {
+            break;
+        }
+
+        max_z++;
+    }
+
+
+    // ===============================
+    // 标记矩形内 cell 已使用
+    // ===============================
+
+    for (int x = min_x; x < max_x; x++)
+    {
+        for (int z = min_z; z < max_z; z++)
+        {
+            int found = find_top_cell(
+                roof_x,
+                roof_z,
+                roof_y,
+                roof_used,
+                x,
+                z,
+                y,
+                eps
+            );
+
+            if (found >= 0)
+            {
+                roof_used[found] = 1;
+            }
+        }
+    }
+
+
+    // ===============================
+    // 创建矩形屋顶 primitive
+    // ===============================
+
+    vector p0 = set(float(min_x) * unit, y, float(min_z) * unit);
+    vector p1 = set(float(max_x) * unit, y, float(min_z) * unit);
+    vector p2 = set(float(max_x) * unit, y, float(max_z) * unit);
+    vector p3 = set(float(min_x) * unit, y, float(max_z) * unit);
+
+    int pt0 = addpoint(0, p0);
+    int pt1 = addpoint(0, p1);
+    int pt2 = addpoint(0, p2);
+    int pt3 = addpoint(0, p3);
+
+    int pr = addprim(0, "poly", pt0, pt1, pt2, pt3);
+
+    vector cd = set(0.9, 0.7, 0.15);
+
+    setpointattrib(0, "Cd", pt0, cd, "set");
+    setpointattrib(0, "Cd", pt1, cd, "set");
+    setpointattrib(0, "Cd", pt2, cd, "set");
+    setpointattrib(0, "Cd", pt3, cd, "set");
+
+    int width_grid = max_x - min_x;
+    int depth_grid = max_z - min_z;
+
+    setprimattrib(0, "roof_type", pr, "flat_roof_rect", "set");
+
+    setprimattrib(0, "roof_y", pr, y, "set");
+    setprimattrib(0, "roof_source_floor", pr, source_floor, "set");
+
+    setprimattrib(0, "min_x_grid", pr, min_x, "set");
+    setprimattrib(0, "max_x_grid", pr, max_x, "set");
+    setprimattrib(0, "min_z_grid", pr, min_z, "set");
+    setprimattrib(0, "max_z_grid", pr, max_z, "set");
+
+    setprimattrib(0, "width_grid", pr, width_grid, "set");
+    setprimattrib(0, "depth_grid", pr, depth_grid, "set");
+    setprimattrib(0, "area_grid", pr, width_grid * depth_grid, "set");
+
+    setprimattrib(0, "Cd", pr, cd, "set");
+
+    rect_count++;
+}
+
+
+// ===============================
+// 删除原始 occupancy 点，只保留屋顶矩形面
+// ===============================
+
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+
+// ===============================
+// 输出检查信息
+// ===============================
+
+setdetailattrib(0, "roof_rectangle_status", "roof_rectangles_created", "set");
+setdetailattrib(0, "roof_top_cell_count", roof_cell_count, "set");
+setdetailattrib(0, "roof_rectangle_count", rect_count, "set");

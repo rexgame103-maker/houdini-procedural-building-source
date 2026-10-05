@@ -1,0 +1,148 @@
+// ==========================================
+// 23_FRONT_BALCONY_PROXY_BOX
+// V2.1A：正面阳台 Proxy 预览
+//
+// 输入：front_balcony_anchor
+// 输出：底板 + 外侧栏杆 + 左右栏杆
+//
+// anchor = 阳台贴墙侧底部中心
+// front = Z-
+// ==========================================
+
+void add_box(
+    int geo;
+    vector minp;
+    vector maxp;
+    vector cd;
+    string part_name;
+    int global_floor)
+{
+    vector corners[] = array(
+        set(minp.x, minp.y, minp.z),
+        set(maxp.x, minp.y, minp.z),
+        set(maxp.x, maxp.y, minp.z),
+        set(minp.x, maxp.y, minp.z),
+
+        set(minp.x, minp.y, maxp.z),
+        set(maxp.x, minp.y, maxp.z),
+        set(maxp.x, maxp.y, maxp.z),
+        set(minp.x, maxp.y, maxp.z)
+    );
+
+    int pts[];
+
+    foreach (vector p; corners)
+    {
+        int pt = addpoint(geo, p);
+
+        setpointattrib(geo, "Cd", pt, cd, "set");
+        setpointattrib(geo, "module_type", pt, "front_balcony_proxy", "set");
+        setpointattrib(geo, "balcony_proxy_part", pt, part_name, "set");
+        setpointattrib(geo, "facade", pt, "front", "set");
+        setpointattrib(geo, "global_floor", pt, global_floor, "set");
+
+        append(pts, pt);
+    }
+
+    int prims[] = array(
+        addprim(geo, "poly", pts[0], pts[1], pts[2], pts[3]),
+        addprim(geo, "poly", pts[4], pts[7], pts[6], pts[5]),
+        addprim(geo, "poly", pts[0], pts[4], pts[5], pts[1]),
+        addprim(geo, "poly", pts[1], pts[5], pts[6], pts[2]),
+        addprim(geo, "poly", pts[3], pts[2], pts[6], pts[7]),
+        addprim(geo, "poly", pts[0], pts[3], pts[7], pts[4])
+    );
+
+    foreach (int pr; prims)
+    {
+        setprimattrib(geo, "Cd", pr, cd, "set");
+        setprimattrib(geo, "module_type", pr, "front_balcony_proxy", "set");
+        setprimattrib(geo, "balcony_proxy_part", pr, part_name, "set");
+        setprimattrib(geo, "facade", pr, "front", "set");
+        setprimattrib(geo, "global_floor", pr, global_floor, "set");
+    }
+}
+
+
+int src_count = npoints(0);
+
+float slab_h = 0.15;
+float rail_thick = 0.08;
+
+vector slab_cd = set(0.70, 0.55, 0.32);
+vector rail_cd = set(0.95, 0.70, 0.25);
+
+for (int i = 0; i < src_count; i++)
+{
+    string module_type = point(0, "module_type", i);
+
+    if (module_type != "front_balcony_anchor")
+    {
+        continue;
+    }
+
+    vector anchor = point(0, "P", i);
+
+    float w = point(0, "width_cm", i) / 100.0;
+    float d = point(0, "depth_cm", i) / 100.0;
+    float h = point(0, "height_cm", i) / 100.0;
+
+    int global_floor = point(0, "global_floor", i);
+
+    // 整体范围
+    float min_x = anchor.x - w * 0.5;
+    float max_x = anchor.x + w * 0.5;
+
+    float max_z = anchor.z;      // 贴墙侧
+    float min_z = anchor.z - d;  // 外挑侧 Z-
+
+    float min_y = anchor.y;
+    float max_y = anchor.y + h;
+
+    // 1. 底板
+    add_box(
+        0,
+        set(min_x, min_y, min_z),
+        set(max_x, min_y + slab_h, max_z),
+        slab_cd,
+        "slab",
+        global_floor
+    );
+
+    // 2. 外侧栏杆：Z- 边
+    add_box(
+        0,
+        set(min_x, min_y + slab_h, min_z),
+        set(max_x, max_y, min_z + rail_thick),
+        rail_cd,
+        "front_railing",
+        global_floor
+    );
+
+    // 3. 左侧栏杆
+    add_box(
+        0,
+        set(min_x, min_y + slab_h, min_z),
+        set(min_x + rail_thick, max_y, max_z),
+        rail_cd,
+        "left_railing",
+        global_floor
+    );
+
+    // 4. 右侧栏杆
+    add_box(
+        0,
+        set(max_x - rail_thick, min_y + slab_h, min_z),
+        set(max_x, max_y, max_z),
+        rail_cd,
+        "right_railing",
+        global_floor
+    );
+}
+
+
+// 删除原始 anchor 点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}

@@ -1,0 +1,186 @@
+int enable = chi("../enable_ground_side_doors");
+float chance = clamp(chf("../ground_side_door_chance"), 0.0, 1.0);
+int seed = chi("../ground_side_door_seed");
+int only_outermost = chi("../ground_side_door_only_outermost");
+float unit = chf("../grid_unit");
+
+if (enable == 0)
+{
+    return;
+}
+
+string door_asset = "SM_Building_01_WallDoor_400x200_02";
+string door_path  = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallDoor_400x200_02.SM_Building_01_WallDoor_400x200_02";
+
+vector bbmin = getbbox_min(0);
+vector bbmax = getbbox_max(0);
+
+int n = npoints(0);
+
+string facades[] = array("left", "right");
+
+foreach (string target_facade; facades)
+{
+    // 逐条侧墙线处理，按 X 分组
+    for (int xi = int(floor(bbmin.x / unit)) - 1; xi <= int(ceil(bbmax.x / unit)) + 1; xi++)
+    {
+        int cand_pts[];
+        int cand_zs[];
+
+        // 收集当前侧墙线上的候选 400x200 单元
+        for (int p = 0; p < n; p++)
+        {
+            if (point(0, "global_floor", p) != 0)
+            {
+                continue;
+            }
+
+            string facade = point(0, "facade", p);
+
+            if (facade != target_facade)
+            {
+                continue;
+            }
+
+            string module_type = point(0, "module_type", p);
+
+            if (module_type != "plain_wall")
+            {
+                continue;
+            }
+
+            int grid_width = point(0, "grid_width", p);
+
+            if (grid_width != 2)
+            {
+                continue;
+            }
+
+            string win_applied = point(0, "ground_side_window_applied", p);
+
+            // 不替换已经生成的一楼侧面窗墙
+            if (win_applied == "yes")
+            {
+                continue;
+            }
+
+            vector P = point(0, "P", p);
+            int px_grid = int(floor(P.x / unit + 0.5));
+
+            if (px_grid != xi)
+            {
+                continue;
+            }
+
+            // 最外侧过滤
+            if (only_outermost == 1)
+            {
+                float tol = 0.05;
+
+                if (facade == "left" && abs(P.x - bbmin.x) > tol)
+                {
+                    continue;
+                }
+
+                if (facade == "right" && abs(P.x - bbmax.x) > tol)
+                {
+                    continue;
+                }
+            }
+
+            int side_start = 0;
+
+            if (facade == "left")
+            {
+                side_start = int(floor(P.z / unit + 0.5)) - grid_width;
+            }
+            else
+            {
+                side_start = int(floor(P.z / unit + 0.5));
+            }
+
+            append(cand_pts, p);
+            append(cand_zs, side_start);
+        }
+
+        int cnum = len(cand_pts);
+
+        if (cnum <= 0)
+        {
+            continue;
+        }
+
+        // 找当前侧墙候选范围
+        int min_z = cand_zs[0];
+        int max_z = cand_zs[0];
+
+        for (int i = 0; i < cnum; i++)
+        {
+            min_z = min(min_z, cand_zs[i]);
+            max_z = max(max_z, cand_zs[i]);
+        }
+
+        int chunk_size = 6;
+        int min_gap = 4; // 门宽 2 grid + 间隔 2 grid
+        int last_selected_z = -999999;
+
+        for (int chunk_start = min_z; chunk_start <= max_z; chunk_start += chunk_size)
+        {
+            float r = rand(seed + xi * 13.17 + chunk_start * 7.31 + (target_facade == "left" ? 101.0 : 202.0));
+
+            if (r > chance)
+            {
+                continue;
+            }
+
+            int possible_pts[];
+            int possible_zs[];
+
+            // 找这个 6 grid 区间内可用候选
+            for (int i = 0; i < cnum; i++)
+            {
+                int z = cand_zs[i];
+
+                if (z < chunk_start || z >= chunk_start + chunk_size)
+                {
+                    continue;
+                }
+
+                if (abs(z - last_selected_z) < min_gap)
+                {
+                    continue;
+                }
+
+                append(possible_pts, cand_pts[i]);
+                append(possible_zs, z);
+            }
+
+            if (len(possible_pts) <= 0)
+            {
+                continue;
+            }
+
+            int pick = int(floor(rand(seed + chunk_start * 19.73 + xi * 5.11) * len(possible_pts)));
+            pick = clamp(pick, 0, len(possible_pts) - 1);
+
+            int pt = possible_pts[pick];
+            int selected_z = possible_zs[pick];
+
+            float old_rot = point(0, "rot_y_deg", pt);
+            float new_rot = old_rot + 90.0;
+
+            setpointattrib(0, "asset_id", pt, door_asset, "set");
+            setpointattrib(0, "unreal_instance", pt, door_path, "set");
+
+            // 保持 plain_wall，继续走侧面墙补偿
+            setpointattrib(0, "module_type", pt, "plain_wall", "set");
+
+            setpointattrib(0, "rot_y_deg", pt, new_rot, "set");
+            setpointattrib(0, "orient", pt, quaternion(radians(new_rot), set(0, 1, 0)), "set");
+
+            setpointattrib(0, "ground_side_door_applied", pt, "yes", "set");
+
+            last_selected_z = selected_z;
+        }
+    }
+}

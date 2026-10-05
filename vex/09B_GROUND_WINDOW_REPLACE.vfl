@@ -1,0 +1,244 @@
+// ==========================================
+// 09B_GROUND_WINDOW_REPLACE
+// V2：一楼 front 窗墙替换
+//
+// 当前规则：
+// 1. 只处理 global_floor = 0
+// 2. 只处理 facade = front
+// 3. 跳过门墙
+// 4. 把 4格普通墙拆成 2格 slot
+// 5. 按 ground_window_interval 替换 400x200 窗墙
+// ==========================================
+
+
+void add_ground_module(
+    const int geo;
+    const int start_x;
+    const int z;
+    const float unit;
+    const float floor_bottom_y;
+    const float floor_height;
+    const string facade;
+    const float rot_y;
+    const int module_grid;
+    const int make_window;
+    const string source_tag)
+{
+    string asset_id = "";
+    string path = "";
+    string module_type = "plain_wall";
+
+    if (make_window == 1)
+    {
+        asset_id = "SM_Building_01_WallWindow_400x200_01";
+        path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_WallWindow_400x200_01.SM_Building_01_WallWindow_400x200_01";
+        module_type = "window_wall_ground";
+    }
+    else
+    {
+        if (module_grid == 1)
+        {
+            asset_id = "SM_Building_01_Wall_400x100_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x100_01.SM_Building_01_Wall_400x100_01";
+        }
+        else
+        {
+            asset_id = "SM_Building_01_Wall_400x200_01";
+            path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_400x200_01.SM_Building_01_Wall_400x200_01";
+        }
+
+        module_type = "plain_wall";
+    }
+
+    vector pos = set(float(start_x) * unit, floor_bottom_y, float(z) * unit);
+
+    int pt = addpoint(geo, pos);
+
+    setpointattrib(geo, "asset_id", pt, asset_id, "set");
+    setpointattrib(geo, "module_type", pt, module_type, "set");
+    setpointattrib(geo, "unreal_instance", pt, path, "set");
+
+    setpointattrib(geo, "facade", pt, facade, "set");
+    setpointattrib(geo, "global_floor", pt, 0, "set");
+
+    setpointattrib(geo, "grid_width", pt, module_grid, "set");
+    setpointattrib(geo, "width_cm", pt, float(module_grid) * 100.0, "set");
+    setpointattrib(geo, "height_cm", pt, floor_height * 100.0, "set");
+    setpointattrib(geo, "depth_cm", pt, 25.0, "set");
+    setpointattrib(geo, "thickness_cm", pt, 25.0, "set");
+
+    setpointattrib(geo, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(geo, "floor_height", pt, floor_height, "set");
+
+    setpointattrib(geo, "rot_y_deg", pt, rot_y, "set");
+    setpointattrib(geo, "orient", pt, quaternion(radians(rot_y), set(0, 1, 0)), "set");
+    setpointattrib(geo, "scale", pt, set(1, 1, 1), "set");
+
+    setpointattrib(geo, "ground_window_source", pt, source_tag, "set");
+}
+
+
+// ===============================
+// 参数
+// ===============================
+
+int enable_windows = chi("../enable_ground_windows");
+int window_interval = max(1, chi("../ground_window_interval"));
+int window_offset = chi("../ground_window_offset");
+
+float unit = chf("../grid_unit");
+
+if (enable_windows == 0)
+{
+    setdetailattrib(0, "ground_window_status", "disabled", "set");
+    return;
+}
+
+int src_count = npoints(0);
+
+
+// ===============================
+// 先找 front 一楼普通墙的最小 X，用来计算窗户节奏
+// ===============================
+
+int found_candidate = 0;
+int pattern_min_x = 999999;
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = point(0, "grid_width", i);
+
+    if (
+        facade == "front" &&
+        module_type == "plain_wall" &&
+        global_floor == 0 &&
+        grid_width >= 2
+    )
+    {
+        vector P = point(0, "P", i);
+        int sx = int(floor(P.x / unit + 0.5));
+
+        pattern_min_x = min(pattern_min_x, sx);
+        found_candidate = 1;
+    }
+}
+
+if (found_candidate == 0)
+{
+    setdetailattrib(0, "ground_window_status", "no_front_ground_plain_wall", "set");
+    return;
+}
+
+
+// ===============================
+// 遍历并替换
+// ===============================
+
+int created_window_count = 0;
+int rebuilt_plain_count = 0;
+
+int remove_ids[];
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    int global_floor = point(0, "global_floor", i);
+    int grid_width = point(0, "grid_width", i);
+
+    if (
+        facade != "front" ||
+        module_type != "plain_wall" ||
+        global_floor != 0 ||
+        grid_width < 2
+    )
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", i);
+
+    int start_x = int(floor(P.x / unit + 0.5));
+    int z = int(floor(P.z / unit + 0.5));
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+    float rot_y = point(0, "rot_y_deg", i);
+
+    int used = 0;
+
+    while (used < grid_width)
+    {
+        int remain = grid_width - used;
+        int module_grid = 1;
+
+        if (remain >= 2)
+        {
+            module_grid = 2;
+        }
+        else
+        {
+            module_grid = 1;
+        }
+
+        int slot_start_x = start_x + used;
+        int make_window = 0;
+
+        if (module_grid == 2)
+        {
+            int slot_index = int(floor(float(slot_start_x - pattern_min_x) / 2.0));
+
+            if (((slot_index + window_offset) % window_interval) == 0)
+            {
+                make_window = 1;
+            }
+        }
+
+        string source_tag = "ground_plain_rebuild";
+
+        if (make_window == 1)
+        {
+            source_tag = "ground_window_replace";
+            created_window_count++;
+        }
+        else
+        {
+            rebuilt_plain_count++;
+        }
+
+        add_ground_module(
+            0,
+            slot_start_x,
+            z,
+            unit,
+            floor_bottom_y,
+            floor_height,
+            facade,
+            rot_y,
+            module_grid,
+            make_window,
+            source_tag
+        );
+
+        used += module_grid;
+    }
+
+    append(remove_ids, i);
+}
+
+
+// 删除被重建的原普通墙点
+// 删除被重建的原普通墙点
+// 注意：必须倒序删除，避免点编号变化影响删除结果
+for (int r = len(remove_ids) - 1; r >= 0; r--)
+{
+    int remove_pt = remove_ids[r];
+    removepoint(0, remove_pt);
+}
+
+setdetailattrib(0, "ground_window_status", "ground_windows_created", "set");
+setdetailattrib(0, "ground_window_created_count", created_window_count, "set");
+setdetailattrib(0, "ground_window_rebuilt_plain_count", rebuilt_plain_count, "set");

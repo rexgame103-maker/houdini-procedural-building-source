@@ -1,0 +1,79 @@
+// ==========================================
+// 17_ROOF_FILL_MODULE_POINTS
+// V2：把屋顶矩形区域拆成 100x100 屋顶模块点
+//
+// 使用资产：
+// SM_Building_01_Roof_100x100_01
+// ==========================================
+
+int prim_count = nprimitives(0);
+float unit = chf("../grid_unit");
+
+string roof_asset = "SM_Building_01_Roof_100x100_01";
+string roof_path = "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Roof_100x100_01.SM_Building_01_Roof_100x100_01";
+
+int roof_module_count = 0;
+
+for (int pr = 0; pr < prim_count; pr++)
+{
+    string roof_type = prim(0, "roof_type", pr);
+
+    if (roof_type != "flat_roof_rect")
+    {
+        continue;
+    }
+
+    int min_x = prim(0, "min_x_grid", pr);
+    int max_x = prim(0, "max_x_grid", pr);
+    int min_z = prim(0, "min_z_grid", pr);
+    int max_z = prim(0, "max_z_grid", pr);
+
+    float roof_y = prim(0, "roof_y", pr);
+    int source_floor = prim(0, "roof_source_floor", pr);
+
+    for (int x = min_x; x < max_x; x++)
+    {
+        for (int z = min_z; z < max_z; z++)
+        {
+            vector pos = set(float(x) * unit, roof_y, float(z) * unit);
+
+            int pt = addpoint(0, pos);
+
+            setpointattrib(0, "asset_id", pt, roof_asset, "set");
+            setpointattrib(0, "module_type", pt, "roof_fill", "set");
+            setpointattrib(0, "unreal_instance", pt, roof_path, "set");
+
+            setpointattrib(0, "facade", pt, "roof", "set");
+
+            setpointattrib(0, "global_floor", pt, source_floor, "set");
+            setpointattrib(0, "roof_source_floor", pt, source_floor, "set");
+
+            setpointattrib(0, "grid_width", pt, 1, "set");
+            setpointattrib(0, "grid_depth", pt, 1, "set");
+
+            setpointattrib(0, "width_cm", pt, 100.0, "set");
+            setpointattrib(0, "height_cm", pt, 10.0, "set");
+            setpointattrib(0, "depth_cm", pt, 100.0, "set");
+            setpointattrib(0, "thickness_cm", pt, 10.0, "set");
+
+            setpointattrib(0, "roof_y", pt, roof_y, "set");
+
+            setpointattrib(0, "rot_y_deg", pt, 0.0, "set");
+            setpointattrib(0, "orient", pt, quaternion(radians(0.0), set(0, 1, 0)), "set");
+            setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+            setpointattrib(0, "roof_fill_source", pt, "roof_rect_fill_100x100", "set");
+
+            roof_module_count++;
+        }
+    }
+}
+
+// 删除屋顶矩形 primitive，只保留屋顶模块点
+for (int pr = prim_count - 1; pr >= 0; pr--)
+{
+    removeprim(0, pr, 1);
+}
+
+setdetailattrib(0, "roof_fill_module_count", roof_module_count, "set");
+setdetailattrib(0, "roof_fill_status", "roof_fill_modules_created", "set");

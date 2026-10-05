@@ -1,0 +1,60 @@
+int enable = chi("../enable_upper_corner_variant");
+int mode = chi("../upper_corner_variant_mode");
+int seed = chi("../upper_corner_variant_seed");
+
+if (enable == 0)
+{
+    return;
+}
+
+if (s@module_type != "corner_wall")
+{
+    return;
+}
+
+if (i@global_floor <= 0)
+{
+    return;
+}
+
+string assets[] = array(
+    "SM_Building_01_Wall_CRN_300x100_06",
+    "SM_Building_01_Wall_CRN_300x100_05",
+    "SM_Building_01_Wall_CRN_300x100_01",
+    "SM_Building_01_Wall_CRN_300x100_02",
+    "SM_Building_01_Wall_CRN_300x100_04"
+);
+
+string paths[] = array(
+    "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_CRN_300x100_06.SM_Building_01_Wall_CRN_300x100_06",
+    "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_CRN_300x100_05.SM_Building_01_Wall_CRN_300x100_05",
+    "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_CRN_300x100_01.SM_Building_01_Wall_CRN_300x100_01",
+    "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_CRN_300x100_02.SM_Building_01_Wall_CRN_300x100_02",
+    "/Game/CityStreetStylizedPack/Environment/Architecture/Building_01/SM_Building_01_Wall_CRN_300x100_04.SM_Building_01_Wall_CRN_300x100_04"
+);
+
+int index = 0;
+
+if (mode >= 1 && mode <= 5)
+{
+    index = mode - 1;
+}
+else if (mode == 6)
+{
+    index = int(floor(rand(seed + 91.37) * len(assets)));
+    index = clamp(index, 0, len(assets) - 1);
+}
+else
+{
+    return;
+}
+
+s@asset_id = assets[index];
+s@unreal_instance = paths[index];
+
+// 新增可替换高层转角资产需要在原有转角旋转基础上向左旋转 90 度
+f@rot_y_deg += 90.0;
+p@orient = quaternion(radians(f@rot_y_deg), set(0, 1, 0));
+
+s@upper_corner_variant_applied = "yes";
+i@upper_corner_variant_index = index;

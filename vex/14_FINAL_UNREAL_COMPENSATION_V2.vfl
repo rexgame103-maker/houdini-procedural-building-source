@@ -1,0 +1,143 @@
+// ==========================================
+// 14_FINAL_UNREAL_COMPENSATION_V2
+// V2：Houdini 逻辑模块点 → Unreal 真实资产点位
+//
+// 当前先处理普通墙 plain_wall。
+// 后面接入资产表后，再叠加 asset_rotation_offset_y / asset_static_offset。
+// ==========================================
+
+float unit = chf("../grid_unit");
+
+
+// ===============================
+// 旋转补偿
+// ===============================
+//
+// V1.4 中已经验证：
+// Unreal 真实资产需要在 Houdini 逻辑旋转基础上 +90°。
+// 当前 V2 普通墙也沿用这个规则。
+
+// ===============================
+// 旋转补偿
+// ===============================
+//
+// f@rot_y_deg 是逻辑朝向。
+// f@asset_rotation_offset_y 来自资产补偿表。
+// 普通墙当前是 +90。
+
+float asset_rot_offset = 0.0;
+
+if (haspointattrib(0, "asset_rotation_offset_y"))
+{
+    asset_rot_offset = f@asset_rotation_offset_y;
+}
+
+float r = f@rot_y_deg + asset_rot_offset;
+
+// 转角墙方向需要额外修正
+// 这是 V1.4 中已经验证过的规则
+if (s@module_type == "corner_wall")
+{
+    r += 90.0;
+}
+
+if (s@module_type == "cornice_corner")
+{
+    r += 90.0;
+}
+
+// 屋顶平面不吃墙体旋转补偿
+if (s@module_type == "roof_fill")
+{
+    r = 0.0;
+}
+
+f@rot_y_deg = r;
+p@orient = quaternion(radians(r), set(0, 1, 0));
+
+
+// ===============================
+// 位置补偿
+// ===============================
+//
+// 原因：
+// 当前模块点是按 Houdini 逻辑边起点放置。
+// 但 Unreal 资产 Pivot / 朝向经过旋转后，
+// 需要根据模块长度把点推到正确端点。
+// ===============================
+
+if (
+    s@module_type == "plain_wall" ||
+    s@module_type == "door_wall_ground" ||
+    s@module_type == "door_wall_upper" ||
+    s@module_type == "window_wall_ground" ||
+    s@module_type == "window_wall_upper" ||
+    s@module_type == "window_wall_side_upper"
+)
+{
+    float move = float(i@grid_width) * unit;
+
+    if (s@facade == "front")
+    {
+        @P.x += move;
+    }
+    else if (s@facade == "back")
+    {
+        @P.x -= move;
+    }
+    else if (s@facade == "left")
+    {
+        @P.z -= move;
+    }
+    else if (s@facade == "right")
+    {
+        @P.z += move;
+    }
+}
+
+
+// ===============================
+// 资产表补偿预留
+// ===============================
+//
+// 如果后面接入 asset_rotation_offset_y / asset_static_offset，
+// 会在这里继续叠加。
+// 当前先不启用，避免没有属性时报错。
+// ===============================
+
+if (haspointattrib(0, "asset_static_offset"))
+{
+    @P += v@asset_static_offset;
+}
+
+// 屋顶平面补偿：向上抬起自身高度，避免和墙顶重叠
+if (s@module_type == "roof_fill")
+{
+    @P.y += f@height_cm / 100.0;
+}
+
+// ===============================
+// 屋檐边动态补偿
+// ===============================
+
+if (s@module_type == "cornice_edge")
+{
+    float move = float(i@grid_width) * unit;
+
+    if (s@facade == "roof_front")
+    {
+        @P.x += move;
+    }
+    else if (s@facade == "roof_back")
+    {
+        @P.x -= move;
+    }
+    else if (s@facade == "roof_left")
+    {
+        @P.z -= move;
+    }
+    else if (s@facade == "roof_right")
+    {
+        @P.z += move;
+    }
+}

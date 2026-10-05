@@ -1,0 +1,537 @@
+// ==========================================
+// 28_SIDE_BALCONY_ANCHOR_POINTS
+// V2.1C：侧面阳台挂点生成
+//
+// 规则：
+// 1. 只处理 left / right
+// 2. 只处理 global_floor > 0
+// 3. 只挂在侧面高层门墙上
+// 4. outer_side 直接允许生成
+// 5. protruding_visible_side 必须满足可见侧面高度 >= 指定层数
+// 6. protruding_visible_side 从自身第二层以上开始生成
+// ==========================================
+
+function int round_grid(const float v)
+{
+    if (v >= 0)
+    {
+        return int(floor(v + 0.5));
+    }
+
+    return int(ceil(v - 0.5));
+}
+
+
+function int calc_side_center_z2(
+    const string facade;
+    const vector P;
+    const int grid_width;
+    const float unit)
+{
+    int anchor_z = round_grid(P.z / unit);
+
+    float start_z = float(anchor_z);
+
+    if (facade == "left")
+    {
+        // left 侧点位在模块 Z 方向末端
+        start_z = float(anchor_z - grid_width);
+    }
+    else
+    {
+        // right 侧点位在模块 Z 方向起点
+        start_z = float(anchor_z);
+    }
+
+    float center_z = start_z + float(grid_width) * 0.5;
+
+    // 乘 2 是为了兼容 100cm 模块的 0.5 格中心
+    return round_grid(center_z * 2.0);
+}
+
+int enable_balcony = chi("../enable_side_balcony");
+float chance = clamp(chf("../side_balcony_chance"), 0.0, 1.0);
+int seed = chi("../side_balcony_seed");
+
+int protruding_min_floor_count = max(1, chi("../side_balcony_protruding_min_floor_count"));
+int protruding_start_local_floor = max(0, chi("../side_balcony_protruding_start_local_floor"));
+
+float y_offset = chf("../side_balcony_y_offset_cm") / 100.0;
+float wall_offset = chf("../side_balcony_wall_offset_cm") / 100.0;
+
+float unit = chf("../grid_unit");
+
+int src_count = npoints(0);
+int created_count = 0;
+
+if (enable_balcony == 0)
+{
+    for (int i = src_count - 1; i >= 0; i--)
+    {
+        removepoint(0, i);
+    }
+
+    setdetailattrib(0, "side_balcony_status", "disabled", "set");
+    setdetailattrib(0, "side_balcony_created_count", 0, "set");
+    return;
+}
+
+
+// ===============================
+// 统计每个侧面阳台列的楼层范围
+//
+// 旧逻辑 key = facade + x
+// 会把同一个 X 上不同 Z 段的突出侧面混在一起。
+//
+// 新逻辑 key = facade + x + z_center
+// 按具体侧面列判断 visible_floor_count / local_floor。
+// ===============================
+
+string keys[];
+int key_min_floor[];
+int key_max_floor[];
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+
+    if (facade != "left" && facade != "right")
+    {
+        continue;
+    }
+
+    int global_floor = point(0, "global_floor", i);
+
+    if (global_floor <= 0)
+    {
+        continue;
+    }
+
+    vector P = point(0, "P", i);
+
+    int gx = round_grid(P.x / unit);
+    int grid_width = max(1, point(0, "grid_width", i));
+
+    int anchor_z = round_grid(P.z / unit);
+
+    int module_start_z = anchor_z;
+
+    if (facade == "left")
+    {
+        module_start_z = anchor_z - grid_width;
+    }
+
+    // 把 400cm / 200cm / 100cm 侧面模块拆成逻辑 slot 统计
+    int used = 0;
+
+    while (used < grid_width)
+    {
+        int remain = grid_width - used;
+        int slot_grid = remain >= 2 ? 2 : 1;
+
+        float center_z = float(module_start_z + used) + float(slot_grid) * 0.5;
+        int center_z2 = round_grid(center_z * 2.0);
+
+        string key = sprintf("%s_%d_%d", facade, gx, center_z2);
+
+        int found = -1;
+
+        for (int k = 0; k < len(keys); k++)
+        {
+            if (keys[k] == key)
+            {
+                found = k;
+                break;
+            }
+        }
+
+        if (found < 0)
+        {
+            append(keys, key);
+            append(key_min_floor, global_floor);
+            append(key_max_floor, global_floor);
+        }
+        else
+        {
+            key_min_floor[found] = min(key_min_floor[found], global_floor);
+            key_max_floor[found] = max(key_max_floor[found], global_floor);
+        }
+
+        used += slot_grid;
+    }
+}
+
+
+// ===============================
+// 遍历侧面高层门墙，生成阳台挂点
+// ===============================
+
+for (int i = 0; i < src_count; i++)
+{
+    string facade = point(0, "facade", i);
+    string module_type = point(0, "module_type", i);
+    string asset_id = point(0, "asset_id", i);
+
+    int global_floor = point(0, "global_floor", i);
+
+    if (facade != "left" && facade != "right")
+    {
+        continue;
+    }
+
+    if (global_floor <= 0)
+    {
+        continue;
+    }
+
+    // 侧面门墙识别：优先用 module_type，同时兼容 asset_id
+    if (module_type != "door_wall_upper" && asset_id != "SM_Building_01_WallDoor_300x200_01")
+    {
+        continue;
+    }
+
+    string side_region = point(0, "side_upper_region", i);
+
+    if (side_region == "")
+    {
+        side_region = "outer_side";
+    }
+
+    vector door_pos = point(0, "P", i);
+    int door_grid_width = max(1, point(0, "grid_width", i));
+    float door_width_m = float(door_grid_width) * unit;
+    
+    int gx = round_grid(door_pos.x / unit);
+    int center_z2 = calc_side_center_z2(facade, door_pos, door_grid_width, unit);
+    
+    string key = sprintf("%s_%d_%d", facade, gx, center_z2);
+
+    int min_floor = global_floor;
+    int max_floor = global_floor;
+
+    for (int k = 0; k < len(keys); k++)
+    {
+        if (keys[k] == key)
+        {
+            min_floor = key_min_floor[k];
+            max_floor = key_max_floor[k];
+            break;
+        }
+    }
+
+    int visible_floor_count = max_floor - min_floor + 1;
+    int local_floor_in_region = global_floor - min_floor;
+
+    int allow_balcony = 0;
+
+    if (side_region == "outer_side")
+    {
+        allow_balcony = 1;
+    }
+    else if (side_region == "protruding_visible_side")
+    {
+        if (
+            visible_floor_count >= protruding_min_floor_count &&
+            local_floor_in_region >= protruding_start_local_floor
+        )
+        {
+            allow_balcony = 1;
+        }
+    }
+
+    if (allow_balcony == 0)
+    {
+        continue;
+    }
+    
+    
+    // ===============================
+    // 过滤：侧面门墙下方如果没有同位置侧面墙体，说明它挨着屋顶平面
+    // 这种上层楼体底层门墙不生成侧面阳台，避免与下层屋檐 / 屋顶穿模
+    // ===============================
+    
+    int has_side_wall_below = 0;
+    
+    int cur_x = round_grid(door_pos.x / unit);
+    
+    int cur_start_z;
+    int cur_end_z;
+    
+    if (facade == "left")
+    {
+        cur_end_z = round_grid(door_pos.z / unit);
+        cur_start_z = cur_end_z - door_grid_width;
+    }
+    else
+    {
+        cur_start_z = round_grid(door_pos.z / unit);
+        cur_end_z = cur_start_z + door_grid_width;
+    }
+    
+    for (int j = 0; j < src_count; j++)
+    {
+        if (j == i)
+        {
+            continue;
+        }
+    
+        int below_floor = point(0, "global_floor", j);
+    
+        if (below_floor != global_floor - 1)
+        {
+            continue;
+        }
+    
+        string below_facade = point(0, "facade", j);
+    
+        if (below_facade != facade)
+        {
+            continue;
+        }
+    
+        string below_module_type = point(0, "module_type", j);
+    
+        // 只把墙体类模块当作“下方有墙”
+        if (
+            below_module_type != "plain_wall" &&
+            below_module_type != "door_wall_upper" &&
+            below_module_type != "window_wall_upper" &&
+            below_module_type != "corner_wall"
+        )
+        {
+            continue;
+        }
+    
+        vector below_pos = point(0, "P", j);
+    
+        int below_x = round_grid(below_pos.x / unit);
+    
+        if (below_x != cur_x)
+        {
+            continue;
+        }
+    
+        int below_grid_width = max(1, point(0, "grid_width", j));
+    
+        int below_start_z;
+        int below_end_z;
+    
+        if (facade == "left")
+        {
+            below_end_z = round_grid(below_pos.z / unit);
+            below_start_z = below_end_z - below_grid_width;
+        }
+        else
+        {
+            below_start_z = round_grid(below_pos.z / unit);
+            below_end_z = below_start_z + below_grid_width;
+        }
+    
+        int overlap = (below_start_z < cur_end_z) && (below_end_z > cur_start_z);
+    
+        if (overlap)
+        {
+            has_side_wall_below = 1;
+            break;
+        }
+    }
+    
+    if (has_side_wall_below == 0)
+    {
+        continue;
+    }
+    
+    // ===============================
+    // 过滤：侧面阳台外挑方向如果离对面墙太近，则不生成
+    // 用于避免两栋楼墙缝 / 窄巷里生成侧面阳台
+    // ===============================
+    
+    float balcony_clearance_grid = 2.0; // 至少需要 2 grid = 200cm 外挑空间
+    int blocked_by_opposite_wall = 0;
+    
+    int check_dir = 0;
+    
+    if (facade == "left")
+    {
+        check_dir = -1;
+    }
+    else
+    {
+        check_dir = 1;
+    }
+    
+    for (int j = 0; j < src_count; j++)
+    {
+        if (j == i)
+        {
+            continue;
+        }
+    
+        int other_floor = point(0, "global_floor", j);
+    
+        if (other_floor != global_floor)
+        {
+            continue;
+        }
+    
+        string other_facade = point(0, "facade", j);
+    
+        if (other_facade != "left" && other_facade != "right" && other_facade != "front" && other_facade != "back")
+        {
+            continue;
+        }
+    
+        string other_type = point(0, "module_type", j);
+    
+        if (
+            other_type != "plain_wall" &&
+            other_type != "door_wall_upper" &&
+            other_type != "window_wall_upper" &&
+            other_type != "corner_wall"
+        )
+        {
+            continue;
+        }
+    
+        vector otherP = point(0, "P", j);
+    
+        int other_x = round_grid(otherP.x / unit);
+    
+        // 只检查阳台外挑方向上的墙
+        int dx = other_x - cur_x;
+    
+        if (check_dir == -1)
+        {
+            if (dx >= 0)
+            {
+                continue;
+            }
+        }
+        else
+        {
+            if (dx <= 0)
+            {
+                continue;
+            }
+        }
+    
+        if (abs(float(dx)) > balcony_clearance_grid)
+        {
+            continue;
+        }
+    
+        int other_grid_width = max(1, point(0, "grid_width", j));
+    
+        int other_start_z;
+        int other_end_z;
+    
+        string ofacade = point(0, "facade", j);
+    
+        if (ofacade == "left")
+        {
+            other_end_z = round_grid(otherP.z / unit);
+            other_start_z = other_end_z - other_grid_width;
+        }
+        else if (ofacade == "right")
+        {
+            other_start_z = round_grid(otherP.z / unit);
+            other_end_z = other_start_z + other_grid_width;
+        }
+        else
+        {
+            // front/back 沿 X，不适合用这里的 Z overlap 计算，先跳过
+            continue;
+        }
+    
+        int overlap_z = (other_start_z < cur_end_z) && (other_end_z > cur_start_z);
+    
+        if (overlap_z)
+        {
+            blocked_by_opposite_wall = 1;
+            break;
+        }
+    }
+    
+    if (blocked_by_opposite_wall == 1)
+    {
+        continue;
+    }
+    
+    float r = rand(float(seed) + float(i) * 17.31 + float(global_floor) * 9.73);
+    
+    if (r > chance)
+    {
+        continue;
+    }
+
+    float floor_bottom_y = point(0, "floor_bottom_y", i);
+    float floor_height = point(0, "floor_height", i);
+
+    vector anchor_pos = door_pos;
+
+    // 侧面门墙中心点：
+    // left 的点在模块后端，所以往 -Z 回半个门宽
+    // right 的点在模块前端，所以往 +Z 进半个门宽
+    if (facade == "left")
+    {
+        anchor_pos.z = door_pos.z - door_width_m * 0.5;
+        anchor_pos.x = door_pos.x - wall_offset;
+    }
+    else
+    {
+        anchor_pos.z = door_pos.z + door_width_m * 0.5;
+        anchor_pos.x = door_pos.x + wall_offset;
+    }
+
+    anchor_pos.y = floor_bottom_y + y_offset;
+
+    int pt = addpoint(0, anchor_pos);
+
+    setpointattrib(0, "module_type", pt, "side_balcony_anchor", "set");
+    setpointattrib(0, "facade", pt, facade, "set");
+    setpointattrib(0, "global_floor", pt, global_floor, "set");
+
+    setpointattrib(0, "side_upper_region", pt, side_region, "set");
+    setpointattrib(0, "side_balcony_source", pt, "side_upper_door", "set");
+    setpointattrib(0, "source_door_point", pt, i, "set");
+
+    setpointattrib(0, "visible_floor_count", pt, visible_floor_count, "set");
+    setpointattrib(0, "local_floor_in_region", pt, local_floor_in_region, "set");
+    setpointattrib(0, "side_balcony_column_key", pt, key, "set");
+    setpointattrib(0, "side_balcony_region_min_floor", pt, min_floor, "set");
+    setpointattrib(0, "side_balcony_region_max_floor", pt, max_floor, "set");
+
+    setpointattrib(0, "width_cm", pt, 277.0, "set");
+    setpointattrib(0, "depth_cm", pt, 120.0, "set");
+    setpointattrib(0, "height_cm", pt, 113.0, "set");
+
+    setpointattrib(0, "floor_bottom_y", pt, floor_bottom_y, "set");
+    setpointattrib(0, "floor_height", pt, floor_height, "set");
+
+    if (facade == "left")
+    {
+        setpointattrib(0, "balcony_out_dir", pt, set(-1, 0, 0), "set");
+    }
+    else
+    {
+        setpointattrib(0, "balcony_out_dir", pt, set(1, 0, 0), "set");
+    }
+
+    setpointattrib(0, "pivot_type", pt, "balcony_inner_bottom_center", "set");
+
+    setpointattrib(0, "rot_y_deg", pt, 0.0, "set");
+    setpointattrib(0, "orient", pt, quaternion(0, set(0, 1, 0)), "set");
+    setpointattrib(0, "scale", pt, set(1, 1, 1), "set");
+
+    created_count++;
+}
+
+
+// 删除原始墙体点，只保留侧面阳台挂点
+for (int i = src_count - 1; i >= 0; i--)
+{
+    removepoint(0, i);
+}
+
+setdetailattrib(0, "side_balcony_status", "side_balcony_anchors_created", "set");
+setdetailattrib(0, "side_balcony_created_count", created_count, "set");
